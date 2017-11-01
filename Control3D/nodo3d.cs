@@ -36,6 +36,15 @@ namespace Proyecto2_compi2_2sem_2017.Control3D
             this.val = valor;
         }
 
+        
+        public nodo3d(string etv,string etf,int tipo)
+        {
+            this.etv = etv;
+            this.etf = etf;
+            this.tipo = 1; 
+        }
+        
+
 
     }
 }

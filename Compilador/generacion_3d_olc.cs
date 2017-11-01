@@ -177,6 +177,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             //---------------------> Hijo 1, la accion 
             nodo3d val = castear_nodo3d(evaluarEXPRESION(nodo.ChildNodes[0]));
 
+            
             //aqui tengo que ver como realizo toda la lista el elseif
 
             if (nodo.ChildNodes.Count == 3)
@@ -184,9 +185,22 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 if (nodo.ChildNodes[2].ChildNodes.Count == 0)
                 {
                     string nuevo_ambito = ambito + "_if" + lista_actual.noIf++;
+                    aumentar_3d();
                     aumentarAmbito(nuevo_ambito);
+
+                    escribir3d(val.etv + ":", "condicion verdadera de if");
                     ejecutar(nodo.ChildNodes[1], nuevo_ambito);
+                    escribir3d(val.etf + ":", "etiqueta falsa de if");
+
+                    string cont = lista_c3d.First().codigo.ToString();
+                    Boolean estado = lista_c3d.First().estado;
+                    disminuir_3d();
                     disminuirAmbito();
+
+                    if (estado)
+                        lista_c3d.First().codigo.Append(cont);
+                    else
+                        Control3d.agregarError(new errores("semantico", nodo.Span.Location.Line, nodo.Span.Location.Column, "Erro en la traduccion del IF, no se agrego el codigo"));
                 }
             }
             else
@@ -207,9 +221,12 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             {
                 string etv = Control3d.getEti();
                 string etf = Control3d.getEti();
+                escribir_condicion(nodo.val, "1", "==", etv, etf, "creacion de condicion para if");
+                return new nodo3d(etv, etf, 1);
             }
-            return null;
-        }
+            else
+                return nodo;
+       }
 
         private void ejecutarSWITCH(ParseTreeNode nodo)
         {
@@ -358,7 +375,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         public void escribir_condicion(string uno, string dos,string op,string etv,string etf,string comentario)
         {
             string cond = "if " + uno + " " + op + " " + dos + " goto " + etv + "\n"+ " //" + comentario + "\n";
-            string cond2 = "goto " + etf;
+            string cond2 = "goto " + etf+"\n";
             this.lista_c3d.First().codigo.Append(cond);
             this.lista_c3d.First().codigo.Append(cond2);
         }

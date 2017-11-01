@@ -25,6 +25,7 @@ namespace Proyecto2_compi2_2sem_2017
         {
             //try
             //{
+                Control3d.iniciar_controlador();
                 pagina nuevo = (pagina)tabControl1.TabPages[tabControl1.SelectedIndex];
                 string contenido = nuevo.contenido.Text;
                 Interprete inter = new Interprete();

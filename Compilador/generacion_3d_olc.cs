@@ -175,58 +175,66 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         {
             //---------------------> Hijo 0, la condicion
             //---------------------> Hijo 1, la accion 
+            string nuevo_ambito = ambito + "_if" + lista_actual.noIf++;
+            string salida = Control3d.getEti();
+            aumentar_3d();
+            aumentarAmbito(nuevo_ambito);
             nodo3d val = castear_nodo3d(evaluarEXPRESION(nodo.ChildNodes[0]));
 
+            escribir3d(val.etv + ":", "condicion verdadera de if");
+            ejecutar(nodo.ChildNodes[1], nuevo_ambito);
+            escribir3d("goto " + salida, "para que no ejecute las sentencias del else");
+            escribir3d(val.etf + ":", "condicion falsa de if");
             
             //aqui tengo que ver como realizo toda la lista el elseif
-
+            #region IF_ELSE
             if (nodo.ChildNodes.Count == 3)
             {//if solo
-                if (nodo.ChildNodes[2].ChildNodes.Count == 0)
-                {
-                    string nuevo_ambito = ambito + "_if" + lista_actual.noIf++;
-                    aumentar_3d();
-                    aumentarAmbito(nuevo_ambito);
-
-                    escribir3d(val.etv + ":", "condicion verdadera de if");
-                    ejecutar(nodo.ChildNodes[1], nuevo_ambito);
-                    escribir3d(val.etf + ":", "etiqueta falsa de if");
-
-                    string cont = lista_c3d.First().codigo.ToString();
-                    Boolean estado = lista_c3d.First().estado;
-                    disminuir_3d();
-                    disminuirAmbito();
-
-                    if (estado)
-                        lista_c3d.First().codigo.Append(cont);
-                    else
-                        Control3d.agregarError(new errores("semantico", nodo.Span.Location.Line, nodo.Span.Location.Column, "Erro en la traduccion del IF, no se agrego el codigo"));
+                if (nodo.ChildNodes[2].ChildNodes.Count > 0)
+                {//viene if else
+                    ejecutar(nodo.ChildNodes[2].ChildNodes[0], nuevo_ambito);
                 }
+                escribir3d(salida + ":", "para que no ejecute las sentencias del else");
             }
+            #endregion
+            
+            #region IF_ELSEIF_ELSE
             else
             {
-                if (nodo.ChildNodes[3].ChildNodes.Count == 0)
+                foreach(ParseTreeNode elif in nodo.ChildNodes[2].ChildNodes)
                 {
-                    string nuevo_ambito = ambito + "_if" + lista_actual.noIf++;
-                    aumentarAmbito(nuevo_ambito);
-                    ejecutar(nodo.ChildNodes[1], nuevo_ambito);
-                    disminuirAmbito();
+                    val = castear_nodo3d(evaluarEXPRESION(elif.ChildNodes[0]));
+                    //nuevo_ambito = ambito + "_if" + lista_actual.noIf++;
+                    //string salida = Control3d.getEti();
+                    //aumentar_3d();
+                    //aumentarAmbito(nuevo_ambito);
+
+                    escribir3d(val.etv + ":", "condicion verdadera de else_if");
+                    ejecutar(elif.ChildNodes[1], nuevo_ambito);
+                    escribir3d("goto " + salida, "para que no ejecute las sentencias del else_if");
+                    escribir3d(val.etf + ":", "condicion falsa de else_if");
+
                 }
+                if (nodo.ChildNodes[3].ChildNodes.Count > 0)
+                {//viene if else
+                    ejecutar(nodo.ChildNodes[3].ChildNodes[0], nuevo_ambito);
+                }
+                escribir3d(salida + ":", "para que no ejecute las sentencias del else");
+                // tengo que ver si aumento el ambito like elseif_0 kind of
             }
+            #endregion
+
+            string cont = lista_c3d.First().codigo.ToString();
+            Boolean estado = lista_c3d.First().estado;
+
+            disminuirAmbito();
+            disminuir_3d();
+
+            if (estado)
+                lista_c3d.First().codigo.Append(cont);
+            else
+                Control3d.agregarError(new errores("semantico", nodo.Span.Location.Line, nodo.Span.Location.Column, "Erro en la traduccion del IF, no se agrego el codigo"));
         }
-
-        private nodo3d castear_nodo3d(nodo3d nodo)
-        {
-            if (nodo.tipo == 2 || nodo.tipo == 3)
-            {
-                string etv = Control3d.getEti();
-                string etf = Control3d.getEti();
-                escribir_condicion(nodo.val, "1", "==", etv, etf, "creacion de condicion para if");
-                return new nodo3d(etv, etf, 1);
-            }
-            else
-                return nodo;
-       }
 
         private void ejecutarSWITCH(ParseTreeNode nodo)
         {
@@ -259,14 +267,38 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
              }*/
 
         }
+
         private void ejecutarWHILE(ParseTreeNode nodo, string ambito)
         {
             string nuevo_ambito = ambito + "_while" + lista_actual.noWhile++;
-            aumentarAmbito(nuevo_ambito);
-            ejecutar(nodo.ChildNodes[1], nuevo_ambito);
-            disminuirAmbito();
 
+            string continuar = Control3d.getEti();
+
+            aumentar_3d();
+            aumentarAmbito(nuevo_ambito);
+
+            escribir3d(continuar + ":", "etiqueta para continuar el while");
+
+            nodo3d val = castear_nodo3d(evaluarEXPRESION(nodo.ChildNodes[0]));
+
+
+            escribir3d(val.etv + ":", "condicion verdadera de while");
+            ejecutar(nodo.ChildNodes[1], nuevo_ambito);
+            escribir3d("goto " + continuar, "Para continuar el ciclo");
+            escribir3d(val.etf + ":", "condicion falsa de while");
+
+            string cont = lista_c3d.First().codigo.ToString();
+            Boolean estado = lista_c3d.First().estado;
+
+            disminuirAmbito();
+            disminuir_3d();
+
+            if (estado)
+                lista_c3d.First().codigo.Append(cont);
+            else
+                Control3d.agregarError(new errores("semantico", nodo.Span.Location.Line, nodo.Span.Location.Column, "Error en la traduccion del WHILE, no se agrego el codigo"));
         }
+
         private void ejecutarDO_WHILE(ParseTreeNode nodo, string ambito)
         {
 
@@ -275,6 +307,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             ejecutar(nodo.ChildNodes[0], nuevo_ambito);
             disminuirAmbito();
         }
+
         private void ejecutarREPEAT(ParseTreeNode nodo, string ambito)
         {
 
@@ -282,6 +315,19 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             aumentarAmbito(nuevo_ambito);
             ejecutar(nodo.ChildNodes[0], nuevo_ambito);
             disminuirAmbito();
+        }
+
+        private nodo3d castear_nodo3d(nodo3d nodo)
+        {
+            if (nodo.tipo == 2 || nodo.tipo == 3)
+            {
+                string etv = Control3d.getEti();
+                string etf = Control3d.getEti();
+                escribir_condicion(nodo.val, "1", "==", etv, etf, "creacion de condicion para if");
+                return new nodo3d(etv, etf, 1);
+            }
+            else
+                return nodo;
         }
 
         #endregion
@@ -374,7 +420,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
         public void escribir_condicion(string uno, string dos,string op,string etv,string etf,string comentario)
         {
-            string cond = "if " + uno + " " + op + " " + dos + " goto " + etv + "\n"+ " //" + comentario + "\n";
+            string cond = "if " + uno + " " + op + " " + dos + " goto " + etv + " //" + comentario + "\n";
             string cond2 = "goto " + etf+"\n";
             this.lista_c3d.First().codigo.Append(cond);
             this.lista_c3d.First().codigo.Append(cond2);

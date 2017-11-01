@@ -84,7 +84,6 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             }
         }
 
-
         private void ejecutar(ParseTreeNode nodo, string ambito)
         {
             switch (nodo.Term.Name)
@@ -118,6 +117,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                     ejecutarREPEAT(nodo, ambito);
                     break;
                 case "FOR"://me falta guardar esto de la tabla de simbolos
+                    ejecutarFOR(nodo, ambito);
                     break;
                 case "WHILEX"://me falta guardar las variables en la tabla de sym
                     break;
@@ -125,6 +125,9 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                     break;
             }
         }
+
+        
+
         private void ejecutarDECLARAR(ParseTreeNode nodo, String ambito)
         {
             String nombre = nodo.ChildNodes[2].ChildNodes[0].Token.Text;
@@ -303,18 +306,100 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         {
 
             string nuevo_ambito = ambito + "_doWhile" + lista_actual.doWhile++;
+            string continuar = Control3d.getEti();
+
+            aumentar_3d();
             aumentarAmbito(nuevo_ambito);
+
+            escribir3d(continuar + ":", "etiqueta para continuar el while");
+
             ejecutar(nodo.ChildNodes[0], nuevo_ambito);
+
+            nodo3d val = castear_nodo3d(evaluarEXPRESION(nodo.ChildNodes[1]));
+
+            escribir3d(val.etv + ":", "condicion verdadera de do_while");
+            escribir3d("goto " + continuar, "Para continuar el ciclo");
+            escribir3d(val.etf + ":", "condicion falsa de do_while");
+
+            string cont = lista_c3d.First().codigo.ToString();
+            Boolean estado = lista_c3d.First().estado;
+
             disminuirAmbito();
+            disminuir_3d();
+
+            if (estado)
+                lista_c3d.First().codigo.Append(cont);
+            else
+                Control3d.agregarError(new errores("semantico", nodo.Span.Location.Line, nodo.Span.Location.Column, "Error en la traduccion del DO_WHILE, no se agrego el codigo"));
         }
 
         private void ejecutarREPEAT(ParseTreeNode nodo, string ambito)
         {
 
             string nuevo_ambito = ambito + "_repeat" + lista_actual.noUntil++;
+
+            string continuar = Control3d.getEti();
+
+            aumentar_3d();
             aumentarAmbito(nuevo_ambito);
-            ejecutar(nodo.ChildNodes[0], nuevo_ambito);
+
+            escribir3d(continuar + ":", "etiqueta para continuar el repeat");
+
+            nodo3d val = castear_nodo3d(evaluarEXPRESION(nodo.ChildNodes[0]));
+
+
+            escribir3d(val.etf + ":", "condicion falsa de repeat");
+            ejecutar(nodo.ChildNodes[1], nuevo_ambito);
+            escribir3d("goto " + continuar, "Para continuar el ciclo");
+            escribir3d(val.etv + ":", "condicion verdadera de repeat");
+
+            string cont = lista_c3d.First().codigo.ToString();
+            Boolean estado = lista_c3d.First().estado;
+
             disminuirAmbito();
+            disminuir_3d();
+
+            if (estado)
+                lista_c3d.First().codigo.Append(cont);
+            else
+                Control3d.agregarError(new errores("semantico", nodo.Span.Location.Line, nodo.Span.Location.Column, "Error en la traduccion del REPEAT, no se agrego el codigo"));
+        }
+
+        private void ejecutarFOR(ParseTreeNode nodo, string ambito)
+        {
+            
+            string aumento = Control3d.getEti();
+            string continuar = Control3d.getEti();
+            string nuevo_ambito = ambito + "_while" + lista_actual.noWhile++;
+            string variable = nodo.ChildNodes[2].ChildNodes[0].Token.Text;
+            string tipo_aumento = nodo.ChildNodes[2].ChildNodes[1].Token.Text;
+
+            aumentar_3d();
+            aumentarAmbito(nuevo_ambito);
+
+            escribir3d(continuar + ":", "etiqueta para continuar el FOR");
+            nodo3d val = castear_nodo3d(evaluarEXPRESION(nodo.ChildNodes[1]));
+
+            escribir3d(val.etv + ":", "condicion verdadera de FOR");
+            ejecutar(nodo.ChildNodes[3], nuevo_ambito);
+            escribir3d(aumento+",","Para aumentar la variable del for");
+            if (tipo_aumento.Equals("++"))
+                escribir_operacion_asignacio(variable, variable, "+", "1");
+            else
+                escribir_operacion_asignacio(variable, variable, "-", "1");
+            escribir3d("goto " + continuar,"Para continuar la ejecucion del for");
+            escribir3d(val.etf + ":", "condicion falsa de for");
+
+            string cont = lista_c3d.First().codigo.ToString();
+            Boolean estado = lista_c3d.First().estado;
+
+            disminuirAmbito();
+            disminuir_3d();
+
+            if (estado)
+                lista_c3d.First().codigo.Append(cont);
+            else
+                Control3d.agregarError(new errores("semantico", nodo.Span.Location.Line, nodo.Span.Location.Column, "Error en la traduccion del FOR, no se agrego el codigo"));
         }
 
         private nodo3d castear_nodo3d(nodo3d nodo)
@@ -331,8 +416,6 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         }
 
         #endregion
-
-
 
         #region EVALUAR_EXP
 
@@ -417,7 +500,6 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             this.lista_c3d.First().codigo.Append(cont + " //" + comentario + "\n");
         }
 
-
         public void escribir_condicion(string uno, string dos,string op,string etv,string etf,string comentario)
         {
             string cond = "if " + uno + " " + op + " " + dos + " goto " + etv + " //" + comentario + "\n";
@@ -426,7 +508,11 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             this.lista_c3d.First().codigo.Append(cond2);
         }
 
-
+        public void escribir_operacion_asignacio(string destino, string uno, string op,string dos)
+        {
+            string cont = destino + " = " + uno + " " + op + " " + dos;
+            this.lista_c3d.First().codigo.Append(cont + "\n");
+        }
     }
 }
 

@@ -64,6 +64,10 @@ namespace Proyecto2_compi2_2sem_2017.TablaSimbolos
             this.noMetodo = numero;
         }
 
+        public ParseTreeNode getExpresion()
+        {
+            return this.exp;
+        }
 
     }
 }

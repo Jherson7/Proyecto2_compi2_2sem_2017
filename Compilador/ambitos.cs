@@ -15,12 +15,13 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         public int doWhile;
         public int noUntil;
         public int noX;
+        public int no_else_if;
         //le puedo agregar mas cosas
 
         public ambitos(string nombre)
         {
             this.nombre = nombre;
-            noIf = noFor = noWhile = noWhile = noUntil = noX = 0;
+            noIf = noFor = noWhile = noWhile = noUntil = noX = no_else_if= 0;
         }
     }
 }

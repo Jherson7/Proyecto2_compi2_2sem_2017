@@ -18,6 +18,7 @@ namespace Proyecto2_compi2_2sem_2017.Control3D
         {
             this.etf = "";
             this.etv = "";
+            this.tipo = -1;
         }
 
 

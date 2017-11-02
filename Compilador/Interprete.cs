@@ -74,7 +74,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             g.graficar(arbol);
             SentenciasGlobales(raiz);
             iniciar();
-            mostrarTablaSimbolos();
+            //mostrarTablaSimbolos();
             Control3d.setListaClases(lista_clases);//seteo las clases
             Control3d.setListaMetodos(metodos);//seteo los metodos para traducirlos
             generacion_3d_olc gen = new generacion_3d_olc();
@@ -673,22 +673,39 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             //---------------------> Hijo 1, la accion 
             if (nodo.ChildNodes.Count == 3)
             {//if solo
-                if (nodo.ChildNodes[2].ChildNodes.Count == 0)
+                string nuevo_ambito = ambito + "_if" + listaActual.noIf++;
+                aumentarAmbito(nuevo_ambito);
+                ejecutar(nodo.ChildNodes[1], nuevo_ambito);
+                disminuirAmbito();
+                if (nodo.ChildNodes[2].ChildNodes.Count > 0)
                 {
-                    string nuevo_ambito = ambito + "_if" + listaActual.noIf++;
+                    nuevo_ambito = ambito + "_if" + listaActual.noIf+"_else";
                     aumentarAmbito(nuevo_ambito);
-                    ejecutar(nodo.ChildNodes[1], nuevo_ambito);
+                    ejecutar(nodo.ChildNodes[2].ChildNodes[0], nuevo_ambito);
                     disminuirAmbito();
                 }
 
                 
             }else 
             {
-                if (nodo.ChildNodes[3].ChildNodes.Count == 0)
+                string nuevo_ambito = ambito + "_if" + listaActual.noIf++;
+                aumentarAmbito(nuevo_ambito);
+                ejecutar(nodo.ChildNodes[1], nuevo_ambito);
+                disminuirAmbito();
+
+                foreach(ParseTreeNode p in nodo.ChildNodes[2].ChildNodes)
                 {
-                    string nuevo_ambito = ambito + "_if" + listaActual.noIf++;
+                    nuevo_ambito = ambito + "_if" + listaActual.noIf+"_elseif"+listaActual.no_else_if++;
                     aumentarAmbito(nuevo_ambito);
-                    ejecutar(nodo.ChildNodes[1], nuevo_ambito);
+                    ejecutar(p.ChildNodes[1], nuevo_ambito);
+                    disminuirAmbito();
+                }
+
+                if (nodo.ChildNodes[3].ChildNodes.Count > 0)
+                {
+                    nuevo_ambito = ambito + "_if" + listaActual.noIf + "_else";
+                    aumentarAmbito(nuevo_ambito);
+                    ejecutar(nodo.ChildNodes[3].ChildNodes[0], nuevo_ambito);
                     disminuirAmbito();
                 }
             }

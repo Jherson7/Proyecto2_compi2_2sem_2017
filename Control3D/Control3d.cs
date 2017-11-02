@@ -40,6 +40,16 @@ namespace Proyecto2_compi2_2sem_2017.Control3D
                 contador_temp = 0;
         }
 
+        public static void limpiar()
+        {
+            tabla.Clear();
+            //lista_clases.Clear();
+            //lista_metodos.Clear();
+            lista_errores.Clear();
+            c3d.Clear();
+            contador_eti = 0;
+            contador_temp = 0;
+        }
 
         public static void agregarError(errores err)
         {

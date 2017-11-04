@@ -17,6 +17,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         private StringBuilder c3d;
         private LinkedList<ambitos> lista_ambito;
         private ambitos lista_actual;
+        private string terminar_ejecucion;
         
         public generacion_3d_olc()
         {
@@ -25,10 +26,15 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             this.c3d = Control3d.retornarC3D();
             this.lista_ambito = new LinkedList<ambitos>();
             this.lista_ambito.AddFirst(new ambitos("Global"));
+            terminar_ejecucion = Control3d.getEti();
+
             //creo que debo aumentarle el ambito
+            traducirMain();
             traducirMetodos();
+
         }
 
+       
 
         private void aumentarAmbito(String ambito)
         {
@@ -56,6 +62,41 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             this.lista_c3d.RemoveFirst();
         }
 
+
+        private void traducirMain()
+        {
+            LinkedList<metodo> lista = Control3d.getListaMetodo();
+            if (lista != null)
+            {
+                foreach (metodo a in lista)
+                {
+                    if (a.nombre.Equals("PRINCIPAL"))
+                    {
+                        aumentarAmbito(a.nombre);
+                        aumentar_3d();
+                        escribir3d("void " + a.nombre + "(){", "Traduccion del metodo: principal");
+
+                        foreach (ParseTreeNode sent in a.sentencia.ChildNodes)
+                        {
+                            ejecutar(sent, a.nombre);
+                        }
+                        goto_etiqueta(terminar_ejecucion);
+                        escribir3d("}", "Fin de traduccion del metodo: principal");
+
+                        if (lista_c3d.First().estado)
+                        {
+                            string cont = lista_c3d.First().codigo.ToString();
+                            c3d.Append(cont + "\n");
+                        }
+                        //copiar el codigo
+                        disminuirAmbito();
+                        disminuir_3d();
+                        lista.Remove(a);//quito el principal para que ya no se imprima
+                        break;
+                    }
+                }
+            }
+        }
         private void traducirMetodos()
         {
             LinkedList<metodo> lista = Control3d.getListaMetodo();
@@ -83,6 +124,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                     disminuirAmbito();
                     disminuir_3d();
                 }
+                c3d.Append(terminar_ejecucion+":    //Etiqueta para terminar la ejecucion del programa");
             }
         }
 
@@ -130,11 +172,11 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
         private void ejecutarDECLARAR(ParseTreeNode nodo, String ambito)
         {
-            String nombre = nodo.ChildNodes[2].ChildNodes[0].Token.Text;
+            String nombre = nodo.ChildNodes[1].ChildNodes[0].Token.Text;
             String visibilidad = "publico";
-            if (nodo.ChildNodes[0].ChildNodes[0].Term.Name != null)
-                visibilidad = nodo.ChildNodes[0].ChildNodes[0].Term.Name;
-            string tipo = nodo.ChildNodes[1].ChildNodes[0].Term.Name;
+            /*if (nodo.ChildNodes[0].ChildNodes[0].Term.Name != null)
+                visibilidad = nodo.ChildNodes[0].ChildNodes[0].Term.Name;*/
+            string tipo = nodo.ChildNodes[0].ChildNodes[0].Term.Name;
             Variable nueva_variable = new Variable(nombre);
 
         }

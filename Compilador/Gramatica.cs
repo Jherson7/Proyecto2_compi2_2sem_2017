@@ -163,18 +163,17 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             this.Root = INICIO;
 
 
-            visibilidad.Rule = privado
-                            | publico
+            visibilidad.Rule = publico
                             | protegido
-                            | Empty;
+                            | privado;
 
             INICIO.Rule = BODYSENT;
 
             BODYSENT.Rule = MakeStarRule(BODYSENT, BODY);
 
             BODY.Rule =                                  
-                          PRINCIPAL
-                        | STRUCT //LA UTILIZO PARA DECLARAR LOS METODOS DE LA CLASE
+                          
+                          STRUCT //LA UTILIZO PARA DECLARAR LOS METODOS DE LA CLASE
                         | IMPORTAR
                         | LLAMAR
                        ;
@@ -190,6 +189,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             CLASE_SENT.Rule =  visibilidad + CONSTRUCTOR
                              | visibilidad + TIPO_M + id + SENTENCIA_HEAD
                              | OVERRIDE
+                             | PRINCIPAL
 
                          ;//VER QUE MAS ME PUEDE FALTAR
 
@@ -206,7 +206,9 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                          | PARAMETROS+  cpar +alla + SENTENCIAS + clla; 
 
             TIPO_M.Rule =  TIPO_V//PRODUCCION PARA DECLARAR EL TIPO DE LOS METODOS
-                         | vacio;
+                         | vacio
+                         ;
+
 
             OVERRIDE.Rule =  ToTerm("@sobrescribir") + visibilidad + TIPO_M + id+ apar + METODO;
 
@@ -216,12 +218,14 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             ;
 
 
-            DECLARAR.Rule = visibilidad + TIPO_V + LISTA_ID
+            DECLARAR.Rule =  TIPO_V + LISTA_ID
+                          ;
+
                             ;//PRODUCCION PARA DECLARAR
 
             LISTA_ID.Rule = MakeStarRule(LISTA_ID, ToTerm(","), id);// SE PUEDEN DECLARAR MAS DE UN ID
 
-            INSTANCIA.Rule =  visibilidad +id + id + asig + nuevo + id + AUXILIAR_INSTANCIA;
+            INSTANCIA.Rule =  id + id + asig + nuevo + id + AUXILIAR_INSTANCIA;
 
             AUXILIAR_INSTANCIA.Rule =  apar + cpar
                                      | apar + PARAMETROS2 + cpar;
@@ -230,7 +234,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
             ASIGNACION.Rule = id + ToTerm("=") + EXP;//PRODUCCION PARA LA ASIGNACION
 
-            DECLARAR_ASIG.Rule = visibilidad +TIPO_V + LISTA_ID + asig + EXP;//PRODUCCION PARA DECLARAR Y ASIGNAR
+            DECLARAR_ASIG.Rule = TIPO_V + LISTA_ID + asig + EXP;//PRODUCCION PARA DECLARAR Y ASIGNAR
 
             SENTENCIAS.Rule = MakeStarRule(SENTENCIAS, SENTENCIA);
 
@@ -254,7 +258,8 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                              | asigacion_objeto + ppt
                              | DECREMENTOS+ ppt
                              | ESTE
-                             //| LLAMAR
+                             | INSTANCIA
+                            //| LLAMAR
                             ;
 
             LLAMAR.Rule = llamar + apar + tstring + cpar + ppt;
@@ -351,6 +356,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                         | CALLFUN
                         | LLAVE
                         | ACCESO_ARRAY
+                        //aqui tambien puede ver este
                        ;
 
             CALLFUN.Rule = id + apar + cpar
@@ -385,7 +391,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
 
             this.MarkPunctuation("(", ")", ";", ":", "{", "}", "=",".",",","[","]", "@sobrescribir");
-            this.MarkPunctuation("repetir","until","imprimir");
+            this.MarkPunctuation("repetir","until","imprimir","principal","x");
             this.MarkPunctuation("Si", "Sino", "Sino Si", "Mientras", "Hacer","para","llamar","clase","hereda_de");
             //this.MarkPunctuation("whilex", "whilexorand", "repeat", "count", "loop","create","Principal");
             this.MarkTransient(SENTENCIA, CONDFOR, BODY,ARRAY,ACCESO,CASILLA);

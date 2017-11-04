@@ -74,7 +74,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             g.graficar(arbol);
             SentenciasGlobales(raiz);
             iniciar();
-            //mostrarTablaSimbolos();
+            mostrarTablaSimbolos();
             Control3d.setListaClases(lista_clases);//seteo las clases
             Control3d.setListaMetodos(metodos);//seteo los metodos para traducirlos
             generacion_3d_olc gen = new generacion_3d_olc();
@@ -243,6 +243,10 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 return;
             }
 
+            if (raiz.ChildNodes[0].Term.Name.Equals("MAIN")){
+                guardarMain(raiz.ChildNodes[0]);
+                return;
+            }
             if (raiz.ChildNodes[0].ChildNodes.Count > 0)
                 visibilidad = raiz.ChildNodes[0].ChildNodes[0].Token.Text;
             if (raiz.ChildNodes[1].Term.Name.Equals("CONSTRUCTOR"))
@@ -281,6 +285,13 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 Variable var = new Variable(visibilidad, tipo, nombre, null);
                 guardarVariable(var,raiz.Span.Location.Line,raiz.Span.Location.Column);
             }
+        }
+
+        private void guardarMain(ParseTreeNode raiz)
+        {
+            Console.WriteLine("J");
+            metodo nuevo = new metodo("publico", "vacio", "PRINCIPAL", raiz.ChildNodes[0], 0);
+            metodos.AddFirst(nuevo);
         }
 
         private void ejecutarOVERRIDE(ParseTreeNode raiz)
@@ -578,14 +589,8 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 case "DECLARAR":
                     ejecutarDECLARAR(nodo,ambito);
                     break;
-                case "DECLARAR_ASIGNAR":
-                    ejecutarDECLARAR_ASIGNAR(nodo);
-                    break;
-                case "ASIGNAR":
-                   // ejecutarASIGNAR(nodo);
-                    break;
-                case "IMPRIMIR":
-                   // ejecutarIMPRIMIR(nodo);
+                case "DECLARAR_ASIG":
+                    ejecutarDECLARAR_ASIGNAR(nodo,ambito);
                     break;
                 case "IF":
                     ejecutarIF1(nodo,ambito);
@@ -600,20 +605,34 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                     ejecutarREPEAT(nodo, ambito);
                     break;
                 case "FOR":
+                    ejecutarFOR(nodo, ambito);
+                    //guardar las variables del for
                     break;
                 case "WHILEX":
+                    ejecutarWHILEX(nodo, ambito);
+                    //guardar las variables del whilex
                     break;
                 default:
                     break;
             }
         }
+
+        private void ejecutarWHILEX(ParseTreeNode nodo, string ambito)
+        {
+            MessageBox.Show("Hay que revisar esto del whilex");
+            string nuevo_ambito = ambito + "_whilex" + listaActual.noX++;
+            aumentarAmbito(nuevo_ambito);
+            ejecutar(nodo.ChildNodes[2], nuevo_ambito);
+            disminuirAmbito();
+        }
+
         private void ejecutarDECLARAR(ParseTreeNode nodo,String ambito)
         {
-            String nombre = nodo.ChildNodes[2].ChildNodes[0].Token.Text;
-            String visibilidad = "publico";
-            if (nodo.ChildNodes[0].ChildNodes[0].Term.Name!=null)
-                visibilidad = nodo.ChildNodes[0].ChildNodes[0].Term.Name;
-            string tipo = nodo.ChildNodes[1].ChildNodes[0].Term.Name;
+            String nombre = nodo.ChildNodes[1].ChildNodes[0].Token.Text;
+            String visibilidad = "local";
+            /*if (nodo.ChildNodes[0].ChildNodes[0].Term.Name!=null)
+                visibilidad = nodo.ChildNodes[0].ChildNodes[0].Term.Name;*/
+            string tipo = nodo.ChildNodes[0].ChildNodes[0].Term.Name;
             Variable nueva_variable = new Variable(nombre);
             Boolean a = guardarVariable(nueva_variable,nodo.Span.Location.Line, nodo.Span.Location.Column);
             if (a)
@@ -626,40 +645,28 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 posicion.AddFirst(x);
             }
         }
-        private void ejecutarDECLARAR_ASIGNAR(ParseTreeNode nodo)
-        {
-            String nombre = nodo.ChildNodes[0].Token.Text;
-            Object valor = evaluarEXPRESION(nodo.ChildNodes[1]);
-           // Variable nueva_variable = new Variable(nombre, valor);
-           // guardarVariable(nueva_variable);
-        }
-        private void ejecutarASIGNAR(ParseTreeNode nodo)
-        {
-            String nombre = nodo.ChildNodes[0].Token.Text;
-            Variable variable = getVariable(nombre);
-            if(variable==null)
-            {
-                ejecutarIMPRIMIRERROR("Variable "+nombre+" no existe");
-                return;
-            }
-            //variable.valor = evaluarEXPRESION(nodo.ChildNodes[1]);
-        }
-        private Variable getVariable(string nombre)
-        {
-            //jajaja me hace falta esto
 
-            return null;
-        }
-        private void ejecutarIMPRIMIR(ParseTreeNode nodo)
+        private void ejecutarDECLARAR_ASIGNAR(ParseTreeNode nodo,string ambito)
         {
-            String sms = evaluarEXPRESION(nodo.ChildNodes[0]).ToString();
-            this.salida.Append(sms.ToString() + "\n");
+            String nombre = nodo.ChildNodes[1].ChildNodes[0].Token.Text;
+            string tipo = nodo.ChildNodes[0].ChildNodes[0].Term.Name;
+            Variable nueva_variable = new Variable(nombre);
+            Boolean a = guardarVariable(nueva_variable, nodo.Span.Location.Line, nodo.Span.Location.Column);
+            if (a)
+            {
+                nodoTabla nuevo = new nodoTabla("local", tipo, nombre, "var", posicion.First(), 1, ambito);
+                nuevo.setExp(nodo.ChildNodes[2]);
+                tabla.AddLast(nuevo);
+                int x = posicion.First();
+                x++;
+                posicion.RemoveFirst();
+                posicion.AddFirst(x);
+            }
+            // Variable nueva_variable = new Variable(nombre, valor);
+            // guardarVariable(nueva_variable);
         }
-        private void ejecutarIMPRIMIRERROR(String sms)
-        {
-            this.errores.Append(sms + "\n");
-        }
-         
+
+        
         #endregion
 
         /****************************************************************************************/
@@ -742,6 +749,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             }*/
 
         }
+
         private void ejecutarWHILE(ParseTreeNode nodo,string ambito)
         {
             string nuevo_ambito = ambito + "_while" + listaActual.noWhile++ ;
@@ -750,6 +758,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             disminuirAmbito();
             
         }
+
         private void ejecutarDO_WHILE(ParseTreeNode nodo,string ambito)
         {
 
@@ -758,6 +767,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             ejecutar(nodo.ChildNodes[0], nuevo_ambito);
             disminuirAmbito();
         }
+
         private void ejecutarREPEAT(ParseTreeNode nodo,string ambito)
         {
 
@@ -766,6 +776,16 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             ejecutar(nodo.ChildNodes[0], nuevo_ambito);
             disminuirAmbito();
         }
+
+
+        private void ejecutarFOR(ParseTreeNode nodo, string ambito)
+        {
+            string nuevo_ambito = ambito + "_for" + listaActual.noFor++;
+            aumentarAmbito(nuevo_ambito);
+            ejecutar(nodo.ChildNodes[3], nuevo_ambito);
+            disminuirAmbito();
+        }
+
 
         #endregion
 
@@ -840,295 +860,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
         /****************************************************************************************/
         /****************************************************************************************/
-
-        #region "Evaluar Expresion"
-
-        private Object evaluarEXPRESION(ParseTreeNode nodo)
-        {
-            //---------------------> Si tiene 3 hijos
-            #region "3 hijos"
-            if (nodo.ChildNodes.Count==3)
-            {
-                String operador = nodo.ChildNodes[1].Term.Name;
-                switch (operador)
-                {
-                    case "||":  return evaluarOR(nodo.ChildNodes[0], nodo.ChildNodes[2]);
-                    case "&&":  return evaluarAND(nodo.ChildNodes[0], nodo.ChildNodes[2]);
-                    case "==":  return evaluarIGUAL(nodo.ChildNodes[0], nodo.ChildNodes[2]);
-                    case "!=":  return evaluarDIFERENTE(nodo.ChildNodes[0], nodo.ChildNodes[2]);
-                    case ">=":  return evaluarMAYORIGUAL(nodo.ChildNodes[0], nodo.ChildNodes[2]);
-                    case ">":   return evaluarMAYOR(nodo.ChildNodes[0], nodo.ChildNodes[2]);
-                    case "<=":  return evaluarMENORIGUAL(nodo.ChildNodes[0], nodo.ChildNodes[2]);
-                    case "<":   return evaluarMENOR(nodo.ChildNodes[0], nodo.ChildNodes[2]);
-                    case "+":   return evaluarMAS(nodo.ChildNodes[0], nodo.ChildNodes[2]);
-                    case "-":   return evaluarMENOS(nodo.ChildNodes[0], nodo.ChildNodes[2]);
-                    case "*":   return evaluarPOR(nodo.ChildNodes[0], nodo.ChildNodes[2]);
-                    case "/":   return evaluarDIVIDIR(nodo.ChildNodes[0], nodo.ChildNodes[2]);
-                    default:    break;
-                }
-            }
-            #endregion
-
-            //---------------------> Si tiene 2 hijos
-            #region "2 hijos"
-            if (nodo.ChildNodes.Count==2)
-            {
-                if (nodo.ChildNodes[0].Term.Name.Equals("!"))
-                    return evaluarNOT(nodo.ChildNodes[1]);
-            }
-            #endregion
-
-            //---------------------> Si tiene 1 hijo
-            #region "1 hijo"
-            if (nodo.ChildNodes.Count==1)
-            {
-                
-                String termino = nodo.ChildNodes[0].Term.Name;
-                switch (termino)
-                {
-
-                    case "EXP":     return evaluarEXPRESION(nodo.ChildNodes[0]);
-                    case "id":      return evaluarID(nodo.ChildNodes[0]);
-                    case "numero":  return evaluarNUMERO(nodo.ChildNodes[0]);
-                    case "tstring": return nodo.ChildNodes[0].Token.Text.Replace("\"", "");
-                    case "tchar":   return nodo.ChildNodes[0].Token.Text.Replace("'", "");
-                    case "false":   return false;
-                    case "true":    return true;
-                    default:        break;
-                }
-            }
-            #endregion
-
-            //---------------------> Retorno por defecto
-            return 1;
-        }
-        private Object evaluarOR(ParseTreeNode izq, ParseTreeNode der)
-        {
-            try
-            {
-                Boolean val1, val2;
-                val1 = Convert.ToBoolean(evaluarEXPRESION(izq));
-                val2 = Convert.ToBoolean(evaluarEXPRESION(der));
-                return val1 || val2;
-            }
-            catch (Exception)
-            {
-                ejecutarIMPRIMIRERROR("|| solo recibe booleano como parametro");
-                return false;
-            }
-        }
-        private Object evaluarAND(ParseTreeNode izq, ParseTreeNode der)
-        {
-            try
-            {
-                Boolean val1, val2;
-                val1 = Convert.ToBoolean(evaluarEXPRESION(izq));
-                val2 = Convert.ToBoolean(evaluarEXPRESION(der));
-                return val1 && val2;
-            }
-            catch (Exception)
-            {
-                ejecutarIMPRIMIRERROR("&& solo recibe booleano como parametro");
-                return false;
-            }
-        }
-        private Object evaluarIGUAL(ParseTreeNode izq, ParseTreeNode der)
-        {
-            Object val1 = evaluarEXPRESION(izq);
-            Object val2 = evaluarEXPRESION(der);
-            return val1.Equals(val2);
-        }
-        private Object evaluarDIFERENTE(ParseTreeNode izq, ParseTreeNode der)
-        {
-            Object val1 = evaluarEXPRESION(izq);
-            Object val2 = evaluarEXPRESION(der);
-            return !val1.Equals(val2);
-        }
-        private Object evaluarMAYORIGUAL(ParseTreeNode izq, ParseTreeNode der)
-        {
-            Object val1 = evaluarEXPRESION(izq);
-            Object val2 = evaluarEXPRESION(der);
-            int tipo1 = tipoObjecto(val1);
-            int tipo2 = tipoObjecto(val2);
-
-            if(tipo1==1)
-            {
-                if (tipo2 == 1)
-                    return Convert.ToInt32(val1) >= Convert.ToInt32(val2);
-                else if (tipo2 == 2)
-                    return Convert.ToDouble(val1) >= Convert.ToDouble(val2); ;
-            }
-            else if(tipo1==2)
-            {
-                if (tipo2 == 1 || tipo2 == 2)
-                    return Convert.ToDouble(val1) >= Convert.ToDouble(val2);
-            }
-            ejecutarIMPRIMIRERROR(">= operadores no comparables: " + tipo1 + " >= " + tipo2);
-            return false;
-        }
-        private Object evaluarMAYOR(ParseTreeNode izq, ParseTreeNode der)
-        {
-            Object val1 = evaluarEXPRESION(izq);
-            Object val2 = evaluarEXPRESION(der);
-            int tipo1 = tipoObjecto(val1);
-            int tipo2 = tipoObjecto(val2);
-
-            if (tipo1 == 1)
-            {
-                if (tipo2 == 1)
-                    return Convert.ToInt32(val1) > Convert.ToInt32(val2);
-                else if (tipo2 == 2)
-                    return Convert.ToDouble(val1) > Convert.ToDouble(val2); ;
-            }
-            else if (tipo1 == 2)
-            {
-                if (tipo2 == 1 || tipo2 == 2)
-                    return Convert.ToDouble(val1) > Convert.ToDouble(val2);
-            }
-            ejecutarIMPRIMIRERROR("> operadores no comparables: " + tipo1 + " > " + tipo2);
-            return false;
-        }
-        private Object evaluarMENORIGUAL(ParseTreeNode izq, ParseTreeNode der)
-        {
-            Object val1 = evaluarEXPRESION(izq);
-            Object val2 = evaluarEXPRESION(der);
-            int tipo1 = tipoObjecto(val1);
-            int tipo2 = tipoObjecto(val2);
-
-            if (tipo1 == 1)
-            {
-                if (tipo2 == 1)
-                    return Convert.ToInt32(val1) <= Convert.ToInt32(val2);
-                else if (tipo2 == 2)
-                    return Convert.ToDouble(val1) <= Convert.ToDouble(val2); ;
-            }
-            else if (tipo1 == 2)
-            {
-                if (tipo2 == 1 || tipo2 == 2)
-                    return Convert.ToDouble(val1) <= Convert.ToDouble(val2);
-            }
-            ejecutarIMPRIMIRERROR("<= operadores no comparables: " + tipo1 + " <= " + tipo2);
-            return false;
-        }
-        private Object evaluarMENOR(ParseTreeNode izq, ParseTreeNode der)
-        {
-            Object val1 = evaluarEXPRESION(izq);
-            Object val2 = evaluarEXPRESION(der);
-            int tipo1 = tipoObjecto(val1);
-            int tipo2 = tipoObjecto(val2);
-
-            if (tipo1 == 1)
-            {
-                if (tipo2 == 1)
-                    return Convert.ToInt32(val1) < Convert.ToInt32(val2);
-                else if (tipo2 == 2)
-                    return Convert.ToDouble(val1) < Convert.ToDouble(val2); ;
-            }
-            else if (tipo1 == 2)
-            {
-                if (tipo2 == 1 || tipo2 == 2)
-                    return Convert.ToDouble(val1) < Convert.ToDouble(val2);
-            }
-            ejecutarIMPRIMIRERROR("< operadores no comparables: " + tipo1 + " < " + tipo2);
-            return false;
-        }
-        private Object evaluarMAS(ParseTreeNode izq, ParseTreeNode der)
-        {
-            Object val1 = evaluarEXPRESION(izq);
-            Object val2 = evaluarEXPRESION(der);
-            int tipo1 = tipoObjecto(val1);
-            int tipo2 = tipoObjecto(val2);
-
-            if (tipo1 == 2 || tipo2 == 2)
-                return Convert.ToDouble(val1) + Convert.ToDouble(val2);
-            else if (tipo1 == 1 && tipo2 == 1)
-                return Convert.ToInt32(val1) + Convert.ToInt32(val2);
-            else if (tipo1 == 3 || tipo2 == 3)
-                return val1.ToString() + val2.ToString();
-            else if(tipo1==4 && tipo2==4)
-                return val1.ToString() + val2.ToString();
-
-            ejecutarIMPRIMIRERROR("+ solo recibe valores numericos como parametros");
-            return 1;
-        }
-        private Object evaluarMENOS(ParseTreeNode izq, ParseTreeNode der)
-        {
-            Object val1 = evaluarEXPRESION(izq);
-            Object val2 = evaluarEXPRESION(der);
-            int tipo1 = tipoObjecto(val1);
-            int tipo2 = tipoObjecto(val2);
-
-            if (tipo1 == 2 || tipo2 == 2)
-                return Convert.ToDouble(val1) - Convert.ToDouble(val2);
-            else if (tipo1 == 1 && tipo2 == 1)
-                return Convert.ToInt32(val1) - Convert.ToInt32(val2);
-
-            ejecutarIMPRIMIRERROR("- solo recibe valores numericos como parametros");
-            return 1;
-        }
-        private Object evaluarPOR(ParseTreeNode izq, ParseTreeNode der)
-        {
-            Object val1 = evaluarEXPRESION(izq);
-            Object val2 = evaluarEXPRESION(der);
-            int tipo1 = tipoObjecto(val1);
-            int tipo2 = tipoObjecto(val2);
-
-            if (tipo1 == 2 || tipo2 == 2)
-                return Convert.ToDouble(val1) * Convert.ToDouble(val2);
-            else if (tipo1 == 1 && tipo2 == 1)
-                return Convert.ToInt32(val1) * Convert.ToInt32(val2);
-
-            ejecutarIMPRIMIRERROR("+ solo recibe valores numericos como parametros");
-            return 1;
-        }
-        private Object evaluarDIVIDIR(ParseTreeNode izq, ParseTreeNode der)
-        {
-            Object val1 = evaluarEXPRESION(izq);
-            Object val2 = evaluarEXPRESION(der);
-            int tipo1 = tipoObjecto(val1);
-            int tipo2 = tipoObjecto(val2);
-
-            if (tipo1 == 2 || tipo2 == 2)
-                return Convert.ToDouble(val1) / Convert.ToDouble(val2);
-            else if (tipo1 == 1 && tipo2 == 1)
-                return Convert.ToInt32(val1) / Convert.ToInt32(val2);
-
-            ejecutarIMPRIMIRERROR("+ solo recibe valores numericos como parametros");
-            return 1;
-        }
-        private Object evaluarNOT(ParseTreeNode der)
-        {
-            Boolean val;
-            if(Boolean.TryParse(evaluarEXPRESION(der).ToString(), out val))
-                return !val;
-
-            ejecutarIMPRIMIRERROR("! solo recibe booleano como parametro");
-            return false;
-        }
-        private Object evaluarID(ParseTreeNode nodo)
-        {
-            Variable vari = getVariable(nodo.Token.Text);
-            if (vari == null)
-            {
-                ejecutarIMPRIMIRERROR("Variable " + nodo.Token.Text + " no existe");
-                return 1;
-            }
-            if(vari.valor==null)
-            {
-                ejecutarIMPRIMIRERROR("Variable " + nodo.Token.Text + " no tiene valor");
-                return 1;
-            }
-            return vari.valor;
-        }
-        private Object evaluarNUMERO(ParseTreeNode nodo)
-        {
-            if (nodo.Token.Text.Contains("."))
-                return Convert.ToDouble(nodo.Token.Text);
-            else
-                return Convert.ToInt32(nodo.Token.Text);
-        }
-
-        #endregion
+        
 
         /****************************************************************************************/
         /****************************************************************************************/

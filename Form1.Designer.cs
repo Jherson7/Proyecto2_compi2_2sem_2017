@@ -40,10 +40,15 @@
             this.treeView1 = new System.Windows.Forms.TreeView();
             this.control_salida = new System.Windows.Forms.TabControl();
             this.tabPage3 = new System.Windows.Forms.TabPage();
+            this.richTextBox2 = new System.Windows.Forms.RichTextBox();
             this.tabPage4 = new System.Windows.Forms.TabPage();
+            this.richTextBox3 = new System.Windows.Forms.RichTextBox();
             this.tabPage2 = new System.Windows.Forms.TabPage();
+            this.richTextBox4 = new System.Windows.Forms.RichTextBox();
             this.tabPage5 = new System.Windows.Forms.TabPage();
+            this.richTextBox5 = new System.Windows.Forms.RichTextBox();
             this.tabPage6 = new System.Windows.Forms.TabPage();
+            this.richTextBox6 = new System.Windows.Forms.RichTextBox();
             this.label1 = new System.Windows.Forms.Label();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.richTextBox1 = new System.Windows.Forms.RichTextBox();
@@ -53,11 +58,7 @@
             this.btnAbrir = new System.Windows.Forms.Button();
             this.btnCrear_carpeta = new System.Windows.Forms.Button();
             this.btnCompilar = new System.Windows.Forms.Button();
-            this.richTextBox2 = new System.Windows.Forms.RichTextBox();
-            this.richTextBox3 = new System.Windows.Forms.RichTextBox();
-            this.richTextBox4 = new System.Windows.Forms.RichTextBox();
-            this.richTextBox5 = new System.Windows.Forms.RichTextBox();
-            this.richTextBox6 = new System.Windows.Forms.RichTextBox();
+            this.btnEjecutar3d = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             this.control_salida.SuspendLayout();
             this.tabPage3.SuspendLayout();
@@ -149,6 +150,14 @@
             this.tabPage3.Text = "Consola de Salida";
             this.tabPage3.UseVisualStyleBackColor = true;
             // 
+            // richTextBox2
+            // 
+            this.richTextBox2.Location = new System.Drawing.Point(0, 2);
+            this.richTextBox2.Name = "richTextBox2";
+            this.richTextBox2.Size = new System.Drawing.Size(793, 163);
+            this.richTextBox2.TabIndex = 0;
+            this.richTextBox2.Text = "";
+            // 
             // tabPage4
             // 
             this.tabPage4.Controls.Add(this.richTextBox3);
@@ -160,6 +169,14 @@
             this.tabPage4.Text = "Errores";
             this.tabPage4.UseVisualStyleBackColor = true;
             // 
+            // richTextBox3
+            // 
+            this.richTextBox3.Location = new System.Drawing.Point(2, 3);
+            this.richTextBox3.Name = "richTextBox3";
+            this.richTextBox3.Size = new System.Drawing.Size(793, 163);
+            this.richTextBox3.TabIndex = 1;
+            this.richTextBox3.Text = "";
+            // 
             // tabPage2
             // 
             this.tabPage2.Controls.Add(this.richTextBox4);
@@ -169,6 +186,14 @@
             this.tabPage2.TabIndex = 2;
             this.tabPage2.Text = "Salida Proceso Optimizacion";
             this.tabPage2.UseVisualStyleBackColor = true;
+            // 
+            // richTextBox4
+            // 
+            this.richTextBox4.Location = new System.Drawing.Point(2, 3);
+            this.richTextBox4.Name = "richTextBox4";
+            this.richTextBox4.Size = new System.Drawing.Size(793, 163);
+            this.richTextBox4.TabIndex = 1;
+            this.richTextBox4.Text = "";
             // 
             // tabPage5
             // 
@@ -180,6 +205,14 @@
             this.tabPage5.Text = "Codigo 3D";
             this.tabPage5.UseVisualStyleBackColor = true;
             // 
+            // richTextBox5
+            // 
+            this.richTextBox5.Location = new System.Drawing.Point(2, 3);
+            this.richTextBox5.Name = "richTextBox5";
+            this.richTextBox5.Size = new System.Drawing.Size(793, 163);
+            this.richTextBox5.TabIndex = 1;
+            this.richTextBox5.Text = "";
+            // 
             // tabPage6
             // 
             this.tabPage6.Controls.Add(this.richTextBox6);
@@ -189,6 +222,14 @@
             this.tabPage6.TabIndex = 4;
             this.tabPage6.Text = "Codigo 3D optimizado";
             this.tabPage6.UseVisualStyleBackColor = true;
+            // 
+            // richTextBox6
+            // 
+            this.richTextBox6.Location = new System.Drawing.Point(2, 3);
+            this.richTextBox6.Name = "richTextBox6";
+            this.richTextBox6.Size = new System.Drawing.Size(793, 163);
+            this.richTextBox6.TabIndex = 1;
+            this.richTextBox6.Text = "";
             // 
             // label1
             // 
@@ -274,51 +315,22 @@
             this.btnCompilar.UseVisualStyleBackColor = true;
             this.btnCompilar.Click += new System.EventHandler(this.btnCompilar_Click);
             // 
-            // richTextBox2
+            // btnEjecutar3d
             // 
-            this.richTextBox2.Location = new System.Drawing.Point(0, 2);
-            this.richTextBox2.Name = "richTextBox2";
-            this.richTextBox2.Size = new System.Drawing.Size(793, 163);
-            this.richTextBox2.TabIndex = 0;
-            this.richTextBox2.Text = "";
-            // 
-            // richTextBox3
-            // 
-            this.richTextBox3.Location = new System.Drawing.Point(2, 3);
-            this.richTextBox3.Name = "richTextBox3";
-            this.richTextBox3.Size = new System.Drawing.Size(793, 163);
-            this.richTextBox3.TabIndex = 1;
-            this.richTextBox3.Text = "";
-            // 
-            // richTextBox4
-            // 
-            this.richTextBox4.Location = new System.Drawing.Point(2, 3);
-            this.richTextBox4.Name = "richTextBox4";
-            this.richTextBox4.Size = new System.Drawing.Size(793, 163);
-            this.richTextBox4.TabIndex = 1;
-            this.richTextBox4.Text = "";
-            // 
-            // richTextBox5
-            // 
-            this.richTextBox5.Location = new System.Drawing.Point(2, 3);
-            this.richTextBox5.Name = "richTextBox5";
-            this.richTextBox5.Size = new System.Drawing.Size(793, 163);
-            this.richTextBox5.TabIndex = 1;
-            this.richTextBox5.Text = "";
-            // 
-            // richTextBox6
-            // 
-            this.richTextBox6.Location = new System.Drawing.Point(2, 3);
-            this.richTextBox6.Name = "richTextBox6";
-            this.richTextBox6.Size = new System.Drawing.Size(793, 163);
-            this.richTextBox6.TabIndex = 1;
-            this.richTextBox6.Text = "";
+            this.btnEjecutar3d.Location = new System.Drawing.Point(423, 27);
+            this.btnEjecutar3d.Name = "btnEjecutar3d";
+            this.btnEjecutar3d.Size = new System.Drawing.Size(75, 59);
+            this.btnEjecutar3d.TabIndex = 11;
+            this.btnEjecutar3d.Text = "ejecutar3d";
+            this.btnEjecutar3d.UseVisualStyleBackColor = true;
+            this.btnEjecutar3d.Click += new System.EventHandler(this.btnEjecutar3d_Click);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(831, 650);
+            this.Controls.Add(this.btnEjecutar3d);
             this.Controls.Add(this.btnCompilar);
             this.Controls.Add(this.btnCrear_carpeta);
             this.Controls.Add(this.btnAbrir);
@@ -378,6 +390,7 @@
         private System.Windows.Forms.RichTextBox richTextBox4;
         private System.Windows.Forms.RichTextBox richTextBox5;
         private System.Windows.Forms.RichTextBox richTextBox6;
+        private System.Windows.Forms.Button btnEjecutar3d;
     }
 }
 

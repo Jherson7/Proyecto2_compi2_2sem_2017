@@ -37,6 +37,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             lista_actual = nuevo;
 
         }
+
         private void disminuirAmbito()
         {
             //se manda a guardar la lista de variables
@@ -49,6 +50,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         {
             this.lista_c3d.AddFirst(new codigo_3d());
         }
+
         private void disminuir_3d()
         {
             this.lista_c3d.RemoveFirst();
@@ -63,7 +65,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 {
                     aumentarAmbito(a.nombre + "_" + a.noMetodo);
                     aumentar_3d();
-                    escribir3d("void " + a.nombre + "_" + a.noMetodo + "{", "Traduccion del metodo: " + a.noMetodo);
+                    escribir3d("void " + a.nombre + "_" + a.noMetodo + "(){", "Traduccion del metodo: " + a.noMetodo);
 
                     foreach (ParseTreeNode sent in a.sentencia.ChildNodes)
                     {
@@ -166,7 +168,22 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
         private void ejecutarIMPRIMIR(ParseTreeNode nodo)
         {
-            //String sms = evaluarEXPRESION(nodo.ChildNodes[0]).ToString();
+            nodo3d res= evaluarEXPRESION(nodo.ChildNodes[0]);
+            if (res.tipo > 1 && res.tipo_valor.Equals("cad"))
+            {
+                string continuar = Control3d.getEti();
+                string salida = Control3d.getEti();
+                string tmp = Control3d.getTemp();
+                escribirEtiqueta(continuar, "etiqueta para continuar imprimiendo");
+                obtener_de_heap(tmp, res.val);
+                escribir_condicion_sin_goto(tmp, "0", "==", salida);
+                escribir3d("\tprint(\"%c\"," + tmp+")", "Imprimimos caracter de la cadena");
+                escribir_operacion_asignacio(res.val, res.val, "+", "1");
+                goto_etiqueta(continuar);
+                escribirEtiqueta(salida, "Fin del ciclo imprimir");
+            }
+            else
+                Control3d.agregarError(new errores("semantico", nodo.Span.Location.Line, nodo.Span.Location.Column, "Error al tratar de imprimir, tipo: " + res.tipo));
             //this.salida.Append(sms.ToString() + "\n");
         }
 
@@ -283,14 +300,14 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             aumentar_3d();
             aumentarAmbito(nuevo_ambito);
 
-            escribir3d(continuar + ":", "etiqueta para continuar el while");
+            escribir3d(continuar + ":", "\tetiqueta para continuar el while");
 
             nodo3d val = castear_nodo3d(evaluarEXPRESION(nodo.ChildNodes[0]));
 
 
             escribir3d(val.etv + ":", "condicion verdadera de while");
             ejecutar(nodo.ChildNodes[1], nuevo_ambito);
-            escribir3d("goto " + continuar, "Para continuar el ciclo");
+            goto_etiqueta(continuar + "\t//Para continuar el ciclo");
             escribir3d(val.etf + ":", "condicion falsa de while");
 
             string cont = lista_c3d.First().codigo.ToString();
@@ -431,26 +448,26 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 String operador = nodo.ChildNodes[1].Term.Name;
                 switch (operador)
                 {
-                    case "||": return evaluarOR(nodo.ChildNodes[0], nodo.ChildNodes[2]);
-                    case "&&": return evaluarAND(nodo.ChildNodes[0], nodo.ChildNodes[2]);
-                    case "+": return evaluarMAS(nodo.ChildNodes[0], nodo.ChildNodes[2]);
-                    case "-": return evaluarMENOS(nodo.ChildNodes[0], nodo.ChildNodes[2]);
-                    case "*": return evaluarPOR(nodo.ChildNodes[0], nodo.ChildNodes[2]);
+                    case "||":  return evaluarOR(nodo.ChildNodes[0], nodo.ChildNodes[2]);
+                    case "&&":  return evaluarAND(nodo.ChildNodes[0], nodo.ChildNodes[2]);
+                    case "+":   return evaluarMAS(nodo.ChildNodes[0], nodo.ChildNodes[2]);
+                    case "-":   return evaluarMENOS(nodo.ChildNodes[0], nodo.ChildNodes[2]);
+                    case "*":   return evaluarPOR(nodo.ChildNodes[0], nodo.ChildNodes[2]);
+                    case "==":  return evaluarIGUAL(nodo.ChildNodes[0], nodo.ChildNodes[2]);
+                    case "!=":  return evaluarDIFERENTE(nodo.ChildNodes[0], nodo.ChildNodes[2]);
+                    case ">":   return evaluarMAYOR(nodo.ChildNodes[0], nodo.ChildNodes[2]);
+                    case ">=":  return evaluarMAYORIGUAL(nodo.ChildNodes[0], nodo.ChildNodes[2]);
+                    case "<=":  return evaluarMENORIGUAL(nodo.ChildNodes[0], nodo.ChildNodes[2]);
+                    case "<":   return evaluarMENOR(nodo.ChildNodes[0], nodo.ChildNodes[2]);
 
-                    case "==": return evaluarIGUAL(nodo.ChildNodes[0], nodo.ChildNodes[2]);
+                             //case "|&": return evaluarXOR(nodo.ChildNodes[0], nodo.ChildNodes[2]);
+                             /*  
+                               case "/": return evaluarDIV(nodo.ChildNodes[0], nodo.ChildNodes[2]);
+                               case "^": return evaluarPOT(nodo.ChildNodes[0], nodo.ChildNodes[2]);
+                               case "&?": return evaluarNAND(nodo.ChildNodes[0], nodo.ChildNodes[2]);
+                               case "|?": return evaluarNOR(nodo.ChildNodes[0], nodo.ChildNodes[2]);
 
-                        //case "|&": return evaluarXOR(nodo.ChildNodes[0], nodo.ChildNodes[2]);
-                        /*  
-                          case "/": return evaluarDIV(nodo.ChildNodes[0], nodo.ChildNodes[2]);
-                          case "^": return evaluarPOT(nodo.ChildNodes[0], nodo.ChildNodes[2]);
-                          case "&?": return evaluarNAND(nodo.ChildNodes[0], nodo.ChildNodes[2]);
-                          case "|?": return evaluarNOR(nodo.ChildNodes[0], nodo.ChildNodes[2]);
-                          case "!=": return evaluarDIFERENTE(nodo.ChildNodes[0], nodo.ChildNodes[2]);
-                          case ">": return evaluarMAYOR(nodo.ChildNodes[0], nodo.ChildNodes[2]);
-                          case ">=": return evaluarMAYORIGUAL(nodo.ChildNodes[0], nodo.ChildNodes[2]);
-                          case "<=": return evaluarMENORIGUAL(nodo.ChildNodes[0], nodo.ChildNodes[2]);
-                          case "<": return evaluarMENOR(nodo.ChildNodes[0], nodo.ChildNodes[2]);
-                          */
+                               */
                 }
             }
             #endregion
@@ -481,40 +498,46 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 switch (termino)
                 {
                     //           case "EXP": return evaluarEXPRESION(nodo.ChildNodes[0]);
-                    //           case "id": return evaluarID(nodo.ChildNodes[0]);
                     case "numero": return new nodo3d("num", nodo.ChildNodes[0].Token.Text);
                     case "tstring": return evaluarString(nodo.ChildNodes[0]);
                     case "id": return evaluarID(nodo.ChildNodes[0]);
                     case "false": return new nodo3d("bool","0");
                     case "true":  return new nodo3d("bool", "1");
+                    case "tchar": return evaluarChar(nodo.ChildNodes[0]);
                         //case "NULL": return new nodo3d("NULL", "-300992");
-                        //case "true": return evaluarTrue();//new nodo3d("bool", "true");//evaluar true
-                        //case "tchar": return evaluarString(nodo.ChildNodes[0]);//nodo.ChildNodes[0].Token.Text.Replace("'", "");
                         //case "ACCESO_ARRAY": return acceso_arreglo(nodo.ChildNodes[0]);                                                    /*     */
                         //case "CALLFUN": return ejecutarCallMet(nodo.ChildNodes[0], true);
                         //case "ACCESO_OBJ": return acceso_a_objectos(nodo.ChildNodes[0]);
                 }
             }
+            #endregion
             return new nodo3d();//error
         }
+        #endregion
 
+        #region TRADUCCION_CONDICIONALES
         private nodo3d evaluarIGUAL(ParseTreeNode uno, ParseTreeNode dos)
         {
             nodo3d val1 = evaluarEXPRESION(uno);
             nodo3d val2 = evaluarEXPRESION(dos);
 
-            if (val1.tipo == -1 || val2.tipo == -1)
-               return new nodo3d();
+            if (val1.tipo == -1 || val2.tipo == -1)//retonaron valor nulo
+                return new nodo3d();
+            if (val1.categoria > 4 && val2.categoria > 4)//valido que solo sean cad,char,num,bool
+                return new nodo3d();
             if (val1.tipo_valor.Equals("cad") || val2.tipo_valor.Equals("cad"))
-                return compararIgualCadena(val1, val2);
+                return comparar_condicionales_de_cadena(val1, val2, "==");
 
+            string etv = Control3d.getEti();
+            string etf = Control3d.getEti();
+            escribir_condicion(val1.val, val2.val, "==", etv, etf, "Comparacion de tipo " + val1.tipo_valor + ", y: " + val2.tipo_valor);
+            return new nodo3d(etv, etf, 1);
 
-            return new nodo3d();
         }
 
-        private nodo3d compararIgualCadena(nodo3d val1, nodo3d val2)
+        private nodo3d comparar_condicionales_de_cadena(nodo3d val1, nodo3d val2, string op)
         {
-            if(val1.tipo_valor.Equals("cad")|| val1.tipo_valor.Equals("char")&& val2.tipo_valor.Equals("cad") || val2.tipo_valor.Equals("char"))
+            if (val1.tipo_valor.Equals("cad") || val1.tipo_valor.Equals("char") && val2.tipo_valor.Equals("cad") || val2.tipo_valor.Equals("char"))
             {
                 if (val1.tipo_valor.Equals(val2.tipo_valor))//las dos son string
                 {
@@ -529,61 +552,196 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                     string salida1 = Control3d.getEti();
                     string salida2 = Control3d.getEti();
 
-                    escribir3d(total1 + " = 0", "Para llevar lo de la cadena1");
-                    escribir3d(total2 + " = 0", "Para llevar lo de la cadena2");
+                    escribir3d(total1 + " = 0", "\tPara llevar lo de la cadena1");
+                    escribir3d(total2 + " = 0", "\tPara llevar lo de la cadena2");
                     obtener_de_heap(ptr1, val1.val);
-                    escribir3d(ciclo1 + ":", "Ciclo para recorrer heap cadena1");
+                    escribir3d(ciclo1 + ":", "\tCiclo para recorrer heap cadena1");
                     escribir_condicion_sin_goto(ptr1, "0", "==", salida1);
                     escribir_operacion_asignacio(total1, total1, "+", ptr1);
                     escribir_operacion_asignacio(val1.val, val1.val, "+", "1");
                     obtener_de_heap(ptr1, val1.val);
                     goto_etiqueta(ciclo1);
-                    escribir3d(salida1 + ":", "Fin de recorrer la cadena1");
+                    escribir3d(salida1 + ":", "\tFin de recorrer la cadena1");
 
                     obtener_de_heap(ptr2, val2.val);
-                    escribir3d(ciclo2 + ":", "Ciclo para recorrer heap cadena2");
+                    escribir3d(ciclo2 + ":", "\tCiclo para recorrer heap cadena2");
                     escribir_condicion_sin_goto(ptr2, "0", "==", salida2);
                     escribir_operacion_asignacio(total2, total2, "+", ptr2);
                     escribir_operacion_asignacio(val2.val, val2.val, "+", "1");
                     obtener_de_heap(ptr2, val2.val);
                     goto_etiqueta(ciclo2);
-                    escribir3d(salida2 + ":", "Fin de recorrer la cadena2");
+                    escribir3d(salida2 + ":", "\tFin de recorrer la cadena2");
 
                     string etv = Control3d.getEti();
                     string etf = Control3d.getEti();
 
-                    escribir_condicion(total1, total2, "==", etv, etf, "Si las cadenas son iguales");
-                    return new nodo3d(etv, etf,1);
+                    escribir_condicion(total1, total2, op, etv, etf, "Si cad1 " + op + " cad2");
+                    return new nodo3d(etv, etf, 1);
                 }
-            }else
+            }
+            else
             {
                 //agregar error
             }
             return new nodo3d();
         }
-
-        private nodo3d evaluarID(ParseTreeNode nodo)
+        private nodo3d evaluarMENOR(ParseTreeNode uno, ParseTreeNode dos)
         {
-            string variable = nodo.Token.Text;
-            foreach (nodoTabla n in tabla)
-            {
-                if (n.ambito.Equals(lista_actual.nombre))
-                {
-                    if (n.rol.Equals("var") && n.nombre.Equals(variable))
-                    {
-                        if (n.getExpresion() != null)
-                        {
-                            string tmp = Control3d.getTemp();
-                            escribir_operacion_asignacio(tmp, "P", "+", n.pos.ToString());
-                            string tmp2 = Control3d.getTemp();
-                            obtener_desde_stak(tmp2, tmp);
-                            return new nodo3d(n.tipo, tmp2);
-                            //lo mas simple por el momento del ID
-                        }
-                    }
-                }
+            nodo3d val1 = evaluarEXPRESION(uno);
+            nodo3d val2 = evaluarEXPRESION(dos);
+
+            if (val1.tipo == -1 || val2.tipo == -1)//retonaron valor nulo
+                return new nodo3d();
+            if (val1.categoria > 4 && val2.categoria > 4)//valido que solo sean cad,char,num,bool
+                return new nodo3d();
+            if (val1.tipo_valor.Equals("cad") || val2.tipo_valor.Equals("cad"))
+                return comparar_condicionales_de_cadena(val1, val2, "<");
+
+            string etv = Control3d.getEti();//aun hay que probar esto
+            string etf = Control3d.getEti();
+            escribir_condicion(val1.val, val2.val, "<=", etv, etf, "Comparacion de tipo " + val1.tipo_valor + ", y: " + val2.tipo_valor);
+            return new nodo3d(etv, etf, 1);
+        }
+
+        private nodo3d evaluarMENORIGUAL(ParseTreeNode uno, ParseTreeNode dos)
+        {
+            nodo3d val1 = evaluarEXPRESION(uno);
+            nodo3d val2 = evaluarEXPRESION(dos);
+
+            if (val1.tipo == -1 || val2.tipo == -1)//retonaron valor nulo
+                return new nodo3d();
+            if (val1.categoria > 4 && val2.categoria > 4)//valido que solo sean cad,char,num,bool
+                return new nodo3d();
+            if (val1.tipo_valor.Equals("cad") || val2.tipo_valor.Equals("cad"))
+                return comparar_condicionales_de_cadena(val1, val2, "<=");
+
+            string etv = Control3d.getEti();//aun hay que probar esto
+            string etf = Control3d.getEti();
+            escribir_condicion(val1.val, val2.val, "<=", etv, etf, "Comparacion de tipo " + val1.tipo_valor + ", y: " + val2.tipo_valor);
+            return new nodo3d(etv, etf, 1);
+        }
+
+        private nodo3d evaluarMAYORIGUAL(ParseTreeNode uno, ParseTreeNode dos)
+        {
+            nodo3d val1 = evaluarEXPRESION(uno);
+            nodo3d val2 = evaluarEXPRESION(dos);
+
+            if (val1.tipo == -1 || val2.tipo == -1)//retonaron valor nulo
+                return new nodo3d();
+            if (val1.categoria > 4 && val2.categoria > 4)//valido que solo sean cad,char,num,bool
+                return new nodo3d();
+            if (val1.tipo_valor.Equals("cad") || val2.tipo_valor.Equals("cad"))
+                return comparar_condicionales_de_cadena(val1, val2, ">=");
+
+            string etv = Control3d.getEti();//aun hay que probar esto
+            string etf = Control3d.getEti();
+            escribir_condicion(val1.val, val2.val, ">=", etv, etf, "Comparacion de tipo " + val1.tipo_valor + ", y: " + val2.tipo_valor);
+            return new nodo3d(etv, etf, 1);
+        }
+
+        private nodo3d evaluarMAYOR(ParseTreeNode uno, ParseTreeNode dos)
+        {
+            nodo3d val1 = evaluarEXPRESION(uno);
+            nodo3d val2 = evaluarEXPRESION(dos);
+
+            if (val1.tipo == -1 || val2.tipo == -1)//retonaron valor nulo
+                return new nodo3d();
+            if (val1.categoria > 4 && val2.categoria > 4)//valido que solo sean cad,char,num,bool
+                return new nodo3d();
+            if (val1.tipo_valor.Equals("cad") || val2.tipo_valor.Equals("cad"))
+                return comparar_condicionales_de_cadena(val1, val2, ">");
+
+            string etv = Control3d.getEti();//aun hay que probar esto
+            string etf = Control3d.getEti();
+            escribir_condicion(val1.val, val2.val, ">", etv, etf, "Comparacion de tipo " + val1.tipo_valor + ", y: " + val2.tipo_valor);
+            return new nodo3d(etv, etf, 1);
+        }
+
+        private nodo3d evaluarDIFERENTE(ParseTreeNode uno, ParseTreeNode dos)
+        {
+            nodo3d val1 = evaluarEXPRESION(uno);
+            nodo3d val2 = evaluarEXPRESION(dos);
+
+            if (val1.tipo == -1 || val2.tipo == -1)//retonaron valor nulo
+                return new nodo3d();
+            if (val1.categoria > 4 && val2.categoria > 4)//valido que solo sean cad,char,num,bool
+                return new nodo3d();
+            if (val1.tipo_valor.Equals("cad") || val2.tipo_valor.Equals("cad"))
+                return comparar_condicionales_de_cadena(val1, val2, "!=");
+
+            string etv = Control3d.getEti();//aun hay que probar esto
+            string etf = Control3d.getEti();
+            escribir_condicion(val1.val, val2.val, "!=", etv, etf, "Comparacion de tipo " + val1.tipo_valor + ", y: " + val2.tipo_valor);
+            return new nodo3d(etv, etf, 1);
+        }
+
+        #endregion
+
+        #region TRADUCCION_ARITMETICO
+        private nodo3d retornarMasCadenas(nodo3d val1, nodo3d val2)
+        {
+            //en el caso de que los dos sean cadena
+            string retorno = Control3d.getTemp();
+            escribir_operacion_asignacio(retorno, "H", "+", "0");
+
+            string tmp1 = Control3d.getTemp();
+
+
+            if (val1.tipo_valor.Equals("num")) {
+                val1 = convertir_int_en_strig(val2.val);
             }
-            return new nodo3d();
+               
+
+            if (val1.tipo_valor.Equals("cad"))
+            {
+                string l1 = Control3d.getEti();
+                string salida1 = Control3d.getEti();
+                obtener_de_heap(tmp1, val1.val);
+                escribir3d(l1 + ":", "ciclo para copiar la primera cadena");
+                escribir_condicion_sin_goto(tmp1, "0", "==", salida1);
+                asignar_heap("H", tmp1);
+                aumentar_heap();
+                escribir_operacion_asignacio(val1.val, val1.val, "+", "1");
+                obtener_de_heap(tmp1, val1.val);
+                goto_etiqueta(l1);
+                escribir3d(salida1 + ":", "Salida de copiar el primer string");
+
+            }
+            else
+            {
+                //ver si es char, booelano, decimal o entero
+                asignar_heap("H", "-201346094");
+                aumentar_heap();
+                asignar_heap("h", val1.val);
+                aumentar_heap();
+            }
+
+            if (val2.tipo_valor.Equals("num"))
+            {
+                val2 = convertir_int_en_strig(val2.val);
+            }
+
+            if (val2.tipo_valor.Equals("cad"))
+            {
+                string tmp2 = Control3d.getTemp();
+                string salida2 = Control3d.getEti();
+                string l2 = Control3d.getEti();
+                obtener_de_heap(tmp2, val2.val);
+                escribir3d(l2 + ":", "ciclo para copiar la segunda cadena");
+                escribir_condicion_sin_goto(tmp2, "0", "==", salida2);
+                asignar_heap("H", tmp2);
+                aumentar_heap();
+                escribir_operacion_asignacio(val2.val, val2.val, "+", "1");
+                obtener_de_heap(tmp2, val2.val);
+                goto_etiqueta(l2);
+                escribir3d(salida2 + ":", "Salida de copiar el segundo string");
+            }
+            
+
+            asignar_heap("H", "0");
+            aumentar_heap();
+
+            return new nodo3d("cad", retorno);
         }
 
         private nodo3d evaluarPOR(ParseTreeNode uno, ParseTreeNode dos)
@@ -633,12 +791,74 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             return new nodo3d();
         }
 
+        private nodo3d evaluarMAS(ParseTreeNode uno, ParseTreeNode dos)
+        {
+            nodo3d val1 = evaluarEXPRESION(uno);
+            nodo3d val2 = evaluarEXPRESION(dos);
+
+            if (val1.tipo <= 1 || val2.tipo <= 1)
+                return new nodo3d();
+
+            if (val1.tipo_valor.Equals("cad") || val2.tipo_valor.Equals("cad"))
+                return retornarMasCadenas(val1, val2);
+            else
+            {
+                string tmp = Control3d.getTemp();
+
+                if (val1.tipo_valor.Equals("num") || val2.tipo_valor.Equals("num"))
+                {
+                    escribir_operacion_asignacio(tmp, val1.val, "+", val2.val);
+                    return new nodo3d("num", tmp);
+                }
+                else if (val1.tipo_valor.Equals("bool") || val2.tipo_valor.Equals("bool"))
+                {
+                    escribir_operacion_asignacio(tmp, val1.val, "+", val2.val);//aqui tengo que hacer una OR
+                    return new nodo3d("bool", tmp);
+                }
+            }
+
+            return new nodo3d();
+        }
+
+        #endregion
+
+        private nodo3d evaluarChar(ParseTreeNode nodo)
+        {
+            string cad =nodo.ChildNodes[0].Token.Text.Replace("'", "");
+            int val = (int)cad.ElementAt(0);
+            return new nodo3d("char", val.ToString());
+        }
+
+        private nodo3d evaluarID(ParseTreeNode nodo)
+        {
+            string variable = nodo.Token.Text;
+            foreach (nodoTabla n in tabla)
+            {
+                if (n.ambito.Equals(lista_actual.nombre))
+                {
+                    if (n.rol.Equals("var") && n.nombre.Equals(variable))
+                    {
+                        if (n.getExpresion() != null)
+                        {
+                            string tmp = Control3d.getTemp();
+                            escribir_operacion_asignacio(tmp, "P", "+", n.pos.ToString());
+                            string tmp2 = Control3d.getTemp();
+                            obtener_desde_stak(tmp2, tmp);
+                            return new nodo3d(n.tipo, tmp2);
+                            //lo mas simple por el momento del ID
+                        }
+                    }
+                }
+            }
+            return new nodo3d();
+        }
+
         private nodo3d evaluarString(ParseTreeNode nodo)
         {
             string tmp = Control3d.getTemp();
             escribir_operacion_asignacio(tmp, "H", "+", "0");
 
-            string cadena = nodo.Token.Text;
+            string cadena = nodo.Token.Text.Replace("\"","");
             foreach(char a in cadena)
             {
                 double x = (Double)(int)a;
@@ -649,94 +869,6 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             aumentar_heap();
 
             return new nodo3d("cad",tmp);
-        }
-
-        private nodo3d evaluarMAS(ParseTreeNode uno, ParseTreeNode dos)
-        {
-            nodo3d val1 = evaluarEXPRESION(uno);
-            nodo3d val2 = evaluarEXPRESION(dos);
-
-            if (val1.tipo <= 1 || val2.tipo <= 1)
-                return new nodo3d();
-
-            if(val1.tipo_valor.Equals("cad")|| val2.tipo_valor.Equals("cad"))
-                return retornarMasCadenas(val1, val2);
-            else
-            {
-                string tmp = Control3d.getTemp();
-
-                if (val1.tipo_valor.Equals("num")|| val2.tipo_valor.Equals("num"))
-                {
-                    escribir_operacion_asignacio(tmp, val1.val,"+", val2.val);
-                    return new nodo3d("num", tmp);
-                }else if (val1.tipo_valor.Equals("bool") || val2.tipo_valor.Equals("bool"))
-                    {
-                        escribir_operacion_asignacio(tmp, val1.val, "+", val2.val);//aqui tengo que hacer una OR
-                        return new nodo3d("bool", tmp);
-                    }
-            }
-
-            return new nodo3d();
-        }
-
-        private nodo3d retornarMasCadenas(nodo3d val1, nodo3d val2)
-        {
-            //en el caso de que los dos sean cadena
-            string retorno = Control3d.getTemp();
-            escribir_operacion_asignacio(retorno, "H","+" , "0");
-
-            string tmp1 = Control3d.getTemp();
-
-            if (val1.tipo_valor.Equals("cad"))
-            {
-                string l1 = Control3d.getEti();
-                string salida1 = Control3d.getEti();
-                obtener_de_heap(tmp1, val1.val);
-                escribir3d(l1 + ":", "ciclo para copiar la primera cadena");
-                escribir_condicion_sin_goto(tmp1, "0", "==", salida1);
-                asignar_heap("H", tmp1);
-                aumentar_heap();
-                escribir_operacion_asignacio(val1.val, val1.val, "+", "1");
-                obtener_de_heap(tmp1, val1.val);
-                goto_etiqueta(l1);
-                escribir3d(salida1 + ":", "Salida de copiar el primer string");
-
-            }else
-            {
-                //ver si es char, booelano, decimal o entero
-                asignar_heap("H", "-201346094");
-                aumentar_heap();
-                asignar_heap("h", val1.val);
-                aumentar_heap();
-            }
-
-            if (val2.tipo_valor.Equals("cad"))
-            {
-                string tmp2 = Control3d.getTemp();
-                string salida2 = Control3d.getEti();
-                string l2 = Control3d.getEti();
-                obtener_de_heap(tmp2, val2.val);
-                escribir3d(l2 + ":", "ciclo para copiar la segunda cadena");
-                escribir_condicion_sin_goto(tmp2, "0", "==", salida2);
-                asignar_heap("H", tmp2);
-                aumentar_heap();
-                escribir_operacion_asignacio(val2.val, val2.val, "+", "1");
-                obtener_de_heap(tmp2, val2.val);
-                goto_etiqueta(l2);
-                escribir3d(salida2 + ":", "Salida de copiar el segundo string");
-            }else
-            {
-                asignar_heap("H", "-201346094");
-                aumentar_heap();
-                asignar_heap("h", val2.val);
-                aumentar_heap();
-            }
-            
-
-            asignar_heap("H", "0");
-            aumentar_heap();
-
-            return new nodo3d("cad",retorno);
         }
 
         private nodo3d evaluarAND(ParseTreeNode uno, ParseTreeNode dos)
@@ -787,61 +919,167 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             return new nodo3d(val1.etv+":\n"+val2.etv,val2.etf,1);
         }
 
-        #endregion
 
-        #endregion
+        private nodo3d convertir_int_en_strig(string numero)
+        {
+            String cadena = "";
 
+            String t0 = Control3d.getTemp();
+            String t1 = Control3d.getTemp();
+            String t2 = Control3d.getTemp();
+            String t3 = Control3d.getTemp();
+            String t4 = Control3d.getTemp();
+            String t5 = Control3d.getTemp();
+            String t6 = Control3d.getTemp();
+            String t7 = Control3d.getTemp();
+
+            String e1 = Control3d.getEti();
+            String e2 = Control3d.getEti();
+            String e3 = Control3d.getEti();
+            String e4 = Control3d.getEti();
+            String e5 = Control3d.getEti();
+            String e6 = Control3d.getEti();
+            String e7 = Control3d.getEti();
+            String e8 = Control3d.getEti();
+            String e9 = Control3d.getEti();
+            String e10 = Control3d.getEti();
+            String e11 = Control3d.getEti();
+            String e12 = Control3d.getEti();
+
+            //codigo 3d
+            cadena += "\t\t" + t0 + " = " + numero + "//Convirtiendo entero a cadena\n"; // temporal que guarda el numero a convertir en cadena
+            cadena += "\t\t" + t1 + " = " + "1\n"; //temporal que guardara si es negativo o positivo
+            cadena += "\t\t" + "if " + t0 + " >= 0 goto " + e1 + "\n"; // si es negativo guardamos el -1
+            cadena += "\t\t" + t1 + " = -1\n";
+            cadena += "\t\t" + t0 + " = " + t0 + " * -1\n";
+            cadena += "\t" + e1 + ":\n";
+            cadena += "\t\t" + t2 + " = 1\n"; // temporal con el que sabremos el tamaño del numero  
+            cadena += "\t" + e3 + ":\n";
+            cadena += "\t\t" + t3 + " = 1\n"; // temporal que llevara el contador de 9
+            cadena += "\t" + e4 + ":\n";
+            cadena += "\t\t" + t4 + " = " + t2 + " * " + t3 + "\n";
+            cadena += "\t\t" + "if " + t3 + " > 10 goto " + e5 + "\n";
+            cadena += "\t\t" + "if " + t0 + " < " + t4 + " goto " + e2 + "\n";
+            cadena += "\t\t" + t3 + " = " + t3 + " + 1\n";
+            cadena += "\t\t" + "goto " + e4 + "\n";
+            cadena += "\t" + e5 + ":\n";
+            cadena += "\t\t" + t2 + " = " + t2 + " * 10\n";
+            cadena += "\t\t" + "goto " + e3 + "\n";
+            ////////////////////////////////////////////////////////////////
+            cadena += "\t" + e2 + "://comenzamos a guardar el numero en el heap\n";
+            cadena += "\t\t" + t5 + " = H\n"; // temporal que guardara la posicion del heap donde creamos el numero
+            cadena += "\t\t" + "if " + t1 + " == 1 goto " + e6 + "\n";
+            cadena += "\t\t" + "Heap[H] = 45\n";
+            cadena += "\t\t" + "H = H + 1\n";
+            cadena += "\t" + e6 + ":\n";
+            cadena += "\t\t" + t3 + " = " + t3 + " - 1\n";
+            cadena += "\t\t" + t6 + " = 0\n";
+            cadena += "\t\t" + t7 + "= 48\n";
+            cadena += "\t" + e7 + ":\n";
+            cadena += "\t\t" + "if " + t6 + " == " + t3 + " goto " + e8 + "\n";
+            cadena += "\t\t" + t6 + " = " + t6 + " + 1\n";
+            cadena += "\t\t" + t7 + " = " + t7 + " + 1\n";
+            cadena += "\t\t" + "goto " + e7 + "\n";
+
+            cadena += "\t" + e8 + ":\n";//aqui guarda ascii
+            cadena += "\t\t" + "Heap[H] = " + t7 + "\n";
+            cadena += "\t\t" + "H = H + 1\n";
+
+
+            cadena += "\t\t" + "if " + t2 + " == 1 goto " + e9 + "\n";
+            cadena += "\t\t" + t4 + " = " + t2 + " * " + t3 + "\n";
+            cadena += "\t\t" + t0 + " = " + t0 + " - " + t4 + "\n";
+            cadena += "\t\t" + t2 + " = " + t2 + " / 10\n";
+
+            cadena += "\t" + e10 + ":\n";
+            cadena += "\t\t" + t3 + " = 1\n"; // temporal que llevara el contador de 9
+            cadena += "\t" + e11 + ":\n";
+            cadena += "\t\t" + t4 + " = " + t2 + " * " + t3 + "\n";
+            cadena += "\t\t" + "if " + t3 + " > 10 goto " + e12 + "\n";
+            cadena += "\t\t" + "if " + t0 + " < " + t4 + " goto " + e6 + "\n";
+            cadena += "\t\t" + t3 + " = " + t3 + " + 1\n";
+            cadena += "\t\t" + "goto " + e11 + "\n";
+            cadena += "\t" + e12 + ":\n";
+            cadena += "\t\t" + t2 + " = " + t2 + " * 10\n";
+            cadena += "\t\t" + "goto " + e10 + "\n";
+
+            cadena += "\t" + e9 + ":\n";
+            cadena += "\t\t" + "Heap[H] = 0\n";
+            cadena += "\t\t" + "H = H + 1\n";
+
+            // codigo3d.Codigo = cadena
+            //codigo3d.Tipo = Constante.TCadena
+            //codigo3d.Valor = t5
+            escribir3d("", " comienza traduccion del numero entero");
+            escribir3d(cadena, "");
+            escribir3d("", "fin de la traduccion de num_to_int");
+            return new nodo3d("cad", t5);
+        }
+
+        #region ESCRIBIR EN 3D
+
+        public void escribirEtiqueta(string eti,object com)
+        {
+            string comentario = "";
+            if (com.GetType().ToString().Equals("string"))
+            {
+                comentario = "\t//"+com.ToString();
+            }
+            this.lista_c3d.First().codigo.Append(eti + ":" + comentario + "\n");
+        }
 
         public void escribir3d(string cont, string comentario)
         {
             this.lista_c3d.First().codigo.Append(cont + " //" + comentario + "\n");
         }
 
-        public void escribir_condicion(string uno, string dos,string op,string etv,string etf,string comentario)
+        public void escribir_condicion(string uno, string dos, string op, string etv, string etf, string comentario)
         {
-            string cond = "if " + uno + " " + op + " " + dos + " goto " + etv + " //" + comentario + "\n";
-            string cond2 = "goto " + etf+"\n";
+            string cond = "\tif " + uno + " " + op + " " + dos + " goto " + etv + " //" + comentario + "\n";
+            string cond2 = "\tgoto " + etf + "\n";
             this.lista_c3d.First().codigo.Append(cond);
             this.lista_c3d.First().codigo.Append(cond2);
         }
 
         public void escribir_condicion_sin_goto(string uno, string dos, string op, string etv)
         {
-            string cond = "if " + uno + " " + op + " " + dos + " goto " + etv + "\n";
+            string cond = "\tif " + uno + " " + op + " " + dos + " goto " + etv + "\n";
             this.lista_c3d.First().codigo.Append(cond);
         }
 
-        public void escribir_operacion_asignacio(string destino, string uno, string op,string dos)
+        public void escribir_operacion_asignacio(string destino, string uno, string op, string dos)
         {
             string cont = destino + " = " + uno + " " + op + " " + dos;
-            this.lista_c3d.First().codigo.Append(cont + "\n");
+            this.lista_c3d.First().codigo.Append("\t" + cont + "\n");
         }
 
         public void aumentar_heap()
         {
-            this.lista_c3d.First().codigo.Append("H = H + 1\n");
+            this.lista_c3d.First().codigo.Append("\tH = H + 1\n");
         }
 
         public void asignar_heap(string pos, string val)
         {
-            this.lista_c3d.First().codigo.Append("HEAP[ "+pos+" ] = "+val+"\n");
+            this.lista_c3d.First().codigo.Append("\tHEAP[ " + pos + " ] = " + val + "\n");
         }
 
-        public void obtener_de_heap(string tmp,string pos)
+        public void obtener_de_heap(string tmp, string pos)
         {
-            this.lista_c3d.First().codigo.Append(tmp+ " = "+ "HEAP[ "+ pos+ " ]\n");
+            this.lista_c3d.First().codigo.Append("\t" + tmp + " = " + "HEAP[ " + pos + " ]\n");
         }
 
         public void obtener_desde_stak(string tmp, string pos)
         {
-            this.lista_c3d.First().codigo.Append(tmp + " = " + "stack[ " + pos + " ]\n");
+            this.lista_c3d.First().codigo.Append("\t" + tmp + " = " + "stack[ " + pos + " ]\n");
         }
-
 
         public void goto_etiqueta(string etiq)
         {
-            this.lista_c3d.First().codigo.Append("goto "+etiq+" \n");
+            this.lista_c3d.First().codigo.Append("\tgoto " + etiq + " \n");
         }
+        #endregion
+
+
     }
 }
 

@@ -385,11 +385,12 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
 
             this.MarkPunctuation("(", ")", ";", ":", "{", "}", "=",".",",","[","]", "@sobrescribir");
-            this.MarkPunctuation("repetir","until");
+            this.MarkPunctuation("repetir","until","imprimir");
             this.MarkPunctuation("Si", "Sino", "Sino Si", "Mientras", "Hacer","para","llamar","clase","hereda_de");
             //this.MarkPunctuation("whilex", "whilexorand", "repeat", "count", "loop","create","Principal");
             this.MarkTransient(SENTENCIA, CONDFOR, BODY,ARRAY,ACCESO,CASILLA);
 
         }
+
     }
 }

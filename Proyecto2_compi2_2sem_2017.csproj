@@ -65,6 +65,8 @@
     <Compile Include="Editor\pagina.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Ejecucion3D\Gramatica3d.cs" />
+    <Compile Include="Ejecucion3D\Interprete3d.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>

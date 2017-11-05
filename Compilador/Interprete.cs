@@ -28,6 +28,8 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         private tablaSimbolos tabla;
         private LinkedList<int> posicion;
         public Dictionary<string,objeto_clase> lista_clases;
+        private objeto_clase clase_actual;
+
         #endregion
 
         /****************************************************************************************/
@@ -74,12 +76,15 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             g.graficar(arbol);
             SentenciasGlobales(raiz);
             iniciar();
+            traducir_clases();
             mostrarTablaSimbolos();
             Control3d.setListaClases(lista_clases);//seteo las clases
             Control3d.setListaMetodos(metodos);//seteo los metodos para traducirlos
             generacion_3d_olc gen = new generacion_3d_olc();
             //ejecutar(raiz);
         }
+
+       
 
         #endregion
 
@@ -179,6 +184,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 objeto_clase nuevo = new objeto_clase(nombre);
                 lista_clases.Add(nombre,nuevo);
                 metodos = nuevo.metodos;
+                clase_actual = nuevo;//guarda la ultima clase que se tradujo// tendria que ser la que se se esta ejecutando
                 listaActual = nuevo.variables;
                 constructores = nuevo.constructores;
                 //y tambien el constructor;
@@ -266,14 +272,11 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             if (raiz.ChildNodes[3].ChildNodes.Count > 0)
             {
                 ParseTreeNode aux = raiz.ChildNodes[3].ChildNodes[0];
-                if (aux.Term.Name.Equals("METODO"))
-                {
+                if (aux.Term.Name.Equals("METODO")){
                     guardar_metodo(tipo, nombre, visibilidad, aux);
-                }else if (aux.Term.Name.Equals("L_ARRAY"))
-                {
+                }else if (aux.Term.Name.Equals("L_ARRAY")){
                     guardarArreglo(visibilidad, tipo, nombre, raiz.ChildNodes[3]);
-                }else if (aux.Term.Name.Equals("new"))
-                {
+                }else if (aux.Term.Name.Equals("new")){
                     guardarInstancia(visibilidad, tipo, nombre, raiz.ChildNodes[3]);
                 }
                 else//seria una declaracion asignacion
@@ -528,17 +531,29 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             //vamos a guardar los metodos
             foreach(metodo a in metodos)
             {
-                nodoTabla nuevo = new nodoTabla(a.visibilidad, a.tipo, a.nombre, "METODO", -1, 0, "Global");
+                string met = "METODO";
+                if (a.tipo != "vacio")
+                    met = "FUNCION";
+                nodoTabla nuevo = new nodoTabla(a.visibilidad, a.tipo, a.nombre, met, -1, 0, "Global");
                 tabla.AddLast(nuevo);
                 int posActual = tabla.Count - 1;
 
                 nuevo.setNoMetodo(a.noMetodo);
                 aumentarAmbito(a.nombre);//ver si ocupo concatenarle el _noMetodo
                 posicion.AddFirst(0);
-                if(a.nombre.ToUpper().Equals("PRINCIPAL"))
+                if (a.nombre.ToUpper().Equals("PRINCIPAL"))
                     ejecutar(a.sentencia, a.nombre);//ejecutamos las sentencias
                 else
+                {
+                    if (a.tipo != "vacio")
+                    {
+                        tabla.AddLast(new nodoTabla("privado", a.tipo, "retorno", "returno", 0, 1, a.nombre + "_" + a.noMetodo));
+                        posicion.RemoveFirst();
+                        posicion.AddFirst(1);
+                    }
                     ejecutar(a.sentencia, a.nombre + "_" + a.noMetodo);//ejecutamos las sentencias
+                }
+                    
                 posicion.RemoveFirst();
                 //recorrer para guardar guardar el tamanio
 
@@ -547,6 +562,68 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                     tam += tabla.ElementAt(posActual).tam;
                 nuevo.tam = tam;
                 disminuirAmbito();
+            }
+        }
+
+        private void traducir_clases()
+        {
+            foreach (KeyValuePair<string, objeto_clase> Par in lista_clases)
+            {
+                //CertBuilder.AppendLine(string.Format("{0}:{1}", Par.Key, Par.Value));
+                if (Par.Value == clase_actual)
+                    continue;
+                string clase = Par.Key;
+                objeto_clase aux = Par.Value;
+
+                nodoTabla nuevo = new nodoTabla(aux.visibilidad, "CLASE", aux.nombre, "CLASE", -1, 0, "Global");
+                tabla.AddLast(nuevo);
+                
+               
+
+                //variable
+                int pos=0;
+                foreach (Variable a in aux.variables)
+                {
+                    int tama = 1;
+                    if (a.casilla != null)
+                    {
+                        foreach (int x in a.casilla)
+                            tama *= x;
+                        nodoTabla variable = new nodoTabla(a.visibilidad, a.tipo, a.nombre, "var_array", pos++, tama, aux.nombre, a.casilla, a.valor);
+                        tabla.AddLast(variable);
+                        //tabla.posGlobal += tam;//me falta cuando sea
+                    }
+                    else
+                    {
+                        nodoTabla variable = new nodoTabla(a.visibilidad, a.tipo, a.nombre, "var", pos++, 1, aux.nombre + "_Global");
+                        tabla.AddLast(variable);
+                        //tabla.posGlobal++;//me falta cuando sea
+                    }
+
+                }
+
+                foreach (metodo a in aux.metodos)
+                {
+                    nuevo = new nodoTabla(a.visibilidad, a.tipo, a.nombre, "METODO", -1, 0, aux.nombre+"_Global");
+                    tabla.AddLast(nuevo);
+                    int posActual = tabla.Count - 1;
+
+                    nuevo.setNoMetodo(a.noMetodo);
+                    aumentarAmbito(aux.nombre+"_"+a.nombre);//ver si ocupo concatenarle el _noMetodo
+                    posicion.AddFirst(0);
+                    if (!a.nombre.ToUpper().Equals("PRINCIPAL"))
+                        ejecutar(a.sentencia, aux.nombre + "_" + a.nombre + "_" + a.noMetodo);//ejecutamos las sentencias
+                        
+                    posicion.RemoveFirst();
+                    //recorrer para guardar guardar el tamanio
+
+                    int tam = 0;
+                    for (; posActual < tabla.Count; posActual++)
+                        tam += tabla.ElementAt(posActual).tam;
+                    nuevo.tam = tam;
+                    disminuirAmbito();
+                }
+
             }
         }
 
@@ -823,7 +900,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 pagina += "<tr>";
                 pagina += "<td>" + counter + "</td>";
                 pagina += "<td>" + item.ambito + "</td>";
-                if (item.rol.Equals("METODO"))
+                if (item.rol.Equals("METODO")|| item.rol.Equals("FUNCION"))
                     pagina += "<td>" + item.nombre+"_"+item.noMetodo + "</td>";
                 else
                     pagina += "<td>" + item.nombre + "</td>";

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Proyecto2_compi2_2sem_2017.TablaSimbolos;
 using Proyecto2_compi2_2sem_2017.Control3D;
 using Irony.Parsing;
+using System.Windows.Forms;
 
 namespace Proyecto2_compi2_2sem_2017.Compilador
 {
@@ -18,24 +19,29 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         private LinkedList<ambitos> lista_ambito;
         private ambitos lista_actual;
         private string terminar_ejecucion;
-        
+        private Dictionary<string, objeto_clase> lista_clases;
+        private LinkedList<metodo> lista_metodos;
+        private LinkedList<int> tamanio_ambitos;
+
+
         public generacion_3d_olc()
         {
             this.tabla = Control3d.getTabla();
             this.lista_c3d = new LinkedList<codigo_3d>();
             this.c3d = Control3d.retornarC3D();
             this.lista_ambito = new LinkedList<ambitos>();
+            this.lista_metodos = Control3d.getListaMetodo();
             this.lista_ambito.AddFirst(new ambitos("Global"));
             terminar_ejecucion = Control3d.getEti();
-
+            this.tamanio_ambitos = new LinkedList<int>();//para llevar los tamanios de los ambitos
             //creo que debo aumentarle el ambito
             traducirMain();
             traducirMetodos();
+            traducir_clases();
 
         }
 
-       
-
+        
         private void aumentarAmbito(String ambito)
         {
             ambitos nuevo = new Compilador.ambitos(ambito);
@@ -75,6 +81,10 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                         aumentarAmbito(a.nombre);
                         aumentar_3d();
                         escribir3d("void " + a.nombre + "(){", "Traduccion del metodo: principal");
+                        //LE SETEO EL TAMANIO DEL PRINICIPAL
+                        int tam = tamanio_metodo(a.nombre);
+                        if (tam != -1)
+                            this.tamanio_ambitos.AddLast(tam);
 
                         foreach (ParseTreeNode sent in a.sentencia.ChildNodes)
                         {
@@ -89,7 +99,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                             c3d.Append(cont + "\n");
                         }
                         //copiar el codigo
-                        disminuirAmbito();
+                        disminuirAmbito();//putoooooo
                         disminuir_3d();
                         lista.Remove(a);//quito el principal para que ya no se imprima
                         break;
@@ -97,6 +107,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 }
             }
         }
+
         private void traducirMetodos()
         {
             LinkedList<metodo> lista = Control3d.getListaMetodo();
@@ -106,12 +117,13 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 {
                     aumentarAmbito(a.nombre + "_" + a.noMetodo);
                     aumentar_3d();
+                    nodoTabla met = retornar_metodo(a.nombre + "_" + a.noMetodo);
+                    tamanio_ambitos.AddFirst(met.tam);
+
                     escribir3d("void " + a.nombre + "_" + a.noMetodo + "(){", "Traduccion del metodo: " + a.noMetodo);
 
                     foreach (ParseTreeNode sent in a.sentencia.ChildNodes)
-                    {
                         ejecutar(sent, a.nombre + "_" + a.noMetodo);
-                    }
 
                     escribir3d("}", "Fin de traduccion del metodo: " + a.noMetodo);
 
@@ -123,10 +135,46 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                     //copiar el codigo
                     disminuirAmbito();
                     disminuir_3d();
+                    tamanio_ambitos.RemoveFirst();
                 }
                 c3d.Append(terminar_ejecucion+":    //Etiqueta para terminar la ejecucion del programa");
             }
         }
+
+        private void traducir_clases()
+        {
+            lista_clases = Control3d.getListaClase();
+            foreach (KeyValuePair<string, objeto_clase> clase in lista_clases)
+            {
+                objeto_clase aux = clase.Value;
+                //primero traducimos los constructores
+
+                foreach(metodo c in aux.constructores)
+                {
+                    aumentarAmbito(aux.nombre + "_Init_" + c.noMetodo);
+                    aumentar_3d();
+                    escribir3d("void " + c.nombre + "_Init_" + c.noMetodo + "(){", "Traduccion del constructor: " + c.noMetodo);
+
+                    foreach (ParseTreeNode sent in c.sentencia.ChildNodes)
+                    {
+                        ejecutar(sent, c.nombre + "_" + c.nombre);
+                    }
+
+                    escribir3d("}", "Fin de constructor: " + c.noMetodo);
+
+                    if (lista_c3d.First().estado)
+                    {
+                        string cont = lista_c3d.First().codigo.ToString();
+                        c3d.Append(cont + "\n");
+                    }
+                    //copiar el codigo
+                    disminuirAmbito();
+                    disminuir_3d();
+                }
+                
+            }
+        }
+
 
         private void ejecutar(ParseTreeNode nodo, string ambito)
         {
@@ -143,7 +191,11 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                     ejecutarDECLARAR_ASIGNAR(nodo,ambito);
                     break;
                 case "ASIGNAR":
+                case "ASIGNACION":
                     ejecutarASIGNAR(nodo,ambito);
+                    break;
+                case "CALLFUN":
+                    ejecutarCALLFUN(nodo);
                     break;
                 case "IMPRIMIR":
                     ejecutarIMPRIMIR(nodo);
@@ -168,6 +220,131 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 default:
                     break;
             }
+        }
+
+        private nodo3d ejecutarCALLFUN(ParseTreeNode nodo)
+        {
+            string nombre = nodo.ChildNodes[0].Token.Text;
+            nodo3d retorno = new nodo3d();
+
+            if (nodo.ChildNodes.Count > 1){//llamada con parametros
+                return ejecutar_llamada_con_parametros(nombre, nodo);
+            }
+
+            foreach (metodo met in lista_metodos)//llamada sin parametros
+            {
+                
+                if (met.nombre.Equals(nombre) && met.parametros.ChildNodes.Count == 0)
+                {
+                    nodoTabla metodo = retornar_metodo(nombre + "_" + met.noMetodo);
+                    //este es el metodo
+                    escribir_operacion_asignacio("P", "P", "+", tamanio_ambitos.First().ToString());
+                    ////*********** aumentamos ambitos************////
+                    //guardamos el tamanio actual
+                    //tamanio_ambitos.AddFirst(metodo.tam);
+                    //aumentarAmbito(metodo.nombre + "_" + metodo.noMetodo);
+                    //aumentar_3d();
+
+                    escribir3d("\t"+met.nombre+"_"+met.noMetodo+"()", "ejecutamos llamada a metodo/funcion");
+
+                    if (metodo.rol.Equals("FUNCION"))
+                    {
+                        string ret = Control3d.getTemp();
+                        obtener_desde_stak(ret, "P");
+                        escribir_operacion_asignacio("P", "P", "-", tamanio_ambitos.First().ToString());
+                        retorno = new nodo3d(metodo.tipo, ret);
+                    }else
+                        escribir_operacion_asignacio("P", "P", "-", tamanio_ambitos.First().ToString());
+
+                    /*****diminuimmos ambitos*************/
+                    //antes de disminuir el 3d ver que se ejecuto correctamente el codigo sino no se agrega
+                    if (!lista_c3d.First().estado)
+                        MessageBox.Show("Hubo un error en la traduccion del metodo: " + metodo.nombre + "_" + metodo.noMetodo);
+                    //disminuirAmbito();
+                    //disminuir_3d();
+                }
+            }
+            return retorno;
+        }
+
+        private nodo3d ejecutar_llamada_con_parametros(string nombre, ParseTreeNode nodo)
+        {
+            Console.WriteLine(nombre);
+            ParseTreeNode parametros = nodo.ChildNodes[1];
+            LinkedList<nodo3d> lista_parametros=new LinkedList<nodo3d>();
+            LinkedList<metodo> lista_auxiliar = new LinkedList<metodo>();
+
+            foreach(metodo met in lista_metodos)
+            {
+                if (met.nombre.Equals(nombre) && met.parametros.ChildNodes.Count == parametros.ChildNodes.Count)
+                    lista_auxiliar.AddLast(met);
+            }
+            if (lista_auxiliar.Count > 0)
+            {
+                foreach(ParseTreeNode exp in parametros.ChildNodes)
+                {
+                    nodo3d aux = evaluarEXPRESION(exp);
+                    if (aux.tipo > 1)
+                    {
+                        lista_parametros.AddLast(aux);
+                    }else
+                    {
+                        Control3d.agregarError(new errores("semantico", nodo.Span.Location.Line, nodo.Span.Location.Column, "Error en parametros del metodo: " + nombre+",no se agregara codigo"));
+                        this.lista_c3d.First().estado = false;
+                        return new nodo3d();
+                    }
+                }
+                //comparar parametros con los metodos
+                foreach(metodo r in lista_auxiliar)
+                {
+                    if (comparar_parametros(r.parametros, lista_parametros))
+                    {
+                        Console.WriteLine("ya jalo");
+                        //pasar los parametros
+                        string aux_ptr = Control3d.getTemp();
+                        escribir_operacion_asignacio(aux_ptr, "P", "+", tamanio_ambitos.First().ToString());
+                        int cont = 0;
+                        if (r.tipo != "vacio")
+                            cont = 1;
+                        foreach (nodo3d param in lista_parametros)
+                        {
+                            string tmp = Control3d.getTemp();
+                            escribir_operacion_asignacio(tmp, aux_ptr, "+", cont++.ToString());
+                            put_to_stack(tmp, param.val);
+                        }
+                        escribir_operacion_asignacio("P", "P", "+", tamanio_ambitos.First().ToString());
+                        escribir3d("\t"+r.nombre+"_"+r.noMetodo,"llamamos al metodo: "+r.nombre);
+
+                        string ret = Control3d.getTemp();
+                        obtener_desde_stak(ret, "P");
+                        escribir_operacion_asignacio("P", "P", "-", tamanio_ambitos.First().ToString());
+                        return new nodo3d(r.tipo, ret);
+                        //aumentar ambito
+                        //asingar retorno
+                        //reducir ambito
+                        //jherson guapo
+                    }
+                }
+            }
+            Control3d.agregarError(new errores("semantico", nodo.Span.Location.Line, nodo.Span.Location.Column, "No existe el metodo: " + nombre+", con los parametros asignados para ejecutar"));
+            return new nodo3d();//error
+        }
+
+        private bool comparar_parametros(ParseTreeNode parametros, LinkedList<nodo3d> lista_parametros)
+        {
+            Boolean flag = true;
+            int cont = 0;
+            foreach(ParseTreeNode param in parametros.ChildNodes)
+            {
+                string tipo = retornar_tipo_string(param.ChildNodes[0].ChildNodes[0].Token .Text);
+                if (tipo != lista_parametros.ElementAt(cont).tipo_valor)
+                {
+                    flag = false;
+                    break;
+                }
+                cont++;
+            }
+            return flag;
         }
 
         private void ejecutarDECLARAR(ParseTreeNode nodo, String ambito)
@@ -208,6 +385,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             switch (tipo)
             {
                 case "entero":
+                case "decimal":
                     return "num";
                 case "cadena":
                     return "cad";
@@ -224,7 +402,8 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             if (var != null)
             {
                 valor = evaluarEXPRESION(nodo.ChildNodes[1]);
-                if (var.tipo.Equals(valor.tipo_valor))
+                string tipo = retornar_tipo_string(var.tipo);
+                if (tipo.Equals(valor.tipo_valor))
                 {
                     escribir_asignacion(var.pos.ToString(), valor.val);
                 }
@@ -233,13 +412,6 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             }
             else
                 Control3d.agregarError(new errores("semantico", nodo.Span.Location.Line, nodo.Span.Location.Column, "No existe la variable en el ambito actual"));
-        }
-
-        private Variable getVariable(string nombre)
-        {
-            //jajaja me hace falta esto
-
-            return null;
         }
 
         private void ejecutarIMPRIMIR(ParseTreeNode nodo)
@@ -918,10 +1090,32 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         private nodo3d evaluarID(ParseTreeNode nodo)
         {
             string variable = nodo.Token.Text;
-            foreach (nodoTabla n in tabla)
+
+            foreach (ambitos r in lista_ambito)
             {
-                if (n.ambito.Equals(lista_actual.nombre))
+                foreach (nodoTabla a in tabla)
                 {
+                    if (a.rol.Equals("var") && a.nombre.Equals(variable) && a.ambito.Equals(r.nombre))
+                    {
+                        if (a.getExpresion() != null)
+                        {
+                            string tmp = Control3d.getTemp();
+                            escribir_operacion_asignacio(tmp, "P", "+", a.pos.ToString());
+                            string tmp2 = Control3d.getTemp();
+                            obtener_desde_stak(tmp2, tmp);
+                            return new nodo3d(a.tipo, tmp2);
+                            //lo mas simple por el momento del ID
+                        }
+                    }
+                        
+                }
+            }
+
+            Control3d.agregarError(new Control3D.errores("semantico", nodo.Span.Location.Line, nodo.Span.Location.Column, "No es encuentra la variable: " + variable));
+
+           /* foreach (nodoTabla n in tabla)
+            {
+               
                     if (n.rol.Equals("var") && n.nombre.Equals(variable))
                     {
                         if (n.getExpresion() != null)
@@ -934,8 +1128,8 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                             //lo mas simple por el momento del ID
                         }
                     }
-                }
-            }
+                
+            }*/
             return new nodo3d();
         }
 
@@ -1186,14 +1380,42 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
         private nodoTabla get_variable(string nombre, string ambito)
         {
-            foreach(nodoTabla a in tabla)
+
+            foreach(ambitos r in lista_ambito)
             {
-                if (a.nombre.Equals(nombre) && a.ambito.Equals(ambito))
-                    return a;
+                foreach (nodoTabla a in tabla)
+                {
+                    if (a.nombre.Equals(nombre) && a.ambito.Equals(r.nombre))
+                        return a;
+                }
             }
             return null;
         }
 
+
+        private int tamanio_metodo(string nombre)
+        {
+            foreach (nodoTabla n in tabla)
+            {
+                if (n.rol.Equals("METODO")|| n.rol.Equals("FUNCION"))
+                {
+                    if (n.nombre.Equals(nombre))
+                        return n.tam;
+                }
+            }
+            MessageBox.Show("No se encontro el metodo: " + nombre);
+            return -1;
+        }
+
+        private nodoTabla retornar_metodo(string nombre)
+        {
+            foreach(nodoTabla a in tabla)
+            {
+                if (a.nombre.Equals(nombre) && a.rol.Equals("METODO") || a.rol.Equals("FUNCION"))
+                    return a;
+            }
+            return null;
+        }
     }
 }
 

@@ -40,7 +40,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             this.salida = new StringBuilder();
             this.errores = new StringBuilder();
             this.metodos = new LinkedList<metodo>();
-            this.tabla = new tablaSimbolos();
+            this.tabla = Control3d.getTabla();
             this.posicion = new LinkedList<int>();
             this.lista_clases = new Dictionary<string, objeto_clase>();
             this.ambitos = new LinkedList<Compilador.ambitos>();
@@ -103,6 +103,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                     break;
             }
         }
+
         private void ejecutarLlamar(ParseTreeNode raiz)
         {
             Console.WriteLine(raiz.Term.Name);
@@ -534,7 +535,10 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 nuevo.setNoMetodo(a.noMetodo);
                 aumentarAmbito(a.nombre);//ver si ocupo concatenarle el _noMetodo
                 posicion.AddFirst(0);
-                ejecutar(a.sentencia, a.nombre+"_"+a.noMetodo);//ejecutamos las sentencias
+                if(a.nombre.ToUpper().Equals("PRINCIPAL"))
+                    ejecutar(a.sentencia, a.nombre);//ejecutamos las sentencias
+                else
+                    ejecutar(a.sentencia, a.nombre + "_" + a.noMetodo);//ejecutamos las sentencias
                 posicion.RemoveFirst();
                 //recorrer para guardar guardar el tamanio
 
@@ -568,6 +572,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             listaActual = nuevo;
             
         }
+
         private void disminuirAmbito()
         {
             //se manda a guardar la lista de variables
@@ -777,15 +782,14 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             disminuirAmbito();
         }
 
-
         private void ejecutarFOR(ParseTreeNode nodo, string ambito)
         {
             string nuevo_ambito = ambito + "_for" + listaActual.noFor++;
             aumentarAmbito(nuevo_ambito);
+            ejecutar(nodo.ChildNodes[0], nuevo_ambito);
             ejecutar(nodo.ChildNodes[3], nuevo_ambito);
             disminuirAmbito();
         }
-
 
         #endregion
 
@@ -858,15 +862,6 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             g.abrirArbol(@"C:\compiladores\tablaSym.html");
         }
 
-        /****************************************************************************************/
-        /****************************************************************************************/
-        
-
-        /****************************************************************************************/
-        /****************************************************************************************/
-
-        #region "Otros"
-
         private int tipoObjecto(Object var)
         {
             int reto = 0;
@@ -877,12 +872,6 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             else if (var.GetType() == Type.GetType("System.Boolean")) { reto = 5; }
             return reto;
         }
-
-        #endregion
-
-        /****************************************************************************************/
-        /****************************************************************************************/
-
 
         #region GUARDAR_CONSTRUCTORES
         private void guardar_constructor_parametros(string visibilidad,string tipo,string nombre,ParseTreeNode parametros, ParseTreeNode sentencias)

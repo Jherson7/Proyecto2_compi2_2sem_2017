@@ -145,17 +145,21 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
                 case "GET_FROM_HEAP":
                     get_from_heap(raiz);
                     break;
-                default:
-                    Console.Write("me falta: " + raiz.Term.Name);
+                case "PUT_TO_STACK":
+                    put_to_stack(raiz);
                     break;
-
-
-                //asignacion
-                //obtener de heap
-                //put to heap
-                //put to stack
-
+                default:
+                    Console.WriteLine("me falta: " + raiz.Term.Name);
+                    break;
             }
+        }
+
+        private void put_to_stack(ParseTreeNode raiz)
+        {
+            double pos = evaluarEXPRESION(raiz.ChildNodes[0]);
+            double val = evaluarEXPRESION(raiz.ChildNodes[1]);
+            int posi = Convert.ToInt32(pos);
+            stack[posi] = val;
         }
 
         private void get_from_heap(ParseTreeNode raiz)
@@ -192,7 +196,6 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
 
         private void get_from_stack(ParseTreeNode raiz)
         {
-            Console.Write("hoLA");
             string tmp = raiz.ChildNodes[0].Token.Text;
             double res = evaluarEXPRESION(raiz.ChildNodes[1]);
             int pos = Convert.ToInt32(res);
@@ -231,7 +234,6 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
 
         private void put_to_heap(ParseTreeNode raiz)
         {
-            Console.Write('h');
             double pos = evaluarEXPRESION(raiz.ChildNodes[0]);
             double val = evaluarEXPRESION(raiz.ChildNodes[1]);
             int posi = Convert.ToInt32(pos);
@@ -324,7 +326,6 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
             MessageBox.Show("ERROR no se ha definido para: " + nodo.Term.Name);
             return -1;
         }
-
 
         private Double evaluarMAS(ParseTreeNode uno, ParseTreeNode dos)
         {
@@ -465,8 +466,6 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
             }
             return res;
         }
-
-       
 
     }
 

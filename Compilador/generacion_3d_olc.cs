@@ -139,11 +139,11 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 case "DECLARAR":
                     ejecutarDECLARAR(nodo, ambito);
                     break;
-                case "DECLARAR_ASIGNAR":
-                    ejecutarDECLARAR_ASIGNAR(nodo);
+                case "DECLARAR_ASIG":
+                    ejecutarDECLARAR_ASIGNAR(nodo,ambito);
                     break;
                 case "ASIGNAR":
-                    ejecutarASIGNAR(nodo);
+                    ejecutarASIGNAR(nodo,ambito);
                     break;
                 case "IMPRIMIR":
                     ejecutarIMPRIMIR(nodo);
@@ -181,24 +181,58 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
         }
 
-        private void ejecutarDECLARAR_ASIGNAR(ParseTreeNode nodo)
+        private void ejecutarDECLARAR_ASIGNAR(ParseTreeNode nodo,string ambito)
         {
-            String nombre = nodo.ChildNodes[0].Token.Text;
-            // Object valor = evaluarEXPRESION(nodo.ChildNodes[1]);
-            // Variable nueva_variable = new Variable(nombre, valor);
-            // guardarVariable(nueva_variable);
+            String nombre = nodo.ChildNodes[1].ChildNodes[0]. Token.Text;
+
+            nodoTabla var = get_variable(nombre, ambito);
+            nodo3d valor;
+            if (var != null)
+            {
+                valor= evaluarEXPRESION(nodo.ChildNodes[2]);
+                string tipo = retornar_tipo_string(var.tipo);
+                if (tipo.Equals(valor.tipo_valor))
+                {
+                    escribir_asignacion(var.pos.ToString(), valor.val);
+                }else
+                    Control3d.agregarError(new errores("semantico", nodo.Span.Location.Line, nodo.Span.Location.Column, "No son del mismo tipo para asignar"));
+            }
+            else
+                Control3d.agregarError(new errores("semantico", nodo.Span.Location.Line, nodo.Span.Location.Column, "No existe la variable en el ambito actual"));
+            //verificar si la variable existe
+            //ver si el tipo es el del mismo que la variable
         }
 
-        private void ejecutarASIGNAR(ParseTreeNode nodo)
+        private string retornar_tipo_string(string tipo)
+        {
+            switch (tipo)
+            {
+                case "entero":
+                    return "num";
+                case "cadena":
+                    return "cad";
+                default:
+                    return tipo;
+            }
+        }
+
+        private void ejecutarASIGNAR(ParseTreeNode nodo,string ambito)
         {
             String nombre = nodo.ChildNodes[0].Token.Text;
-            Variable variable = getVariable(nombre);
-            if (variable == null)
+            nodoTabla var = get_variable(nombre, ambito);
+            nodo3d valor;
+            if (var != null)
             {
-                ejecutarIMPRIMIRERROR("Variable " + nombre + " no existe");
-                return;
+                valor = evaluarEXPRESION(nodo.ChildNodes[1]);
+                if (var.tipo.Equals(valor.tipo_valor))
+                {
+                    escribir_asignacion(var.pos.ToString(), valor.val);
+                }
+                else
+                    Control3d.agregarError(new errores("semantico", nodo.Span.Location.Line, nodo.Span.Location.Column, "No son del mismo tipo para asignar"));
             }
-            //variable.valor = evaluarEXPRESION(nodo.ChildNodes[1]);
+            else
+                Control3d.agregarError(new errores("semantico", nodo.Span.Location.Line, nodo.Span.Location.Column, "No existe la variable en el ambito actual"));
         }
 
         private Variable getVariable(string nombre)
@@ -223,15 +257,11 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 escribir_operacion_asignacio(res.val, res.val, "+", "1");
                 goto_etiqueta(continuar);
                 escribirEtiqueta(salida, "Fin del ciclo imprimir");
+                escribir3d("\tprint(\"%c\",13)", "Imprimimos caracter de la cadena");
             }
             else
                 Control3d.agregarError(new errores("semantico", nodo.Span.Location.Line, nodo.Span.Location.Column, "Error al tratar de imprimir, tipo: " + res.tipo));
             //this.salida.Append(sms.ToString() + "\n");
-        }
-
-        private void ejecutarIMPRIMIRERROR(String sms)
-        {
-            //this.errores.Append(sms + "\n");
         }
 
         #region SENTENCIAS_CONTROL
@@ -429,27 +459,41 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
         private void ejecutarFOR(ParseTreeNode nodo, string ambito)
         {
-            
+
             string aumento = Control3d.getEti();
             string continuar = Control3d.getEti();
-            string nuevo_ambito = ambito + "_while" + lista_actual.noWhile++;
+            string nuevo_ambito = ambito + "_for" + lista_actual.noWhile++;
             string variable = nodo.ChildNodes[2].ChildNodes[0].Token.Text;
             string tipo_aumento = nodo.ChildNodes[2].ChildNodes[1].Token.Text;
 
             aumentar_3d();
             aumentarAmbito(nuevo_ambito);
-
+            ejecutar(nodo.ChildNodes[0], nuevo_ambito);
             escribir3d(continuar + ":", "etiqueta para continuar el FOR");
             nodo3d val = castear_nodo3d(evaluarEXPRESION(nodo.ChildNodes[1]));
 
             escribir3d(val.etv + ":", "condicion verdadera de FOR");
             ejecutar(nodo.ChildNodes[3], nuevo_ambito);
-            escribir3d(aumento+",","Para aumentar la variable del for");
-            if (tipo_aumento.Equals("++"))
-                escribir_operacion_asignacio(variable, variable, "+", "1");
+
+            escribir3d(aumento + ":", "Para aumentar la variable del for");
+            nodoTabla var = get_variable(variable, nuevo_ambito);
+
+            if (tipo_aumento.Equals("++")) {
+                string tmp1 = poner_temp_en_pos(var.pos.ToString());
+                string tmp = Control3d.getTemp();
+                obtener_desde_stak(tmp, tmp1);
+                escribir_operacion_asignacio(tmp, tmp, "+", "1");
+                put_to_stack(tmp1, tmp);
+            }
             else
-                escribir_operacion_asignacio(variable, variable, "-", "1");
-            escribir3d("goto " + continuar,"Para continuar la ejecucion del for");
+            {
+                string tmp1 = poner_temp_en_pos(var.pos.ToString());
+                string tmp = Control3d.getTemp();
+                obtener_desde_stak(tmp, tmp1);
+                escribir_operacion_asignacio(tmp, tmp, "-", "1");
+                put_to_stack(tmp1, tmp);
+            }
+            escribir3d("\tgoto " + continuar,"Para continuar la ejecucion del for");
             escribir3d(val.etf + ":", "condicion falsa de for");
 
             string cont = lista_c3d.First().codigo.ToString();
@@ -758,7 +802,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 aumentar_heap();
             }
 
-            if (val2.tipo_valor.Equals("num"))
+            if (val2.tipo_valor.Equals("num")|| val2.tipo_valor.Equals("entero"))
             {
                 val2 = convertir_int_en_strig(val2.val);
             }
@@ -961,7 +1005,6 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             return new nodo3d(val1.etv+":\n"+val2.etv,val2.etf,1);
         }
 
-
         private nodo3d convertir_int_en_strig(string numero)
         {
             String cadena = "";
@@ -1060,6 +1103,21 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
         #region ESCRIBIR EN 3D
 
+        private void escribir_asignacion(string pos,string valor)
+        {
+            string tmp = Control3d.getTemp();
+            escribir_operacion_asignacio(tmp, "P", "+", pos);
+            put_to_stack(tmp, valor);
+        }
+
+        private string poner_temp_en_pos(string pos)
+        {
+            string tmp = Control3d.getTemp();
+            escribir_operacion_asignacio(tmp, "P", "+", pos);
+            return tmp;
+        }
+
+
         public void escribirEtiqueta(string eti,object com)
         {
             string comentario = "";
@@ -1115,12 +1173,26 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             this.lista_c3d.First().codigo.Append("\t" + tmp + " = " + "stack[ " + pos + " ]\n");
         }
 
+        public void put_to_stack(string pos, string val)
+        {
+            this.lista_c3d.First().codigo.Append("\tStack[ " + pos + " ] = " + val + "\n");
+        }
+
         public void goto_etiqueta(string etiq)
         {
             this.lista_c3d.First().codigo.Append("\tgoto " + etiq + " \n");
         }
         #endregion
 
+        private nodoTabla get_variable(string nombre, string ambito)
+        {
+            foreach(nodoTabla a in tabla)
+            {
+                if (a.nombre.Equals(nombre) && a.ambito.Equals(ambito))
+                    return a;
+            }
+            return null;
+        }
 
     }
 }

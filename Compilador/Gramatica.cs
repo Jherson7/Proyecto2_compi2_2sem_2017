@@ -221,7 +221,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             DECLARAR.Rule =  TIPO_V + LISTA_ID
                           ;
 
-                            ;//PRODUCCION PARA DECLARAR
+                            //PRODUCCION PARA DECLARAR
 
             LISTA_ID.Rule = MakeStarRule(LISTA_ID, ToTerm(","), id);// SE PUEDEN DECLARAR MAS DE UN ID
 
@@ -238,7 +238,8 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
             SENTENCIAS.Rule = MakeStarRule(SENTENCIAS, SENTENCIA);
 
-            SENTENCIA.Rule =   DECLARAR + ppt
+            SENTENCIA.Rule =
+                                INSTANCIA + ppt
                              | ASIGNACION + ppt
                              | DECLARAR_ASIG + ppt
                              | DECLARAR_ARRAY + ppt
@@ -258,7 +259,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                              | asigacion_objeto + ppt
                              | DECREMENTOS+ ppt
                              | ESTE
-                             | INSTANCIA
+                             
                             //| LLAMAR
                             ;
 

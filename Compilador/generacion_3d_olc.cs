@@ -31,6 +31,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             this.c3d = Control3d.retornarC3D();
             this.lista_ambito = new LinkedList<ambitos>();
             this.lista_metodos = Control3d.getListaMetodo();
+            this.lista_clases = Control3d.getListaClase();
             this.lista_ambito.AddFirst(new ambitos("Global"));
             terminar_ejecucion = Control3d.getEti();
             this.tamanio_ambitos = new LinkedList<int>();//para llevar los tamanios de los ambitos
@@ -68,7 +69,6 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             this.lista_c3d.RemoveFirst();
         }
 
-
         private void traducirMain()
         {
             LinkedList<metodo> lista = Control3d.getListaMetodo();
@@ -80,7 +80,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                     {
                         aumentarAmbito(a.nombre);
                         aumentar_3d();
-                        escribir3d("void " + a.nombre + "(){", "Traduccion del metodo: principal");
+                        escribir3d("\nvoid " + a.nombre + "(){", "Traduccion del metodo: principal");
                         //LE SETEO EL TAMANIO DEL PRINICIPAL
                         int tam = tamanio_metodo(a.nombre);
                         if (tam != -1)
@@ -148,8 +148,10 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             {
                 objeto_clase aux = clase.Value;
                 //primero traducimos los constructores
+                aumentarAmbito(aux.nombre + "_Global");
 
-                foreach(metodo c in aux.constructores)
+
+                foreach (metodo c in aux.constructores)
                 {
                     aumentarAmbito(aux.nombre + "_Init_" + c.noMetodo);
                     aumentar_3d();
@@ -157,7 +159,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
                     foreach (ParseTreeNode sent in c.sentencia.ChildNodes)
                     {
-                        ejecutar(sent, c.nombre + "_" + c.nombre);
+                        ejecutar(sent, c.nombre + "_Init_" + c.noMetodo);
                     }
 
                     escribir3d("}", "Fin de constructor: " + c.noMetodo);
@@ -171,10 +173,10 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                     disminuirAmbito();
                     disminuir_3d();
                 }
-                
+                disminuirAmbito();
+
             }
         }
-
 
         private void ejecutar(ParseTreeNode nodo, string ambito)
         {
@@ -189,6 +191,9 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                     break;
                 case "DECLARAR_ASIG":
                     ejecutarDECLARAR_ASIGNAR(nodo,ambito);
+                    break;
+                case "INSTANCIA":
+                    ejecutarINSTANCIA(nodo, ambito);
                     break;
                 case "ASIGNAR":
                 case "ASIGNACION":
@@ -220,6 +225,147 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 default:
                     break;
             }
+        }
+
+        private void ejecutarINSTANCIA(ParseTreeNode raiz, string ambito)
+        {
+            Console.Write("J");
+            string clase = raiz.ChildNodes[0].Token.Text;
+            string clase2 = raiz.ChildNodes[3].Token.Text;
+            string id = raiz.ChildNodes[1].Token.Text;
+            //suponiendo que existe el constructor, vamos a comparar los parametros
+            if (lista_clases.ContainsKey(clase))
+            {
+                objeto_clase aux_clase;
+                lista_clases.TryGetValue(clase, out aux_clase);
+                nodoTabla nodo_clase = retornar_clase(aux_clase.nombre);
+                if (aux_clase.constructores.Count > 0)
+                {
+                    //comprobar los constructores con los parametros que se envian
+                    
+                    //suponiendo que todo va bien
+                    if (!comprobar_constructores(aux_clase.constructores, clase, id, clase2, raiz.ChildNodes[4],nodo_clase.tam))
+                    {
+                        Control3d.agregarError(new Control3D.errores("semantico", raiz.Span.Location.Line, raiz.Span.Location.Column, "No existe constructor que acepte el numero de parametros:" + id));
+                        return;
+                    }
+                }
+                else
+                {
+                    //agregar error que no se puede instanciar la clase porque no tiene constructores
+                    Control3d.agregarError(new Control3D.errores("semantico", raiz.Span.Location.Line, raiz.Span.Location.Column, "No se puede instanciar la variable:  " + id + ", ya que la clase no tiene constructor"));
+                    return;
+                }
+            }
+
+
+        }
+
+
+        private bool comprobar_constructores(LinkedList<metodo> constructores, string tipo, string nombre, string clase2, ParseTreeNode raiz,int tam_clase)
+        {
+            //verificar que sean los mismos tipos
+            if (!tipo.Equals(clase2))
+            {
+                Control3d.agregarError(new Control3D.errores("semantico", raiz.Span.Location.Line, raiz.Span.Location.Column, "Error al instanciar la variable:" + nombre + ", no coinciden los tipos"));
+                return false;
+            }
+
+            Boolean fl = false;
+            nodoTabla var = get_variable(nombre, lista_ambito.First().nombre);
+            metodo aux_met=null;
+            if (var != null)
+            {
+                if (raiz.ChildNodes.Count == 0)
+                {
+                    foreach (metodo a in constructores)
+                        if (a.parametros.ChildNodes.Count == 0)
+                        {
+                            fl=true;
+                            aux_met = a;
+                            break;
+                        }
+                }
+                else
+                {
+                    ParseTreeNode parametros = raiz.ChildNodes[0];
+                    LinkedList<metodo> auxiliar = new LinkedList<metodo>();
+
+                    foreach (metodo a in constructores)
+                        if (a.parametros.ChildNodes.Count == parametros.ChildNodes.Count)
+                            auxiliar.AddLast(a);
+
+                    foreach (metodo r in auxiliar)
+                    {
+                        Boolean a = comparar_constructor_con_parametros(r.parametros, parametros);
+                        if (a) {
+                            fl = true;
+                            aux_met = r;
+                            break;
+                        }
+                    }
+                }
+                if (fl)
+                {
+                    string pos_var = Control3d.getTemp();
+                    string pos_heap = Control3d.getTemp();
+                    escribir_operacion_asignacio(pos_var, "P", "+", var.pos.ToString());//posicion de la variable en el ambito actual
+                    escribir_operacion_asignacio(pos_heap, "H", "+", "0");//guardo el ultimo puntero del heap
+                    escribir_operacion_asignacio("H", "H", "+", tam_clase.ToString());//reservo el espacio del objeto
+                    put_to_stack(pos_var, pos_heap);//asigno en el estack la poscion del objeto
+                                                    //ver que el tamanio actual este correcto sino esto no funciona
+                                                    //es decir que independientemente del ambito que este, se agregue a la lista de tamanio_ambito
+                    string aux = Control3d.getTemp();
+                    escribir_operacion_asignacio(aux, "P", "+", tamanio_ambitos.First().ToString());//vamos a pasar la referencia del valor de la instancia (heap)
+                    put_to_stack(aux, pos_heap);//pasamos la referencia
+                                                //aumentamos el puntero porque vamos a llamar al constructor
+                    escribir_operacion_asignacio("P", "P", "+", tamanio_ambitos.First().ToString());
+                    //llamamos al constructor
+                    escribir3d("\t" + aux_met.nombre + "_Init_" + aux_met.noMetodo + "()", "llamamos al constructor de la clase");
+                    //disminuimos el ambito despues del constructor
+                    escribir_operacion_asignacio("P", "P", "-", tamanio_ambitos.First().ToString());
+
+                    var.estado = true;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private bool comparar_constructor_con_parametros(ParseTreeNode lista_parametros_metodo, ParseTreeNode parametros)
+        {
+
+            LinkedList<nodo3d> lista_parametros = new LinkedList<nodo3d>();
+           
+                foreach (ParseTreeNode exp in parametros.ChildNodes)
+                {
+                    nodo3d aux = evaluarEXPRESION(exp);
+                    if (aux.tipo > 1)
+                        lista_parametros.AddLast(aux);
+                    else
+                    {
+                        Control3d.agregarError(new errores("semantico", parametros.Span.Location.Line, parametros.Span.Location.Column, "Error en parametros del constructor"));
+                        this.lista_c3d.First().estado = false;
+                        return false;
+                    }
+                }
+                //comparar parametros con los metodos
+                
+                    if (comparar_parametros(lista_parametros_metodo, lista_parametros))
+                    {
+                        string aux_ptr = Control3d.getTemp();
+                        escribir_operacion_asignacio(aux_ptr, "P", "+", tamanio_ambitos.First().ToString());
+                        int cont = 1;
+
+                        foreach (nodo3d param in lista_parametros)
+                        {
+                            string tmp = Control3d.getTemp();
+                            escribir_operacion_asignacio(tmp, aux_ptr, "+", cont++.ToString());
+                            put_to_stack(tmp, param.val);
+                        }
+                        return true;
+                }
+            return false;
         }
 
         private nodo3d ejecutarCALLFUN(ParseTreeNode nodo)
@@ -368,9 +514,9 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             {
                 valor= evaluarEXPRESION(nodo.ChildNodes[2]);
                 string tipo = retornar_tipo_string(var.tipo);
-                if (tipo.Equals(valor.tipo_valor))
-                {
+                if (tipo.Equals(valor.tipo_valor)){
                     escribir_asignacion(var.pos.ToString(), valor.val);
+                    var.estado = true;
                 }else
                     Control3d.agregarError(new errores("semantico", nodo.Span.Location.Line, nodo.Span.Location.Column, "No son del mismo tipo para asignar"));
             }
@@ -406,6 +552,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 if (tipo.Equals(valor.tipo_valor))
                 {
                     escribir_asignacion(var.pos.ToString(), valor.val);
+                    var.estado = true;
                 }
                 else
                     Control3d.agregarError(new errores("semantico", nodo.Span.Location.Line, nodo.Span.Location.Column, "No son del mismo tipo para asignar"));
@@ -1091,45 +1238,35 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         {
             string variable = nodo.Token.Text;
 
-            foreach (ambitos r in lista_ambito)
+            nodoTabla var = get_variable(variable, lista_ambito.First().nombre);
+            if (var != null)
             {
-                foreach (nodoTabla a in tabla)
+                if (var.rol.Equals("var"))
                 {
-                    if (a.rol.Equals("var") && a.nombre.Equals(variable) && a.ambito.Equals(r.nombre))
+                    if (var.estado)
                     {
-                        if (a.getExpresion() != null)
-                        {
-                            string tmp = Control3d.getTemp();
-                            escribir_operacion_asignacio(tmp, "P", "+", a.pos.ToString());
-                            string tmp2 = Control3d.getTemp();
-                            obtener_desde_stak(tmp2, tmp);
-                            return new nodo3d(a.tipo, tmp2);
-                            //lo mas simple por el momento del ID
-                        }
-                    }
-                        
+                        string tmp = Control3d.getTemp();
+                        escribir_operacion_asignacio(tmp, "P", "+", var.pos.ToString());
+                        string tmp2 = Control3d.getTemp();
+                        obtener_desde_stak(tmp2, tmp);
+                        string type = retornar_tipo_string(var.tipo);
+                        return new nodo3d(type, tmp2);
+                        //lo mas simple por el momento del ID
+                    }else
+                        Control3d.agregarError(new Control3D.errores("semantico", nodo.Span.Location.Line, nodo.Span.Location.Column, "La variable no" + variable));
+                }
+                else if (var.rol.Equals("PARAMETRO")){
+                    string tmp = Control3d.getTemp();
+                    escribir_operacion_asignacio(tmp, "P", "+", var.pos.ToString());
+                    string tmp2 = Control3d.getTemp();
+                    obtener_desde_stak(tmp2, tmp);
+                    string type = retornar_tipo_string(var.tipo);
+                    return new nodo3d(type, tmp2);
                 }
             }
 
             Control3d.agregarError(new Control3D.errores("semantico", nodo.Span.Location.Line, nodo.Span.Location.Column, "No es encuentra la variable: " + variable));
 
-           /* foreach (nodoTabla n in tabla)
-            {
-               
-                    if (n.rol.Equals("var") && n.nombre.Equals(variable))
-                    {
-                        if (n.getExpresion() != null)
-                        {
-                            string tmp = Control3d.getTemp();
-                            escribir_operacion_asignacio(tmp, "P", "+", n.pos.ToString());
-                            string tmp2 = Control3d.getTemp();
-                            obtener_desde_stak(tmp2, tmp);
-                            return new nodo3d(n.tipo, tmp2);
-                            //lo mas simple por el momento del ID
-                        }
-                    }
-                
-            }*/
             return new nodo3d();
         }
 
@@ -1392,7 +1529,6 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             return null;
         }
 
-
         private int tamanio_metodo(string nombre)
         {
             foreach (nodoTabla n in tabla)
@@ -1416,6 +1552,18 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             }
             return null;
         }
+
+        private nodoTabla retornar_clase(string nombre)
+        {
+            foreach (nodoTabla a in tabla)
+            {
+                if (a.nombre.Equals(nombre) && a.rol.Equals("CLASE"))
+                    return a;
+            }
+            return null;
+        }
+
+
     }
 }
 

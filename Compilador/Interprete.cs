@@ -192,7 +192,11 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 if (raiz.ChildNodes[2].ChildNodes.Count > 0)
                     ejecutarHeredar(raiz.ChildNodes[2]);
                 foreach (ParseTreeNode a in raiz.ChildNodes[3].ChildNodes)
-                    sentencias_clase(a,nombre);
+                {
+                    posicion.AddFirst(0);
+                    sentencias_clase(a, nombre);
+                    posicion.RemoveFirst();
+                }
             }
             
         }
@@ -277,7 +281,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 }else if (aux.Term.Name.Equals("L_ARRAY")){
                     guardarArreglo(visibilidad, tipo, nombre, raiz.ChildNodes[3]);
                 }else if (aux.Term.Name.Equals("new")){
-                    guardarInstancia(visibilidad, tipo, nombre, raiz.ChildNodes[3]);
+                    guardarInstancia(visibilidad, tipo, nombre, raiz.ChildNodes[3].ChildNodes[1].Token.Text,raiz.ChildNodes[3].ChildNodes[2], nombre_clase);
                 }
                 else//seria una declaracion asignacion
                 {
@@ -345,7 +349,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             //:D
         }
 
-        private void guardarInstancia(string visibilidad, string tipo, string nombre, ParseTreeNode raiz)
+        private void guardarInstancia(string visibilidad, string tipo, string nombre, string tipo2,ParseTreeNode raiz,string ambito)
         {
             //aqui tendria que ver si la clase existe,
             //si tiene constructor 
@@ -357,13 +361,23 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 if (clase.constructores.Count > 0)
                 {
                     //comprobar los constructores con los parametros que se envian
-
                     //suponiendo que todo va bien
-                    if (comprobar_constructores(clase.constructores, tipo, nombre, raiz))
+                    if (comprobar_constructores(clase.constructores, tipo, nombre,tipo2, raiz))
                     {
                         Variable var = new Variable(visibilidad, tipo, nombre, raiz);
-                        guardarVariable(var, raiz.Span.Location.Line, raiz.Span.Location.Column);
-                    }else
+                        //guardarVariable(var, raiz.Span.Location.Line, raiz.Span.Location.Column);
+                        Boolean a = guardarVariable(var, raiz.Span.Location.Line, raiz.Span.Location.Column);
+                        if (a)
+                        {
+                            nodoTabla nuevo = new nodoTabla("local", tipo, nombre, "var", tabla.posGlobal++, 1, "Global");
+                            tabla.AddLast(nuevo);
+                            int x = posicion.First();
+                            x++;
+                            posicion.RemoveFirst();
+                            posicion.AddFirst(x);
+                        }
+                    }
+                    else
                     {
                         Control3d.agregarError(new Control3D.errores("semantico", raiz.Span.Location.Line, raiz.Span.Location.Column, "No existe constructor que acepte el numero de parametros:" + nombre));
                         return;
@@ -383,23 +397,67 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
         }
 
-        private bool comprobar_constructores(LinkedList<metodo> constructores, string tipo, string nombre, ParseTreeNode raiz)
+        private void guardar_instancia_local(ParseTreeNode raiz, string ambito)
+        {
+            
+            string clase = raiz.ChildNodes[0].Token.Text;
+            string clase2 = raiz.ChildNodes[3].Token.Text;
+            string id = raiz.ChildNodes[1].Token.Text;
+            if (lista_clases.ContainsKey(clase))
+            {
+                objeto_clase aux_clase;
+                lista_clases.TryGetValue(clase, out aux_clase);
+                if (aux_clase.constructores.Count > 0)
+                {
+                    //comprobar los constructores con los parametros que se envian
+
+                    //suponiendo que todo va bien
+                    if (comprobar_constructores(aux_clase.constructores, clase, id,clase2, raiz.ChildNodes[4]))
+                    {
+                        Variable var = new Variable("local", clase, id, raiz);
+                        Boolean a = guardarVariable(var, raiz.Span.Location.Line, raiz.Span.Location.Column);
+                        if (a)
+                        {
+                            nodoTabla nuevo = new nodoTabla("local", clase, id, "var", posicion.First(), 1, ambito);
+                            tabla.AddLast(nuevo);
+                            int x = posicion.First();
+                            x++;
+                            posicion.RemoveFirst();
+                            posicion.AddFirst(x);
+                        }
+                    }
+                    else
+                    {
+                        Control3d.agregarError(new Control3D.errores("semantico", raiz.Span.Location.Line, raiz.Span.Location.Column, "No existe constructor que acepte el numero de parametros:" + id));
+                        return;
+                    }
+                }
+                else
+                {
+                    //agregar error que no se puede instanciar la clase porque no tiene constructores
+                    Control3d.agregarError(new Control3D.errores("semantico", raiz.Span.Location.Line, raiz.Span.Location.Column, "No se puede instanciar la variable:  " + id + ", ya que la clase no tiene constructor"));
+                    return;
+                }
+            }
+        }
+
+        private bool comprobar_constructores(LinkedList<metodo> constructores, string tipo, string nombre, string clase2, ParseTreeNode raiz)
         {
             //verificar que sean los mismos tipos
-            if (!tipo.Equals(raiz.ChildNodes[1].Token.Text))
+            if (!tipo.Equals(clase2))
             {
                 Control3d.agregarError(new Control3D.errores("semantico", raiz.Span.Location.Line, raiz.Span.Location.Column, "Error al instanciar la variable:" + nombre+", no coinciden los tipos"));
                 return false;
             }
 
-            if (raiz.ChildNodes[2].ChildNodes.Count == 0)
+            if (raiz.ChildNodes.Count == 0)
             {
                 foreach (metodo a in constructores)
                     if (a.parametros.ChildNodes.Count ==0)
                         return true;
             }else
             {
-                ParseTreeNode parametros = raiz.ChildNodes[2].ChildNodes[0];
+                ParseTreeNode parametros = raiz.ChildNodes[0];
                 foreach(metodo a in constructores)
                     if (a.parametros.ChildNodes.Count == parametros.ChildNodes.Count)
                     return true;
@@ -577,11 +635,12 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
                 nodoTabla nuevo = new nodoTabla(aux.visibilidad, "CLASE", aux.nombre, "CLASE", -1, 0, "Global");
                 tabla.AddLast(nuevo);
-                
-               
 
                 //variable
-                int pos=0;
+                #region "TRADUCIR LAS VARIABLE GLOBALES DE LAS CLASES"
+                int pos = 0;
+                int posActual = tabla.Count - 1;
+
                 foreach (Variable a in aux.variables)
                 {
                     int tama = 1;
@@ -602,27 +661,81 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
                 }
 
-                foreach (metodo a in aux.metodos)
+                int tam = 0;
+                for (; posActual < tabla.Count; posActual++)
+                    tam += tabla.ElementAt(posActual).tam;
+                nuevo.tam = tam;
+                #endregion
+
+                #region "TRADUCCION DE LOS CONSTRUCTORES"
+                foreach (metodo a in aux.constructores)
                 {
-                    nuevo = new nodoTabla(a.visibilidad, a.tipo, a.nombre, "METODO", -1, 0, aux.nombre+"_Global");
+                    //nuevo = new nodoTabla(a.visibilidad, a.tipo, aux.nombre + "_" + a.nombre + "_" + a.noMetodo, "CONSTRUCTOR", -1, 0, aux.nombre + "_Global");
+                    nuevo = new nodoTabla(a.visibilidad, a.tipo, aux.nombre + "_Init_" + a.noMetodo, "CONSTRUCTOR", -1, 0, aux.nombre + "_Global");
+                    //
                     tabla.AddLast(nuevo);
-                    int posActual = tabla.Count - 1;
+                    posActual = tabla.Count - 1;
 
                     nuevo.setNoMetodo(a.noMetodo);
-                    aumentarAmbito(aux.nombre+"_"+a.nombre);//ver si ocupo concatenarle el _noMetodo
-                    posicion.AddFirst(0);
+                    //aumentarAmbito(aux.nombre + "_" + a.nombre + "_" + a.noMetodo);//ver si ocupo concatenarle el _noMetodo
+                    aumentarAmbito(aux.nombre + "_Init_" + a.noMetodo);//ver si ocupo concatenarle el _noMetodo
+
+                   //en la posicion 0 del constructor va a ir la referencia
+                    //de la variable creada en el heap
+                    //entonces si se declaran mas variables dentro del constructor
+                    //no afectaran la referencia
+                    posicion.AddFirst(1);
+                    //GUARDO LOS PARAMETROS
+                    foreach (ParseTreeNode p in a.parametros.ChildNodes)
+                    {
+                        string nombre = p.ChildNodes[1].Token.Text;
+                        string tipo = p.ChildNodes[0].ChildNodes[0].Token.Text;
+                        nodoTabla parametro = new nodoTabla("privado", tipo, nombre, "PARAMETRO", posicion.First(), 1, aux.nombre + "_Init_" + a.noMetodo);
+                        tabla.AddLast(parametro);
+                        int x = posicion.First();
+                        posicion.RemoveFirst();
+                        posicion.AddFirst(++x);
+                    }
+
+
                     if (!a.nombre.ToUpper().Equals("PRINCIPAL"))
-                        ejecutar(a.sentencia, aux.nombre + "_" + a.nombre + "_" + a.noMetodo);//ejecutamos las sentencias
-                        
+                        ejecutar(a.sentencia, aux.nombre + "_Init_" + a.noMetodo);//ejecutamos las sentencias
+
                     posicion.RemoveFirst();
                     //recorrer para guardar guardar el tamanio
-
-                    int tam = 0;
+                    tam = 0;
                     for (; posActual < tabla.Count; posActual++)
                         tam += tabla.ElementAt(posActual).tam;
                     nuevo.tam = tam;
                     disminuirAmbito();
                 }
+                #endregion
+                //los constructores
+
+                #region "TRADUCCION DE LOS METODOS"
+                foreach (metodo a in aux.metodos)
+                {
+                    nuevo = new nodoTabla(a.visibilidad, a.tipo, a.nombre, "METODO", -1, 0, aux.nombre + "_Global");
+                    tabla.AddLast(nuevo);
+                    posActual = tabla.Count - 1;
+
+                    nuevo.setNoMetodo(a.noMetodo);
+                    aumentarAmbito(aux.nombre + "_" + a.nombre);//ver si ocupo concatenarle el _noMetodo
+                    posicion.AddFirst(0);
+                    if (!a.nombre.ToUpper().Equals("PRINCIPAL"))
+                        ejecutar(a.sentencia, aux.nombre + "_" + a.nombre + "_" + a.noMetodo);//ejecutamos las sentencias
+
+                    posicion.RemoveFirst();
+                    //recorrer para guardar guardar el tamanio
+
+                    tam = 0;
+                    for (; posActual < tabla.Count; posActual++)
+                        tam += tabla.ElementAt(posActual).tam;
+                    nuevo.tam = tam;
+                    disminuirAmbito();
+                }
+                #endregion
+
 
             }
         }
@@ -667,6 +780,9 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 case "SENTENCIAS":
                     foreach (var item in nodo.ChildNodes)
                         ejecutar(item,ambito);
+                    break;
+                case "INSTANCIA":
+                    guardar_instancia_local(nodo, ambito);
                     break;
                 case "DECLARAR":
                     ejecutarDECLARAR(nodo,ambito);

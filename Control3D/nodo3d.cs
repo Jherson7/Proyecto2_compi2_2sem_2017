@@ -42,6 +42,7 @@ namespace Proyecto2_compi2_2sem_2017.Control3D
                     this.categoria = 1;
                     break;
                 case ("num"):
+                case "entero":
                     this.categoria = 2;
                     break;
                 case ("char"):

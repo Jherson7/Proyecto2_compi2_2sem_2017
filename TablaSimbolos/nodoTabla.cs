@@ -19,6 +19,8 @@ namespace Proyecto2_compi2_2sem_2017.TablaSimbolos
         private ParseTreeNode exp;
         public int noMetodo;
         public LinkedList<int> dimArray;
+        public Boolean estado;
+
       
         public nodoTabla(string visibilidad,string type,string name,string rol, int pos,int tam,string ambito)
         {
@@ -31,6 +33,7 @@ namespace Proyecto2_compi2_2sem_2017.TablaSimbolos
             this.ambito = ambito;
             this.exp = null;
             this.dimArray = null;
+            estado = false;
         }
 
         public nodoTabla(string visibilidad, string type, string name, string rol, int pos, int tam, string ambito,ParseTreeNode expr)
@@ -44,6 +47,7 @@ namespace Proyecto2_compi2_2sem_2017.TablaSimbolos
             this.ambito = ambito;
             this.exp = expr;
             this.dimArray = null;
+            estado = false;
         }
 
         public nodoTabla(string visibilidad, string type, string name, string rol, int pos, int tam, string ambito, LinkedList<int> casilla, ParseTreeNode expr)
@@ -57,6 +61,7 @@ namespace Proyecto2_compi2_2sem_2017.TablaSimbolos
             this.ambito = ambito;
             this.exp = expr;
             this.dimArray = casilla;
+            estado = false;
         }
 
         public void setNoMetodo(int numero)

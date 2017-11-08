@@ -77,14 +77,13 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             SentenciasGlobales(raiz);
             iniciar();
             traducir_clases();
-            mostrarTablaSimbolos();
+            ///mostrarTablaSimbolos();
             Control3d.setListaClases(lista_clases);//seteo las clases
             Control3d.setListaMetodos(metodos);//seteo los metodos para traducirlos
+            Control3d.set_clase_actual(clase_actual);
             generacion_3d_olc gen = new generacion_3d_olc();
             //ejecutar(raiz);
         }
-
-       
 
         #endregion
 
@@ -575,12 +574,13 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                         tam *= x;
                     nodoTabla nuevo = new nodoTabla(a.visibilidad, a.tipo, a.nombre, "var_array", tabla.posGlobal,tam , "Global",a.casilla,a.valor);
                     tabla.AddLast(nuevo);
-                    tabla.posGlobal+=tam;//me falta cuando sea
+                    tabla.posGlobal++;//me falta cuando sea
                 }
                 else
                 {
                     nodoTabla nuevo = new nodoTabla(a.visibilidad, a.tipo, a.nombre, "var", tabla.posGlobal, 1, "Global");
                     tabla.AddLast(nuevo);
+                    nuevo.setExp(a.valor);
                     tabla.posGlobal++;//me falta cuando sea
                 }
                 

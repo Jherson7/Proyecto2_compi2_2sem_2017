@@ -14,6 +14,7 @@ namespace Proyecto2_compi2_2sem_2017.Control3D
         public int tipo;
         public string tipo_valor;
         public int categoria;
+        //public Boolean destino;
 
         public nodo3d()
         {
@@ -36,6 +37,7 @@ namespace Proyecto2_compi2_2sem_2017.Control3D
             this.tipo = 3;
             this.tipo_valor = tipo;
             this.val = valor;
+            //this.destino = destino;
             switch (tipo)
             {
                 case ("cad"):

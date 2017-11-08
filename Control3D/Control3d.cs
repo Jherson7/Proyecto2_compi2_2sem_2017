@@ -18,6 +18,7 @@ namespace Proyecto2_compi2_2sem_2017.Control3D
         private static Dictionary<string,objeto_clase> lista_clases;
         private static int contador_temp=-1;
         private static int contador_eti= -1;
+        private static objeto_clase clase_actual;
 
         public static tablaSimbolos getTabla()
         {
@@ -104,6 +105,16 @@ namespace Proyecto2_compi2_2sem_2017.Control3D
         public static string getEti()
         {
             return "L" + contador_eti++;
+        }
+
+        public static void set_clase_actual(objeto_clase clase)
+        {
+            clase_actual = clase;
+        }
+
+        public static objeto_clase get_clase_actual()
+        {
+            return clase_actual;
         }
 
 

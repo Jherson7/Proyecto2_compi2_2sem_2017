@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Proyecto2_compi2_2sem_2017.TablaSimbolos;
 using Proyecto2_compi2_2sem_2017.Compilador;
+using Irony.Parsing;
 
 namespace Proyecto2_compi2_2sem_2017.Control3D
 {
@@ -117,6 +118,12 @@ namespace Proyecto2_compi2_2sem_2017.Control3D
             return clase_actual;
         }
 
+        public static void addError(string tipo,string descripcion,ParseTreeNode raiz)
+        {
+            if (lista_errores == null)
+                lista_errores = new LinkedList<errores>();
+            lista_errores.AddLast(new errores(tipo,raiz.Span.Location.Line,raiz.Span.Location.Column,descripcion));
+        }
 
     }
 }

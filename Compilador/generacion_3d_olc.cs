@@ -85,8 +85,8 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                     {
                         if (var.rol.Equals("var_array"))
                         {
-                            string tmp1 = getTemp();
-                            string cont = getTemp();
+                            string tmp1 = Temp();
+                            string cont = Temp();
                             escribir_operacion_asignacio(cont, "H", "+","0");
                             escribir_operacion_asignacio(tmp1, "P", "+", var.pos.ToString());
                             put_to_stack(tmp1, "H");
@@ -105,7 +105,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                                 if (casilla.tipo > 1)
                                 {
                                     //aqui tengo que verificar que sea del tipo de la variable
-                                    string tmp1 = getTemp();
+                                    string tmp1 = Temp();
                                     escribir_operacion_asignacio(tmp1, "P", "+", var.pos.ToString());
                                     put_to_stack(tmp1, casilla.val);
                                     var.estado = true;
@@ -151,7 +151,6 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 }
             }
         }
-
 
         private void traducirMain()
         {
@@ -613,7 +612,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
         private string retornar_tipo_string(string tipo)
         {
-            switch (tipo)
+            switch (tipo.ToLower())
             {
                 case "entero":
                 case "decimal":
@@ -995,13 +994,90 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                     case "true":  return new nodo3d("bool", "1");
                     case "tchar": return evaluarChar(nodo.ChildNodes[0]);
                         //case "NULL": return new nodo3d("NULL", "-300992");
-                        //case "ACCESO_ARRAY": return acceso_arreglo(nodo.ChildNodes[0]);                                                    /*     */
+                    case "ACCESO_ARRAY": return acceso_arreglo(nodo.ChildNodes[0]);                                                    /*     */
                         //case "CALLFUN": return ejecutarCallMet(nodo.ChildNodes[0], true);
                         //case "ACCESO_OBJ": return acceso_a_objectos(nodo.ChildNodes[0]);
                 }
             }
             #endregion
             return new nodo3d();//error
+        }
+
+        private nodo3d acceso_arreglo(ParseTreeNode nodo)
+        {
+            string nombre = nodo.ChildNodes[0].Token.Text;
+            nodoTabla var = get_variable(nombre, lista_ambito.First().nombre);
+            string salida = Etiqueta();
+            LinkedList<nodo3d> dimensiones = new LinkedList<nodo3d>();
+            if (var != null)
+            {
+                if (var.rol.Equals("var_array"))
+                {
+                    if (var.dimArray.Count ==nodo.ChildNodes[1].ChildNodes.Count)
+                    {
+                        //agregamos las condiciones para que no acceda
+                        ParseTreeNode parametros = nodo.ChildNodes[1];
+                        for(int p =0; p<var.dimArray.Count; p++)
+                        {
+                            nodo3d val_aux = evaluarEXPRESION(parametros.ChildNodes[p]);
+                            if (val_aux.categoria >= 2)
+                            {
+                                dimensiones.AddLast(val_aux);
+                                escribir_condicion_sin_goto(val_aux.val, "0", "<", salida);
+                                escribir_condicion_sin_goto(val_aux.val, var.dimArray.ElementAt(p).ToString(), ">=", salida);
+                            }
+                            else
+                            {
+                                agregar_error("No se permiten accesos que no sean de tipo entero", parametros);
+                                //agregar error al ambito actual
+                                return new nodo3d();
+                            }
+                        }
+
+                        string tmp1 = "";
+                        string tmpant = "";
+                        for (int i = 0; i < dimensiones.Count; i++)
+                        {
+                            tmp1 =Temp();
+                            escribir_operacion_asignacio(tmp1, dimensiones.ElementAt(i).val, "-", "1");
+                            int tam = 1;
+                            for (int H = i; H > 0; H--)
+                                tam *= (var.dimArray.ElementAt(H - 1));
+                            if (tam > 1)
+                            {
+                                string t2 = Temp();
+                                escribir_operacion_asignacio(t2, tmp1, "*", tam.ToString());
+                                string t3 = Temp();
+                                escribir_operacion_asignacio(t3, tmpant, "+",t2);
+                                tmpant = t3;
+                            }
+                            else
+                                tmpant = tmp1;
+                        }
+                        string p_destino = Temp();
+                        if (var.ambito.ToUpper().Contains("GLOBAL"))
+                            escribir_operacion_asignacio(p_destino, var.pos.ToString(), "+", "0");
+                        else
+                        {
+                            string tmp_r = Temp();
+                            escribir_operacion_asignacio(tmp_r, "P", "+", var.pos.ToString());
+                            obtener_desde_stak(p_destino, tmp_r);
+                        }
+
+                        string aux = Temp();
+                        escribir_operacion_asignacio(aux, p_destino, "+", tmpant);
+                        string retorno = Temp();
+                        obtener_de_heap(retorno, aux);
+                        string type = retornar_tipo_string(var.tipo);
+                        return new nodo3d(type, retorno);
+                    }
+                    else
+                        agregar_error("No son las mismas dimensiones para acceder al array", nodo);
+                }
+                else
+                    agregar_error("La variable no es de tipo array", nodo);
+            }
+            return new nodo3d();
         }
         #endregion
 
@@ -1621,12 +1697,12 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         }
         
         
-        public string getTemp()
+        public string Temp()
         {
             return Control3d.getTemp();
         }
 
-        public string getEtiqueta()
+        public string Etiqueta()
         {
             return Control3d.getEti();
         }
@@ -1681,6 +1757,10 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             return null;
         }
 
+        private void agregar_error(string descripcion,ParseTreeNode raiz)
+        {
+            Control3d.addError("semantico", descripcion, raiz);
+        }
 
     }
 }

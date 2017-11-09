@@ -23,6 +23,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         private LinkedList<metodo> lista_metodos;
         private LinkedList<int> tamanio_ambitos;
         private Boolean dentro_de_constructor;
+        private string salida_de_errores;
 
         public generacion_3d_olc()
         {
@@ -34,6 +35,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             this.lista_clases = Control3d.getListaClase();
             this.lista_ambito.AddFirst(new ambitos("Global"));
             terminar_ejecucion = Control3d.getEti();
+            salida_de_errores = Etiqueta();
             this.tamanio_ambitos = new LinkedList<int>();//para llevar los tamanios de los ambitos
             //creo que debo aumentarle el ambito
             iniciar_variables_globales();
@@ -41,6 +43,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             traducirMetodos();
             traducir_clases();
             c3d.Append(terminar_ejecucion + ":    //Etiqueta para terminar la ejecucion del programa");
+            c3d.Append(salida_de_errores + ": //para todos los null pointer exeptions");
         }
 
         
@@ -75,11 +78,13 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         private void iniciar_variables_globales()
         {
             aumentar_3d();
+            int contado_p = 0;
             objeto_clase clase = Control3d.get_clase_actual();
             if (clase != null)
             {
                 foreach(Variable a in clase.variables)
                 {
+                    contado_p++;
                     nodoTabla var = get_variable(a.nombre, "Global");
                     if (var != null)
                     {
@@ -115,6 +120,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                         }
                     }
                 }
+                escribir_operacion_asignacio("P", "P", "+", contado_p.ToString());
             }
 
             if (lista_c3d.First().estado) 
@@ -283,6 +289,9 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 case "ASIGNACION":
                     ejecutarASIGNAR(nodo,ambito);
                     break;
+                case "ASIG_ARRAY":
+                    ejecutarAsignar_arreglo(nodo, ambito);
+                    break;
                 case "CALLFUN":
                     ejecutarCALLFUN(nodo);
                     break;
@@ -308,6 +317,84 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                     break;
                 default:
                     break;
+            }
+        }
+
+        private void ejecutarAsignar_arreglo(ParseTreeNode nodo, string ambito)
+        {
+
+            string variable = nodo.ChildNodes[0].Token.Text;
+            nodoTabla var = get_variable(variable, ambito);
+            if (var != null)
+            {
+                
+                if (var.rol.Equals("var_array"))
+                {
+                    nodo3d res = evaluarEXPRESION(nodo.ChildNodes[2]);
+                    LinkedList<nodo3d> dimensiones = new LinkedList<nodo3d>();
+                    if (var.dimArray.Count == nodo.ChildNodes[1].ChildNodes.Count)
+                    {
+                        //agregamos las condiciones para que no acceda
+                        ParseTreeNode parametros = nodo.ChildNodes[1];
+                        for (int p = 0; p < var.dimArray.Count; p++)
+                        {
+                            nodo3d val_aux = evaluarEXPRESION(parametros.ChildNodes[p]);
+                            if (val_aux.categoria >= 2)
+                            {
+                                dimensiones.AddLast(val_aux);
+                                escribir_condicion_sin_goto(val_aux.val, "0", "<", salida_de_errores);
+                                escribir_condicion_sin_goto(val_aux.val, var.dimArray.ElementAt(p).ToString(), ">", salida_de_errores);
+                            }
+                            else
+                            {
+                                agregar_error("No se permiten accesos que no sean de tipo entero", parametros);
+                                return;
+                            }
+                        }
+                        string tmp1 = "";
+                        string tmpant = "";
+                        for (int i = 0; i < dimensiones.Count; i++)
+                        {
+                            tmp1 = Temp();
+                            escribir_operacion_asignacio(tmp1, dimensiones.ElementAt(i).val, "-", "1");
+                            int tam = 1;
+                            for (int H = i; H > 0; H--)
+                                tam *= (var.dimArray.ElementAt(H - 1));
+                            if (tam > 1)
+                            {
+                                string t2 = Temp();
+                                escribir_operacion_asignacio(t2, tmp1, "*", tam.ToString());
+                                string t3 = Temp();
+                                escribir_operacion_asignacio(t3, tmpant, "+", t2);
+                                tmpant = t3;
+                            }
+                            else
+                                tmpant = tmp1;
+                        }
+                        string p_destino = Temp();
+                        if (var.ambito.ToUpper().Contains("GLOBAL"))
+                        {
+                            string global = Temp();
+                            escribir_operacion_asignacio(global, var.pos.ToString(), "+", "0");
+                            obtener_desde_stak(p_destino, global);
+                        }
+                        else
+                        {
+                            string tmp_r = Temp();
+                            escribir_operacion_asignacio(tmp_r, "P", "+", var.pos.ToString());
+                            obtener_desde_stak(p_destino, tmp_r);
+                        }
+                        string aux = Temp();
+                        escribir_operacion_asignacio(aux, p_destino, "+", tmpant);
+                        
+
+                        asignar_heap(aux, res.val);//asignamos el valor :D
+                    }
+                    else
+                        agregar_error("No son las mismas dimensiones para acceder al array", nodo);
+                }
+                else
+                    agregar_error("La variable no es de tipo array para asignar", nodo);
             }
         }
 
@@ -648,6 +735,10 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         private void ejecutarIMPRIMIR(ParseTreeNode nodo)
         {
             nodo3d res= evaluarEXPRESION(nodo.ChildNodes[0]);
+            if (res.tipo_valor.Equals("num"))
+            {
+                res = convertir_int_en_strig(res.val);
+            }
             if (res.tipo > 1 && res.tipo_valor.Equals("cad"))
             {
                 string continuar = Control3d.getEti();
@@ -1013,18 +1104,18 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             {
                 if (var.rol.Equals("var_array"))
                 {
-                    if (var.dimArray.Count ==nodo.ChildNodes[1].ChildNodes.Count)
+                    if (var.dimArray.Count == nodo.ChildNodes[1].ChildNodes.Count)
                     {
                         //agregamos las condiciones para que no acceda
                         ParseTreeNode parametros = nodo.ChildNodes[1];
-                        for(int p =0; p<var.dimArray.Count; p++)
+                        for (int p = 0; p < var.dimArray.Count; p++)
                         {
                             nodo3d val_aux = evaluarEXPRESION(parametros.ChildNodes[p]);
                             if (val_aux.categoria >= 2)
                             {
                                 dimensiones.AddLast(val_aux);
                                 escribir_condicion_sin_goto(val_aux.val, "0", "<", salida);
-                                escribir_condicion_sin_goto(val_aux.val, var.dimArray.ElementAt(p).ToString(), ">=", salida);
+                                escribir_condicion_sin_goto(val_aux.val, var.dimArray.ElementAt(p).ToString(), ">", salida);
                             }
                             else
                             {
@@ -1038,7 +1129,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                         string tmpant = "";
                         for (int i = 0; i < dimensiones.Count; i++)
                         {
-                            tmp1 =Temp();
+                            tmp1 = Temp();
                             escribir_operacion_asignacio(tmp1, dimensiones.ElementAt(i).val, "-", "1");
                             int tam = 1;
                             for (int H = i; H > 0; H--)
@@ -1048,29 +1139,31 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                                 string t2 = Temp();
                                 escribir_operacion_asignacio(t2, tmp1, "*", tam.ToString());
                                 string t3 = Temp();
-                                escribir_operacion_asignacio(t3, tmpant, "+",t2);
+                                escribir_operacion_asignacio(t3, tmpant, "+", t2);
                                 tmpant = t3;
                             }
                             else
                                 tmpant = tmp1;
                         }
                         string p_destino = Temp();
-                        if (var.ambito.ToUpper().Contains("GLOBAL"))
-                            escribir_operacion_asignacio(p_destino, var.pos.ToString(), "+", "0");
-                        else
+                        if (var.ambito.ToUpper().Contains("GLOBAL")) { 
+                            string global = Temp();
+                            escribir_operacion_asignacio(global, var.pos.ToString(), "+", "0");
+                            obtener_desde_stak(p_destino, global);
+                        } else
                         {
                             string tmp_r = Temp();
                             escribir_operacion_asignacio(tmp_r, "P", "+", var.pos.ToString());
                             obtener_desde_stak(p_destino, tmp_r);
                         }
-
-                        string aux = Temp();
-                        escribir_operacion_asignacio(aux, p_destino, "+", tmpant);
-                        string retorno = Temp();
-                        obtener_de_heap(retorno, aux);
-                        string type = retornar_tipo_string(var.tipo);
-                        return new nodo3d(type, retorno);
-                    }
+                            string aux = Temp();
+                            escribir_operacion_asignacio(aux, p_destino, "+", tmpant);
+                            string retorno = Temp();
+                            obtener_de_heap(retorno, aux);
+                            string type = retornar_tipo_string(var.tipo);
+                        
+                            return new nodo3d(type, retorno);
+                        }
                     else
                         agregar_error("No son las mismas dimensiones para acceder al array", nodo);
                 }

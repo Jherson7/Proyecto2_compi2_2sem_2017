@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Irony.Parsing;
 using Irony.Ast;
 using System.Windows.Forms;
+using Proyecto2_compi2_2sem_2017.Compilador;
 
 namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
 {
@@ -57,12 +58,15 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
                 return;
             }
 
-
+            Graficador gr = new Graficador();
+//            gr.graficar(arbol);
             traducir_a_lista(raiz.ChildNodes[0]);
             imprimir_lista_linealizada();
+
+            //gr.graficar_lista_linealizada(lista_nodos);
             for (; ptr < lista_nodos.Count;)
             {
-                ejecutar(lista_nodos.ElementAt(ptr), ptr);
+                ejecutar(lista_nodos.ElementAt(ptr));
                 ptr++;
             }
 //            ejecutar(raiz.ChildNodes[0]);
@@ -113,13 +117,13 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
             }
         }
 
-        public void ejecutar(ParseTreeNode raiz,int ptr)
+        public void ejecutar(ParseTreeNode raiz)
         {
             switch (raiz.Term.Name)
             {
                 case ("SENT_BODY"):
                     foreach (ParseTreeNode a in raiz.ChildNodes)
-                        ejecutar(a,ptr);
+                        ejecutar(a);
                     break;
                 case ("ASIGNACION"):
                     ejecutarAsignar(raiz);
@@ -242,7 +246,7 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
         private void ejecutarMetodo(ParseTreeNode raiz)
         {
             foreach (ParseTreeNode a in raiz.ChildNodes[2].ChildNodes)
-                ejecutar(a,ptr);
+                ejecutar(a);
         }
 
         private void ejecutarAsignar(ParseTreeNode raiz)
@@ -299,7 +303,7 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
                 {
 
                     case "id": return evaluarID(nodo.ChildNodes[0]);
-                    case "numero": return Convert.ToDouble((nodo.ChildNodes[0].Token.Text));
+                    case "numero": return Convert.ToDouble((nodo.ChildNodes[0].Token.Text.Replace(".",",")));
                     case "EXP": return evaluarEXPRESION(nodo.ChildNodes[0]);
                    // case "tstring": return nodo.ChildNodes[0].Token.Text.Replace("\"", "");
                     //case "tchar": return nodo.ChildNodes[0].Token.Text.Replace("'", "");
@@ -317,7 +321,7 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
                     case "id":
                         return evaluarID(nodo);
                     case "numero":
-                        return Convert.ToDouble((nodo.Token.Text));
+                        return Convert.ToDouble(nodo.Token.Text.Replace(".",","));
                 }
             }
 
@@ -333,6 +337,7 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
 
             return val1 + val2;
         }
+
         private double evaluarDIVIDIR(ParseTreeNode uno, ParseTreeNode dos)
         {
             double val1 = evaluarEXPRESION(uno);

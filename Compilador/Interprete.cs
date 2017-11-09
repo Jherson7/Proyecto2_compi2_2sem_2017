@@ -77,7 +77,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             SentenciasGlobales(raiz);
             iniciar();
             traducir_clases();
-            ///mostrarTablaSimbolos();
+            //mostrarTablaSimbolos();
             Control3d.setListaClases(lista_clases);//seteo las clases
             Control3d.setListaMetodos(metodos);//seteo los metodos para traducirlos
             Control3d.set_clase_actual(clase_actual);

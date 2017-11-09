@@ -65,6 +65,12 @@
     <Compile Include="Editor\pagina.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Editor\tipo_archivo.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Editor\tipo_archivo.Designer.cs">
+      <DependentUpon>tipo_archivo.cs</DependentUpon>
+    </Compile>
     <Compile Include="Ejecucion3D\Gramatica3d.cs" />
     <Compile Include="Ejecucion3D\Interprete3d.cs" />
     <Compile Include="Form1.cs">
@@ -78,6 +84,9 @@
     <Compile Include="TablaSimbolos\metodo.cs" />
     <Compile Include="TablaSimbolos\nodoTabla.cs" />
     <Compile Include="TablaSimbolos\tablaSimbolos.cs" />
+    <EmbeddedResource Include="Editor\tipo_archivo.resx">
+      <DependentUpon>tipo_archivo.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>

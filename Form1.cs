@@ -16,6 +16,9 @@ namespace Proyecto2_compi2_2sem_2017
 {
     public partial class Form1 : Form
     {
+
+        public static  int cont_tree=0;
+        public static int cont_olc= 0;
         public Form1()
         {
             InitializeComponent();
@@ -45,7 +48,10 @@ namespace Proyecto2_compi2_2sem_2017
 
         private void btnNuevo_Click(object sender, EventArgs e)
         {
-            pagina pag = new pagina();
+            string tipo =tipo_archivo.getType();
+            
+
+            pagina pag = new pagina(tipo);
             tabControl1.TabPages.Add(pag);
             tabControl1.SelectTab(pag);
 

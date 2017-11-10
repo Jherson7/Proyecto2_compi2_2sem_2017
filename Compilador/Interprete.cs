@@ -72,12 +72,12 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 return;
             }
             //---------------------> Todo Bien
-            Graficador g = new Graficador();
-            g.graficar(arbol);
+            //Graficador g = new Graficador();
+           // g.graficar(arbol);
             SentenciasGlobales(raiz);
             iniciar();
             traducir_clases();
-            //mostrarTablaSimbolos();
+            mostrarTablaSimbolos();
             Control3d.setListaClases(lista_clases);//seteo las clases
             Control3d.setListaMetodos(metodos);//seteo los metodos para traducirlos
             Control3d.set_clase_actual(clase_actual);
@@ -565,14 +565,16 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
         private void iniciar()
         {
-            foreach(Variable a in listaActual)
+
+            #region traduccion de variables
+            foreach (Variable a in listaActual)
             {
                 if (a.casilla != null)
                 {
                     int tam = 1;
                     foreach (int x in a.casilla)
                         tam *= x;
-                    nodoTabla nuevo = new nodoTabla(a.visibilidad, a.tipo, a.nombre, "var_array", tabla.posGlobal,tam , "Global",a.casilla,a.valor);
+                    nodoTabla nuevo = new nodoTabla(a.visibilidad, a.tipo, a.nombre, "var_array", tabla.posGlobal, tam, "Global", a.casilla, a.valor);
                     tabla.AddLast(nuevo);
                     tabla.posGlobal++;//me falta cuando sea
                 }
@@ -583,11 +585,15 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                     nuevo.setExp(a.valor);
                     tabla.posGlobal++;//me falta cuando sea
                 }
-                
-            }//se guardaron las variables globales
+
+            }
+
+
+            #endregion
+            //se guardaron las variables globales
 
             //vamos a guardar los metodos
-            foreach(metodo a in metodos)
+            foreach (metodo a in metodos)
             {
                 string met = "METODO";
                 if (a.tipo != "vacio")
@@ -599,6 +605,10 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 nuevo.setNoMetodo(a.noMetodo);
                 aumentarAmbito(a.nombre);//ver si ocupo concatenarle el _noMetodo
                 posicion.AddFirst(0);
+
+                //we have to translate the parameters
+
+
                 if (a.nombre.ToUpper().Equals("PRINCIPAL"))
                     ejecutar(a.sentencia, a.nombre);//ejecutamos las sentencias
                 else
@@ -609,6 +619,19 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                         posicion.RemoveFirst();
                         posicion.AddFirst(1);
                     }
+
+                    /*vamos a traducir los parametros*/
+                    foreach (ParseTreeNode p in a.parametros.ChildNodes)
+                    {
+                        string nombre = p.ChildNodes[1].Token.Text;
+                        string tipo = p.ChildNodes[0].ChildNodes[0].Token.Text;
+                        nodoTabla parametro = new nodoTabla("privado", tipo, nombre, "PARAMETRO", posicion.First(), 1, a.nombre + "_" + a.noMetodo);
+                        tabla.AddLast(parametro);
+                        int x = posicion.First();
+                        posicion.RemoveFirst();
+                        posicion.AddFirst(++x);
+                    }
+
                     ejecutar(a.sentencia, a.nombre + "_" + a.noMetodo);//ejecutamos las sentencias
                 }
                     

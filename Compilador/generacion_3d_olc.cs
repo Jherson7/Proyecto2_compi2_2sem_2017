@@ -42,12 +42,11 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             traducirMain();
             traducirMetodos();
             traducir_clases();
-            c3d.Append(terminar_ejecucion + ":    //Etiqueta para terminar la ejecucion del programa");
-            c3d.Append(salida_de_errores + ": //para todos los null pointer exeptions");
+            c3d.Append(terminar_ejecucion + ":    //Etiqueta para terminar la ejecucion del programa\n");
+            c3d.Append(salida_de_errores + ": //para todos los null pointer exeptions\n");
         }
 
         
-
         private void aumentarAmbito(String ambito)
         {
             ambitos nuevo = new Compilador.ambitos(ambito);
@@ -432,7 +431,6 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
         }
 
-
         private bool comprobar_constructores(LinkedList<metodo> constructores, string tipo, string nombre, string clase2, ParseTreeNode raiz,int tam_clase)
         {
             //verificar que sean los mismos tipos
@@ -566,7 +564,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
                     if (metodo.rol.Equals("FUNCION"))
                     {
-                        string ret = Control3d.getTemp();
+                        string ret = Temp();
                         obtener_desde_stak(ret, "P");
                         escribir_operacion_asignacio("P", "P", "-", tamanio_ambitos.First().ToString());
                         retorno = new nodo3d(metodo.tipo, ret);
@@ -630,7 +628,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                             put_to_stack(tmp, param.val);
                         }
                         escribir_operacion_asignacio("P", "P", "+", tamanio_ambitos.First().ToString());
-                        escribir3d("\t"+r.nombre+"_"+r.noMetodo,"llamamos al metodo: "+r.nombre);
+                        escribir3d("\t"+r.nombre+"_"+r.noMetodo+"()","llamamos al metodo: "+r.nombre);
 
                         string ret = Control3d.getTemp();
                         obtener_desde_stak(ret, "P");

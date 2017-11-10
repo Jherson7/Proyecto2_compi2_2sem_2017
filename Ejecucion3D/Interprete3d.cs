@@ -7,6 +7,7 @@ using Irony.Parsing;
 using Irony.Ast;
 using System.Windows.Forms;
 using Proyecto2_compi2_2sem_2017.Compilador;
+using Proyecto2_compi2_2sem_2017.Control3D;
 
 namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
 {
@@ -20,9 +21,11 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
         private LinkedList<ParseTreeNode> lista_nodos;
         private Dictionary<string,metodo3d> lista_metodos;
         private Dictionary<string, int> lista_etiquetas;
+        private LinkedList<Dictionary<string, double>> lista_ambitos;
+        private LinkedList<int> posiciones_ambitos;
         private int ptr = 0;
         public StringBuilder salida;
-
+        private Dictionary<string, double> lista_actual;
 
         public Interprete3d()
         {
@@ -33,15 +36,32 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
             this.lista_metodos = new Dictionary<string,metodo3d>();
             this.lista_etiquetas = new Dictionary<string, int>();
             this.salida = new StringBuilder();
+            this.lista_ambitos = new LinkedList<Dictionary<string, double>>();
+            this.posiciones_ambitos = new LinkedList<int>();
+
             lista_temporales.Add("P", 0);
             lista_temporales.Add("H", 0);
+        }
+
+
+        private void aumentar_ambito()
+        {
+            posiciones_ambitos.AddFirst(ptr);
+            this.lista_ambitos.AddFirst(new Dictionary<string, double>());
+            this.lista_actual = lista_ambitos.First();
+
+        }
+
+        private void disminuir_ambito()
+        {
+            this.lista_ambitos.RemoveFirst();
+            this.lista_actual = lista_ambitos.First();
         }
 
         private void setPtr(int val)
         {
             this.ptr = val;
         }
-
 
         public void analizar(String entrada)
         {
@@ -54,6 +74,9 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
             if (raiz == null || arbol.ParserMessages.Count > 0 || arbol.HasErrors())
             {
                 //---------------------> Hay Errores      
+
+                foreach (var item in arbol.ParserMessages)
+                    Control3d.agregarError(new errores("sintactico",item.Location.Line,item.Location.Column,item.Message));
                 MessageBox.Show("Hay Errores en 3d");
                 return;
             }
@@ -152,9 +175,38 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
                 case "PUT_TO_STACK":
                     put_to_stack(raiz);
                     break;
+                case "CALLFUN":
+                    ejecutarLLAMADA(raiz);
+                    break;
                 default:
                     Console.WriteLine("me falta: " + raiz.Term.Name);
                     break;
+            }
+        }
+
+        private void ejecutarLLAMADA(ParseTreeNode raiz)
+        {
+            Console.Write("J");
+            try
+            {
+                string nombre = raiz.ChildNodes[0].Token.Text;
+                metodo3d aux;
+                this.lista_metodos.TryGetValue(nombre, out aux);
+                Console.Write("J");
+                //aumentar ambito 3d
+                aumentar_ambito();//ahi guarde la posicion actual del puntero para recuperarlos despues
+                setPtr(aux.inicio);
+
+                //tendria que tener una lista de posiciones temporales
+                //estas las podria tener en el mismo aumentar ambito?
+
+                //disminuir ambito 3d
+                //regresar puntero
+
+            }
+            catch
+            {
+
             }
         }
 

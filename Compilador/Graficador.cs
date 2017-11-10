@@ -41,7 +41,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         private void generarDOT_PNG(String rdot, String rpng)
         {
             System.IO.File.WriteAllText(rdot, graphivz.ToString());
-            String comandodot = "C:\\Users\\Jherson Sazo\\Desktop\\GRPHVIZ\\GRPHVIZ\\Graphviz\\bin\\dot.exe -Tpng " + rdot + " -o " + rpng + " ";
+            String comandodot = "C:\\Graphviz\\bin\\dot.exe -Tpng " + rdot + " -o " + rpng + " ";
             var command = string.Format(comandodot);
             var procStartInfo = new System.Diagnostics.ProcessStartInfo("cmd", "/C" + command);
             var proc = new System.Diagnostics.Process();
@@ -54,8 +54,8 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         {
             graphivz = new StringBuilder();
             contador = 0;
-            String rdot = desktop + "\\Files\\Arbol\\arbol.dot";
-            String rpng = desktop + "\\Files\\Arbol\\arbol.png";
+            String rdot = "C:\\compiladores\\proyecto2_2sem\\arbol.dot";
+            String rpng = "C:\\compiladores\\proyecto2_2sem\\arbol.png";
             graphivz.Append("digraph G {\r\n node[shape=rectangle, style=filled, color=khaki1, fontcolor=black]; \r\n");
             Arbol_listar_enlazar(arbol.Root, contador);
             graphivz.Append("}");
@@ -66,10 +66,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         {
             if (nodo != null)
             {
-                if(nodo.ChildNodes.Count==0)
-                    graphivz.Append("node" + num + " [ label = \"" + nodo.Token.Text + "\"];\r\n");
-                else
-                    graphivz.Append("node" + num + " [ label = \"" + nodo.Term.ToString() + "\"];\r\n");
+                graphivz.Append("node" + num + " [ label = \"" + nodo.Term.ToString() + "\"];\r\n");
                 int tam = nodo.ChildNodes.Count;
                 int actual;
                 for (int i = 0; i < tam; i++)
@@ -219,7 +216,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 else 
                     cont += uno.Token.Text;
                 cont += " " + signo + " ";
-                if (dos.ChildNodes.Count == 1)//cuidado aqui porque puede venir que sea -1 y truena
+                if (dos.ChildNodes.Count == 1)//cuidado aqui porque puede venir que sea
                     cont += dos.ChildNodes[0].Token.Text;
                 else
                     cont += dos.Token.Text;

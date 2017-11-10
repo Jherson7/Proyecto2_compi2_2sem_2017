@@ -79,6 +79,7 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
                         | CONDICIONAL
                         | GOTO
                         | PRINT
+                        | CALLFUN
                         ;
 
             PRINT.Rule = ToTerm("print") +apar+ comilla +mod + id+comilla + ToTerm(",")+E+cpar   ;
@@ -135,7 +136,8 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
                         | ASIGNACION
                         | CONDICIONAL
                         | GOTO
-                        | PRINT;
+                        | PRINT
+                        | CALLFUN;
 
             SENTECIA.ErrorRule = SyntaxError + SENTECIA;
 

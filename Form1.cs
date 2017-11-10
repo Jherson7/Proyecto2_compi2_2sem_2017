@@ -66,6 +66,11 @@ namespace Proyecto2_compi2_2sem_2017
 
             RichTextBox salida = (RichTextBox)control_salida.TabPages[0].Controls[0];
             salida.Text = inter.salida.ToString();
+            RichTextBox aux = (RichTextBox)control_salida.TabPages[1].Controls[0];
+            foreach (errores err in Control3d.getErrores())
+            {
+                aux.AppendText(err.tipo + "  |  " + err.descripcion + "  |  " + err.linea + "  |  " + err.columna + "\n");
+            }
 
         }
     }

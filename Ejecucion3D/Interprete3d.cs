@@ -18,11 +18,11 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
         private double[] heap;
 
         private Dictionary<string, double> lista_temporales;
-        private LinkedList<ParseTreeNode> lista_nodos;
+        private LinkedList<nodo_ejecucion> lista_nodos;
         private Dictionary<string,metodo3d> lista_metodos;
         private Dictionary<string, int> lista_etiquetas;
         private LinkedList<Dictionary<string, double>> lista_ambitos;
-        private LinkedList<int> posiciones_ambitos;
+        private LinkedList<ambitos_llamadas> ambitos_llamadas;
         private int ptr = 0;
         public StringBuilder salida;
         private Dictionary<string, double> lista_actual;
@@ -31,22 +31,22 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
         {
             this.stack = new double[10000];
             this.heap = new double[100000];
-            this.lista_nodos = new LinkedList<ParseTreeNode>();
+            this.lista_nodos = new LinkedList<nodo_ejecucion>();
             this.lista_temporales = new Dictionary<string, double>();
             this.lista_metodos = new Dictionary<string,metodo3d>();
             this.lista_etiquetas = new Dictionary<string, int>();
             this.salida = new StringBuilder();
             this.lista_ambitos = new LinkedList<Dictionary<string, double>>();
-            this.posiciones_ambitos = new LinkedList<int>();
+            this.ambitos_llamadas = new LinkedList<ambitos_llamadas>();
 
             lista_temporales.Add("P", 0);
             lista_temporales.Add("H", 0);
         }
 
 
-        private void aumentar_ambito()
+        private void aumentar_ambito(ambitos_llamadas nuevo)
         {
-            posiciones_ambitos.AddFirst(ptr);
+            this.ambitos_llamadas.AddFirst(nuevo);
             this.lista_ambitos.AddFirst(new Dictionary<string, double>());
             this.lista_actual = lista_ambitos.First();
 
@@ -112,13 +112,15 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
                         traducir_a_lista(a);
                     int fin = lista_nodos.Count-1;
                     lista_metodos.Add(nombre, new metodo3d(nombre, inicio, fin));
+                    lista_nodos.AddLast(new nodo_ejecucion("FIN_METODO", raiz));
                     break;
                 case "LABEL":
-                    lista_nodos.AddLast(raiz);
+                    lista_nodos.AddLast(new nodo_ejecucion("LABEL", raiz));
                     guardarLabels(raiz);
                     break;
                 default:
-                    lista_nodos.AddLast(raiz);
+                    string name = raiz.Term.Name;
+                    lista_nodos.AddLast(new nodo_ejecucion(name,raiz));
                     break;
             }
         }
@@ -134,68 +136,77 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
 
         private void imprimir_lista_linealizada()
         {
-            foreach(ParseTreeNode a in lista_nodos)
+            foreach(nodo_ejecucion a in lista_nodos)
             {
-                Console.WriteLine(a.Term.Name);
+                Console.WriteLine(a.nodo.Term.Name);
             }
         }
 
-        public void ejecutar(ParseTreeNode raiz)
+        public void ejecutar(nodo_ejecucion raiz)
         {
-            switch (raiz.Term.Name)
+            switch (raiz.nombre)
             {
                 case ("SENT_BODY"):
-                    foreach (ParseTreeNode a in raiz.ChildNodes)
-                        ejecutar(a);
+                    foreach (ParseTreeNode a in raiz.nodo.ChildNodes)
+                        ejecutar(raiz);
                     break;
                 case ("ASIGNACION"):
-                    ejecutarAsignar(raiz);
+                    ejecutarAsignar(raiz.nodo);
                     break;
                 case ("METODO"):
-                    ejecutarMetodo(raiz);
+                    MessageBox.Show("hay erro en llamada en metodo en ejeucuion");
+                    //ejecutarMetodo(raiz.nodo);
                     break;
                 case "PUT_TO_HEAP":
-                    put_to_heap(raiz);
+                    put_to_heap(raiz.nodo);
                     break;
                 case "PRINT":
-                    imprimir(raiz);
+                    imprimir(raiz.nodo);
                     break;
                 case "GOTO":
-                    ejecutarGOTO(raiz);
+                    ejecutarGOTO(raiz.nodo);
                     break;
                 case "GET_FROM_STACK":
-                    get_from_stack(raiz);
+                    get_from_stack(raiz.nodo);
                     break;
                 case "SALTO_CONDICIONAL":
-                    ejecutarIF(raiz);
+                    ejecutarIF(raiz.nodo);
                     break;
                 case "GET_FROM_HEAP":
-                    get_from_heap(raiz);
+                    get_from_heap(raiz.nodo);
                     break;
                 case "PUT_TO_STACK":
-                    put_to_stack(raiz);
+                    put_to_stack(raiz.nodo);
                     break;
                 case "CALLFUN":
-                    ejecutarLLAMADA(raiz);
+                    ejecutarLLAMADA(raiz.nodo);
+                    break;
+                case "FIN_METODO":
+                    ejecutarFIN_METODO();
                     break;
                 default:
-                    Console.WriteLine("me falta: " + raiz.Term.Name);
+                    if(!raiz.nombre.Equals("LABEL"))
+                        MessageBox.Show("me falta: " + raiz.nombre);
                     break;
             }
+        }
+
+        private void ejecutarFIN_METODO()
+        {
+            throw new NotImplementedException();
         }
 
         private void ejecutarLLAMADA(ParseTreeNode raiz)
         {
-            Console.Write("J");
             try
             {
                 string nombre = raiz.ChildNodes[0].Token.Text;
                 metodo3d aux;
                 this.lista_metodos.TryGetValue(nombre, out aux);
-                Console.Write("J");
                 //aumentar ambito 3d
-                aumentar_ambito();//ahi guarde la posicion actual del puntero para recuperarlos despues
-                setPtr(aux.inicio);
+                ambitos_llamadas nuevo = new ambitos_llamadas(ptr, aux.fin);
+                aumentar_ambito(nuevo);//ahi guarde la posicion actual del puntero para recuperarlos despues
+                setPtr(aux.inicio-1);
 
                 //tendria que tener una lista de posiciones temporales
                 //estas las podria tener en el mismo aumentar ambito?
@@ -206,7 +217,7 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
             }
             catch
             {
-
+                MessageBox.Show("ERRor en llamada a metodo no se encotro");
             }
         }
 
@@ -293,12 +304,6 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
             double val = evaluarEXPRESION(raiz.ChildNodes[1]);
             int posi = Convert.ToInt32(pos);
             heap[posi] = val;
-        }
-
-        private void ejecutarMetodo(ParseTreeNode raiz)
-        {
-            foreach (ParseTreeNode a in raiz.ChildNodes[2].ChildNodes)
-                ejecutar(a);
         }
 
         private void ejecutarAsignar(ParseTreeNode raiz)
@@ -541,37 +546,30 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
         }
     }
 
-    /*        public void ejecutar(ParseTreeNode raiz,int ptr)
+    
+    class nodo_ejecucion
+    {
+        
+        public string nombre;
+        public ParseTreeNode nodo;
+
+        public nodo_ejecucion(string name, ParseTreeNode nodox)
         {
-
-
-            switch (raiz.Term.Name)
-            {
-                case ("SENT_BODY"):
-                    foreach (ParseTreeNode a in raiz.ChildNodes)
-                        ejecutar(a,ptr);
-                    break;
-                case ("ASIGNACION"):
-                    ejecutarAsignar(raiz);
-                    break;
-                case ("METODO"):
-                    ejecutarMetodo(raiz);
-                    break;
-                case "PUT_TO_HEAP":
-                    put_to_heap(raiz);
-                    break;
-                case "IMPRIMIR":
-                    imprimir(raiz);
-                    break;
-
-
-                //asignacion
-                //obtener de heap
-                //put to heap
-                //put to stack
-
-            }
+            this.nombre = name;
+            this.nodo = nodox;
         }
-*/
+    }
+
+    class ambitos_llamadas
+    {
+        public int inicio;
+        public int fin;
+
+        public ambitos_llamadas(int star,int fin)
+        {
+            this.inicio = star;
+            this.fin = fin;
+        }
+    }
 }
 

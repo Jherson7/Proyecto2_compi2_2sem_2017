@@ -19,7 +19,7 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
             MarkReservedWords("stack");
             MarkReservedWords("heap");
             MarkReservedWords("print");
-
+            MarkReservedWords("throw");
             
 
             var heap = ToTerm("heap");
@@ -61,7 +61,7 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
             var SENT_BODY = new NonTerminal("SENT_BODY");
             var BODY = new NonTerminal("BODY");
             var PRINT = new NonTerminal("PRINT");
-
+            var THROW = new NonTerminal("THROW");
 
             this.Root = INICIO;
 
@@ -80,6 +80,7 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
                         | GOTO
                         | PRINT
                         | CALLFUN
+                        | THROW
                         ;
 
             PRINT.Rule = ToTerm("print") +apar+ comilla +mod + id+comilla + ToTerm(",")+E+cpar   ;
@@ -137,13 +138,17 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
                         | CONDICIONAL
                         | GOTO
                         | PRINT
-                        | CALLFUN;
+                        | CALLFUN
+                        | THROW;
 
             SENTECIA.ErrorRule = SyntaxError + SENTECIA;
 
             METODO.Rule = vacio + id + apar + cpar + alla + SENTECIAS + clla;
 
             BODY.ErrorRule = SyntaxError + BODY;
+
+            THROW.Rule = ToTerm("throw") + ToTerm("[")+ ToTerm("]");
+            
             /*
             RegisterOperators(1, Associativity.Left, "==", "!=");           //IGUAL, DIFERENTE
             RegisterOperators(2, Associativity.Left, ">", "<", ">=", "<="); //MAYORQUES, MENORQUES

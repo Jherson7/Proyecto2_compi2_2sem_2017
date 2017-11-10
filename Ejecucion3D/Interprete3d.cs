@@ -81,7 +81,7 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
                 return;
             }
 
-            Graficador gr = new Graficador();
+            //Graficador gr = new Graficador();
 //            gr.graficar(arbol);
             traducir_a_lista(raiz.ChildNodes[0]);
             imprimir_lista_linealizada();
@@ -184,6 +184,9 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
                 case "FIN_METODO":
                     ejecutarFIN_METODO();
                     break;
+                case "THROW":
+                    MessageBox.Show("GRAVE ERROR INTENTO ACCEDER A UNA POSICION NULA O VACIA CERCA DE LA LINEA: " + ptr);
+                    throw new NullReferenceException();
                 default:
                     if(!raiz.nombre.Equals("LABEL"))
                         MessageBox.Show("me falta: " + raiz.nombre);
@@ -193,7 +196,10 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
 
         private void ejecutarFIN_METODO()
         {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
+            int actual = ambitos_llamadas.First().inicio;
+            ambitos_llamadas.RemoveFirst();
+            setPtr(actual);
         }
 
         private void ejecutarLLAMADA(ParseTreeNode raiz)
@@ -207,13 +213,6 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
                 ambitos_llamadas nuevo = new ambitos_llamadas(ptr, aux.fin);
                 aumentar_ambito(nuevo);//ahi guarde la posicion actual del puntero para recuperarlos despues
                 setPtr(aux.inicio-1);
-
-                //tendria que tener una lista de posiciones temporales
-                //estas las podria tener en el mismo aumentar ambito?
-
-                //disminuir ambito 3d
-                //regresar puntero
-
             }
             catch
             {
@@ -317,7 +316,6 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
             }else
                 lista_temporales.Add(tmp, res);
         }
-
 
         private Double evaluarEXPRESION(ParseTreeNode nodo)
         {
@@ -546,7 +544,6 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
         }
     }
 
-    
     class nodo_ejecucion
     {
         

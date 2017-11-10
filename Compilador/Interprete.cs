@@ -485,6 +485,17 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 }
                 
             }
+
+            if (lista.Count >= 1)
+            {
+                int colum = lista.ElementAt(1);
+                int fila = lista.ElementAt(0);
+                lista.RemoveFirst();
+                lista.RemoveFirst();
+                lista.AddFirst(fila);
+                lista.AddFirst(colum);
+            }
+
             Variable var = new Variable(visibilidad, tipo, nombre, aux.ChildNodes[1], lista);
             guardarVariable(var, aux.Span.Location.Line, aux.Span.Location.Column);
         }
@@ -833,6 +844,9 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                     ejecutarWHILEX(nodo, ambito);
                     //guardar las variables del whilex
                     break;
+                
+                //me falta traducir declarar array en metodos y funciones y contructores
+
                 default:
                     break;
             }

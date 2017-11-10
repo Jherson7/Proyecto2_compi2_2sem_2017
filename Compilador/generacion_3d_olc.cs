@@ -42,8 +42,9 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             traducirMain();
             traducirMetodos();
             traducir_clases();
+           
+            c3d.Append(salida_de_errores + ": \n throw[] //para todos los null pointer exeptions\n");
             c3d.Append(terminar_ejecucion + ":    //Etiqueta para terminar la ejecucion del programa\n");
-            c3d.Append(salida_de_errores + ": //para todos los null pointer exeptions\n");
         }
 
         
@@ -1096,7 +1097,6 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         {
             string nombre = nodo.ChildNodes[0].Token.Text;
             nodoTabla var = get_variable(nombre, lista_ambito.First().nombre);
-            string salida = Etiqueta();
             LinkedList<nodo3d> dimensiones = new LinkedList<nodo3d>();
             if (var != null)
             {
@@ -1106,14 +1106,17 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                     {
                         //agregamos las condiciones para que no acceda
                         ParseTreeNode parametros = nodo.ChildNodes[1];
+
+                        
+
                         for (int p = 0; p < var.dimArray.Count; p++)
                         {
                             nodo3d val_aux = evaluarEXPRESION(parametros.ChildNodes[p]);
                             if (val_aux.categoria >= 2)
                             {
                                 dimensiones.AddLast(val_aux);
-                                escribir_condicion_sin_goto(val_aux.val, "0", "<", salida);
-                                escribir_condicion_sin_goto(val_aux.val, var.dimArray.ElementAt(p).ToString(), ">", salida);
+                                escribir_condicion_sin_goto(val_aux.val, "0", "<", salida_de_errores);
+                                escribir_condicion_sin_goto(val_aux.val, var.dimArray.ElementAt(p).ToString(), ">", salida_de_errores);
                             }
                             else
                             {

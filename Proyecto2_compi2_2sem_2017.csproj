@@ -62,6 +62,7 @@
     <Compile Include="Control3D\Control3d.cs" />
     <Compile Include="Control3D\errores.cs" />
     <Compile Include="Control3D\nodo3d.cs" />
+    <Compile Include="Editor\nodo_tree_view.cs" />
     <Compile Include="Editor\pagina.cs">
       <SubType>Component</SubType>
     </Compile>

@@ -37,7 +37,7 @@
             this.codigoCompartidoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.reportesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.treeView1 = new System.Windows.Forms.TreeView();
+            this.tree_view = new System.Windows.Forms.TreeView();
             this.control_salida = new System.Windows.Forms.TabControl();
             this.tabPage3 = new System.Windows.Forms.TabPage();
             this.richTextBox2 = new System.Windows.Forms.RichTextBox();
@@ -119,12 +119,14 @@
             this.panel1.Size = new System.Drawing.Size(657, 284);
             this.panel1.TabIndex = 2;
             // 
-            // treeView1
+            // tree_view
             // 
-            this.treeView1.Location = new System.Drawing.Point(12, 116);
-            this.treeView1.Name = "treeView1";
-            this.treeView1.Size = new System.Drawing.Size(144, 322);
-            this.treeView1.TabIndex = 3;
+            this.tree_view.Location = new System.Drawing.Point(12, 116);
+            this.tree_view.Name = "tree_view";
+            this.tree_view.Size = new System.Drawing.Size(144, 322);
+            this.tree_view.TabIndex = 3;
+            this.tree_view.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.tree_view_AfterSelect);
+            this.tree_view.DoubleClick += new System.EventHandler(this.tree_view_DoubleClick);
             // 
             // control_salida
             // 
@@ -286,6 +288,7 @@
             this.btnGuardar.Size = new System.Drawing.Size(75, 61);
             this.btnGuardar.TabIndex = 7;
             this.btnGuardar.UseVisualStyleBackColor = true;
+            this.btnGuardar.Click += new System.EventHandler(this.btnGuardar_Click);
             // 
             // btnAbrir
             // 
@@ -305,6 +308,7 @@
             this.btnCrear_carpeta.Size = new System.Drawing.Size(75, 59);
             this.btnCrear_carpeta.TabIndex = 9;
             this.btnCrear_carpeta.UseVisualStyleBackColor = true;
+            this.btnCrear_carpeta.Click += new System.EventHandler(this.btnCrear_carpeta_Click);
             // 
             // btnCompilar
             // 
@@ -340,12 +344,13 @@
             this.Controls.Add(this.btnNuevo);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.control_salida);
-            this.Controls.Add(this.treeView1);
+            this.Controls.Add(this.tree_view);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.menuStrip1);
             this.MainMenuStrip = this.menuStrip1;
             this.Name = "Form1";
             this.Text = "Form1";
+            this.Load += new System.EventHandler(this.Form1_Load);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             this.control_salida.ResumeLayout(false);
@@ -370,7 +375,7 @@
         private System.Windows.Forms.ToolStripMenuItem codigoCompartidoToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem reportesToolStripMenuItem;
         private System.Windows.Forms.Panel panel1;
-        private System.Windows.Forms.TreeView treeView1;
+        private System.Windows.Forms.TreeView tree_view;
         private System.Windows.Forms.TabControl control_salida;
         private System.Windows.Forms.TabPage tabPage3;
         private System.Windows.Forms.TabPage tabPage4;

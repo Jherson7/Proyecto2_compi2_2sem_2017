@@ -157,7 +157,9 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             var AUXILIAR_INSTANCIA = new NonTerminal("instance");
             var SENTENCIA_HEAD = new NonTerminal("HEAD");
             var HEREDA = new NonTerminal("HEREDA");
-
+            var SENTENCIAS_THIS = new NonTerminal("SENT_THIS");
+            var SENTENCIAS_THIS2 = new NonTerminal("SENT_THIS");
+            var ESTE2 = new NonTerminal("ESTE");
 
 
             this.Root = INICIO;
@@ -230,7 +232,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             AUXILIAR_INSTANCIA.Rule =  apar + cpar
                                      | apar + PARAMETROS2 + cpar;
 
-            ESTE.Rule = ToTerm("este") + ToTerm(".") + SENTENCIA;
+            ESTE.Rule = ToTerm("este") + ToTerm(".") + SENTENCIAS_THIS + ppt;
 
             ASIGNACION.Rule = id + ToTerm("=") + EXP;//PRODUCCION PARA LA ASIGNACION
 
@@ -262,6 +264,17 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                              
                             //| LLAMAR
                             ;
+
+            SENTENCIAS_THIS.Rule = asigacion_objeto
+                                 | ASIGNACION
+                                 | ASIG_ARRAY;
+
+            ESTE2.Rule = ToTerm("este") + ToTerm(".") + SENTENCIAS_THIS2;
+
+
+            SENTENCIAS_THIS2.Rule = id
+                                 | ACCESO_ARRAY
+                                 | ACCESO_OBJ;
 
             LLAMAR.Rule = llamar + apar + tstring + cpar + ppt;
 
@@ -357,6 +370,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                         | CALLFUN
                         | LLAVE
                         | ACCESO_ARRAY
+                        | ESTE2
                         //aqui tambien puede ver este
                        ;
 
@@ -392,10 +406,10 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
 
             this.MarkPunctuation("(", ")", ";", ":", "{", "}", "=",".",",","[","]", "@sobrescribir");
-            this.MarkPunctuation("repetir","until","imprimir","principal","x","retornar");
+            this.MarkPunctuation("repetir","until","imprimir","principal","x","retornar","este");
             this.MarkPunctuation("Si", "Sino", "Sino Si", "Mientras", "Hacer","para","llamar","clase","hereda_de");
             //this.MarkPunctuation("whilex", "whilexorand", "repeat", "count", "loop","create","Principal");
-            this.MarkTransient(SENTENCIA, CONDFOR, BODY,ARRAY,ACCESO,CASILLA);
+            this.MarkTransient(SENTENCIA, CONDFOR, BODY,ARRAY,ACCESO,CASILLA,SENTENCIAS_THIS);
 
         }
 

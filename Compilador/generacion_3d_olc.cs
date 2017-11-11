@@ -27,7 +27,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         private Boolean dentro_de_constructor;
         private string salida_de_errores;
         private LinkedList<String> salida_metodos = new LinkedList<string>();
-
+        private Boolean este;
 
 
         public generacion_3d_olc()
@@ -51,6 +51,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
            
             c3d.Append(salida_de_errores + ": \n throw[] //para todos los null pointer exeptions\n");
             c3d.Append(terminar_ejecucion + ":    //Etiqueta para terminar la ejecucion del programa\n");
+            this.este = false;
         }
 
         private void aumentarAmbito(String ambito)
@@ -324,8 +325,42 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 case "RETORNO":
                     ejecutarRETORNO(nodo, ambito);
                     break;
-                default:
+                case "DECREMENTOS":
+                    ejecutarDECREMETOS(nodo, ambito);
                     break;
+                case "ESTE":
+                    ejecutarSENTENCIAS_THIS(nodo, ambito);
+                    break;
+                default:
+                    MessageBox.Show("ME FALTA: " + nodo.Term.Name.ToString());
+                    break;
+            }
+        }
+
+        private void ejecutarSENTENCIAS_THIS(ParseTreeNode nodo, string ambito)
+        {
+            //throw new NotImplementedException();
+            this.este = true;
+            ejecutar(nodo.ChildNodes[0], ambito);
+            this.este = false;
+
+        }
+
+        private void ejecutarDECREMETOS(ParseTreeNode nodo, string ambito)
+        {
+            string nombre = nodo.ChildNodes[0].Token.Text;
+            nodoTabla var = get_variable(nombre, ambito);
+            if (var != null)
+            {
+                string signo = "+";
+                if (nodo.ChildNodes[1].Token.Text.Equals("--"))
+                    signo = "-";
+                string tmp = Temp();
+                tmp = poner_temp_en_pos(var.pos.ToString());//aqui si es una variable global... que se hace?
+                string tmp1 = Temp();
+                obtener_desde_stak(tmp1, tmp);
+                escribir_operacion_asignacio(tmp1, tmp1, signo, "1");
+                put_to_stack(tmp, tmp1);
             }
         }
 
@@ -1103,21 +1138,32 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 String termino = nodo.ChildNodes[0].Term.Name;
                 switch (termino)
                 {
-                    //           case "EXP": return evaluarEXPRESION(nodo.ChildNodes[0]);
+                    case "EXP": return evaluarEXPRESION(nodo.ChildNodes[0]);
                     case "numero": return new nodo3d("num", nodo.ChildNodes[0].Token.Text);
                     case "tstring": return evaluarString(nodo.ChildNodes[0]);
                     case "id": return evaluarID(nodo.ChildNodes[0]);
                     case "false": return new nodo3d("bool","0");
                     case "true":  return new nodo3d("bool", "1");
                     case "tchar": return evaluarChar(nodo.ChildNodes[0]);
-                        //case "NULL": return new nodo3d("NULL", "-300992");
                     case "ACCESO_ARRAY": return acceso_arreglo(nodo.ChildNodes[0]);                                                    /*     */
                     case "CALLFUN": return ejecutarCALLFUN(nodo.ChildNodes[0]);
+                    case "ESTE":   return evaluarESTE(nodo.ChildNodes[0]);
                         //case "ACCESO_OBJ": return acceso_a_objectos(nodo.ChildNodes[0]);
+                        //case "NULL": return new nodo3d("NULL", "-300992");
+
                 }
             }
             #endregion
             return new nodo3d();//error
+        }
+
+        private nodo3d evaluarESTE(ParseTreeNode nodo)
+        {
+            //throw new NotImplementedException();
+            this.este = true;
+            nodo3d actual = evaluarEXPRESION(nodo.ChildNodes[0]);
+            this.este = false;
+            return actual;
         }
 
         private nodo3d acceso_arreglo(ParseTreeNode nodo)
@@ -1134,8 +1180,6 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                         //agregamos las condiciones para que no acceda
                         ParseTreeNode parametros = nodo.ChildNodes[1];
 
-                        
-
                         for (int p = 0; p < var.dimArray.Count; p++)
                         {
                             nodo3d val_aux = evaluarEXPRESION(parametros.ChildNodes[p]);
@@ -1148,8 +1192,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                             else
                             {
                                 agregar_error("No se permiten accesos que no sean de tipo entero", parametros);
-                                //agregar error al ambito actual
-                                return new nodo3d();
+                                return new nodo3d();//agregar error al ambito actual
                             }
                         }
 
@@ -1174,7 +1217,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                                 tmpant = tmp1;
                         }
                         string p_destino = Temp();
-                        if (var.ambito.ToUpper().Contains("GLOBAL")) { 
+                        if (var.ambito.ToUpper().Contains("GLOBAL")||this.este) { 
                             string global = Temp();
                             escribir_operacion_asignacio(global, var.pos.ToString(), "+", "0");
                             obtener_desde_stak(p_destino, global);
@@ -1184,14 +1227,14 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                             escribir_operacion_asignacio(tmp_r, "P", "+", var.pos.ToString());
                             obtener_desde_stak(p_destino, tmp_r);
                         }
-                            string aux = Temp();
-                            escribir_operacion_asignacio(aux, p_destino, "+", tmpant);
-                            string retorno = Temp();
-                            obtener_de_heap(retorno, aux);
-                            string type = retornar_tipo_string(var.tipo);
-                        
-                            return new nodo3d(type, retorno);
-                        }
+                        string aux = Temp();
+                        escribir_operacion_asignacio(aux, p_destino, "+", tmpant);
+                        string retorno = Temp();
+                        obtener_de_heap(retorno, aux);
+                        string type = retornar_tipo_string(var.tipo);
+
+                        return new nodo3d(type, retorno);
+                    }
                     else
                         agregar_error("No son las mismas dimensiones para acceder al array", nodo);
                 }
@@ -1537,7 +1580,10 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                     if (var.estado)
                     {
                         string tmp = Control3d.getTemp();
-                        escribir_operacion_asignacio(tmp, "P", "+", var.pos.ToString());
+                        if(this.este||var.ambito.ToUpper().Equals("GLOBAL"))
+                            escribir_operacion_asignacio(tmp, "0", "+", var.pos.ToString());
+                        else
+                            escribir_operacion_asignacio(tmp, "P", "+", var.pos.ToString());
                         string tmp2 = Control3d.getTemp();
                         obtener_desde_stak(tmp2, tmp);
                         string type = retornar_tipo_string(var.tipo);
@@ -1724,20 +1770,31 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             
 
             Boolean val = false;
-            if (dentro_de_constructor && ambito.ToUpper().Contains("GLOBAL"))
-                val = true;
-            if (val) {
-                string tmp_aux = Control3d.getTemp();
-                string tmp_heap = Control3d.getTemp();
-                escribir_operacion_asignacio(tmp, "P", "+", "0");
-                obtener_desde_stak(tmp_aux, tmp);
-                escribir_operacion_asignacio(tmp_heap, tmp_aux, "+", pos);
-                asignar_heap(tmp_heap, valor);//por si es asignacion hacia un objeto 
-            }
-            else {
-                escribir_operacion_asignacio(tmp, "P", "+", pos);
+            if (this.este)
+            {
+                escribir_operacion_asignacio(tmp, "0", "+", pos);
                 put_to_stack(tmp, valor);
             }
+            else
+            {
+                if (dentro_de_constructor && ambito.ToUpper().Contains("GLOBAL"))
+                    val = true;
+                if (val)
+                {
+                    string tmp_aux = Control3d.getTemp();
+                    string tmp_heap = Control3d.getTemp();
+                    escribir_operacion_asignacio(tmp, "P", "+", "0");
+                    obtener_desde_stak(tmp_aux, tmp);
+                    escribir_operacion_asignacio(tmp_heap, tmp_aux, "+", pos);
+                    asignar_heap(tmp_heap, valor);//por si es asignacion hacia un objeto 
+                }
+                else
+                {
+                    escribir_operacion_asignacio(tmp, "P", "+", pos);
+                    put_to_stack(tmp, valor);
+                }
+            }
+            
         }
 
         private string poner_temp_en_pos(string pos)
@@ -1833,14 +1890,25 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         private nodoTabla get_variable(string nombre, string ambito)
         {
 
-            foreach(ambitos r in lista_ambito)
+            if (this.este)
             {
                 foreach (nodoTabla a in tabla)
                 {
-                    if (a.nombre.Equals(nombre) && a.ambito.Equals(r.nombre))
+                    if (a.nombre.Equals(nombre) && a.ambito.ToUpper().Equals("GLOBAL"))
                         return a;
                 }
             }
+            else {
+                foreach (ambitos r in lista_ambito)
+                {
+                    foreach (nodoTabla a in tabla)
+                    {
+                        if (a.nombre.Equals(nombre) && a.ambito.Equals(r.nombre))
+                            return a;
+                    }
+                }
+            }
+            
             return null;
         }
 

@@ -19,6 +19,7 @@ namespace Proyecto2_compi2_2sem_2017
 
         public static  int cont_tree=0;
         public static int cont_olc= 0;
+
         public Form1()
         {
             InitializeComponent();

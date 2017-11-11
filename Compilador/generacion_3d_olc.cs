@@ -1,4 +1,6 @@
-﻿using System;
+﻿
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -24,6 +26,9 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         private LinkedList<int> tamanio_ambitos;
         private Boolean dentro_de_constructor;
         private string salida_de_errores;
+        private LinkedList<String> salida_metodos = new LinkedList<string>();
+
+
 
         public generacion_3d_olc()
         {
@@ -36,6 +41,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             this.lista_ambito.AddFirst(new ambitos("Global"));
             terminar_ejecucion = Control3d.getEti();
             salida_de_errores = Etiqueta();
+            salida_metodos.AddFirst(salida_de_errores);//por si viene un return en el principal
             this.tamanio_ambitos = new LinkedList<int>();//para llevar los tamanios de los ambitos
             //creo que debo aumentarle el ambito
             iniciar_variables_globales();
@@ -47,7 +53,6 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             c3d.Append(terminar_ejecucion + ":    //Etiqueta para terminar la ejecucion del programa\n");
         }
 
-        
         private void aumentarAmbito(String ambito)
         {
             ambitos nuevo = new Compilador.ambitos(ambito);
@@ -73,7 +78,6 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         {
             this.lista_c3d.RemoveFirst();
         }
-
 
         private void iniciar_variables_globales()
         {
@@ -127,7 +131,6 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 c3d.Append(lista_c3d.First().codigo);
             //else manejar error 
         }
-
 
         private void llenar_casillas_arreglo(ParseTreeNode nodo,string tmp)
         {
@@ -205,6 +208,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 foreach (metodo a in lista)
                 {
                     aumentarAmbito(a.nombre + "_" + a.noMetodo);
+                    salida_metodos.AddFirst(Etiqueta());
                     aumentar_3d();
                     nodoTabla met = retornar_metodo(a.nombre + "_" + a.noMetodo);
                     tamanio_ambitos.AddFirst(met.tam);
@@ -213,8 +217,9 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
                     foreach (ParseTreeNode sent in a.sentencia.ChildNodes)
                         ejecutar(sent, a.nombre + "_" + a.noMetodo);
+                    escribir3d("\t"+salida_metodos.First() + ":", "//salida del metodo: " + a.nombre + "_" + a.noMetodo + "\n"  );
 
-                    escribir3d("}", "Fin de traduccion del metodo: " + a.noMetodo);
+                    escribir3d("}", "Fin de traduccion del metodo: " + a.nombre + "_" + a.noMetodo);
 
                     if (lista_c3d.First().estado)
                     {
@@ -225,11 +230,12 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                     disminuirAmbito();
                     disminuir_3d();
                     tamanio_ambitos.RemoveFirst();
+                    salida_metodos.RemoveFirst();
                 }
                
             }
         }
-
+        //ver si en la traduccion de las clases tambien tengo que traducir los metodos....
         private void traducir_clases()
         {
             lista_clases = Control3d.getListaClase();
@@ -315,9 +321,28 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                     break;
                 case "WHILEX"://me falta guardar las variables en la tabla de sym
                     break;
+                case "RETORNO":
+                    ejecutarRETORNO(nodo, ambito);
+                    break;
                 default:
                     break;
             }
+        }
+
+        private void ejecutarRETORNO(ParseTreeNode nodo, string ambito)
+        {
+            //throw new NotImplementedException();
+            if (nodo.ChildNodes.Count > 0)
+            {
+                nodo3d ret = evaluarEXPRESION(nodo.ChildNodes[0]);
+                if (ret.tipo > 1)
+                {
+                    put_to_stack("P", ret.val);
+                    //aqui podria preguntar si el tipo de retorno es el mismo que el del metodo
+                }else
+                    agregar_error("evaluacion de retorno arroja valor nulo ALERTA!", nodo);
+            }
+            goto_etiqueta(salida_metodos.First());
         }
 
         private void ejecutarAsignar_arreglo(ParseTreeNode nodo, string ambito)
@@ -568,7 +593,8 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                         string ret = Temp();
                         obtener_desde_stak(ret, "P");
                         escribir_operacion_asignacio("P", "P", "-", tamanio_ambitos.First().ToString());
-                        retorno = new nodo3d(metodo.tipo, ret);
+                        string type = retornar_tipo_string(metodo.tipo);
+                        retorno = new nodo3d(type, ret);
                     }else
                         escribir_operacion_asignacio("P", "P", "-", tamanio_ambitos.First().ToString());
 
@@ -634,7 +660,8 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                         string ret = Control3d.getTemp();
                         obtener_desde_stak(ret, "P");
                         escribir_operacion_asignacio("P", "P", "-", tamanio_ambitos.First().ToString());
-                        return new nodo3d(r.tipo, ret);
+                        string type = retornar_tipo_string(r.tipo);
+                        return new nodo3d(type, ret);
                         //aumentar ambito
                         //asingar retorno
                         //reducir ambito
@@ -734,7 +761,8 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         private void ejecutarIMPRIMIR(ParseTreeNode nodo)
         {
             nodo3d res= evaluarEXPRESION(nodo.ChildNodes[0]);
-            if (res.tipo_valor.Equals("num"))
+            string tipo = retornar_tipo_string(res.tipo_valor);
+            if (tipo.Equals("num"))
             {
                 res = convertir_int_en_strig(res.val);
             }
@@ -771,7 +799,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
             escribir3d(val.etv + ":", "condicion verdadera de if");
             ejecutar(nodo.ChildNodes[1], nuevo_ambito);
-            escribir3d("goto " + salida, "para que no ejecute las sentencias del else");
+            escribir3d("\tgoto " + salida, "para que no ejecute las sentencias del else");
             escribir3d(val.etf + ":", "condicion falsa de if");
             
             //aqui tengo que ver como realizo toda la lista el elseif
@@ -782,7 +810,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 {//viene if else
                     ejecutar(nodo.ChildNodes[2].ChildNodes[0], nuevo_ambito);
                 }
-                escribir3d(salida + ":", "para que no ejecute las sentencias del else");
+                escribir3d("\t"+salida + ":", "para que no ejecute las sentencias del else");
             }
             #endregion
             
@@ -799,7 +827,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
                     escribir3d(val.etv + ":", "condicion verdadera de else_if");
                     ejecutar(elif.ChildNodes[1], nuevo_ambito);
-                    escribir3d("goto " + salida, "para que no ejecute las sentencias del else_if");
+                    escribir3d("\tgoto " + salida, "para que no ejecute las sentencias del else_if");
                     escribir3d(val.etf + ":", "condicion falsa de else_if");
 
                 }
@@ -1038,15 +1066,12 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                     case ">=":  return evaluarMAYORIGUAL(nodo.ChildNodes[0], nodo.ChildNodes[2]);
                     case "<=":  return evaluarMENORIGUAL(nodo.ChildNodes[0], nodo.ChildNodes[2]);
                     case "<":   return evaluarMENOR(nodo.ChildNodes[0], nodo.ChildNodes[2]);
-
-                             //case "|&": return evaluarXOR(nodo.ChildNodes[0], nodo.ChildNodes[2]);
-                             /*  
-                               case "/": return evaluarDIV(nodo.ChildNodes[0], nodo.ChildNodes[2]);
-                               case "^": return evaluarPOT(nodo.ChildNodes[0], nodo.ChildNodes[2]);
-                               case "&?": return evaluarNAND(nodo.ChildNodes[0], nodo.ChildNodes[2]);
-                               case "|?": return evaluarNOR(nodo.ChildNodes[0], nodo.ChildNodes[2]);
-
-                               */
+                  /*case "|&": return evaluarXOR(nodo.ChildNodes[0], nodo.ChildNodes[2]);
+                    case "/": return evaluarDIV(nodo.ChildNodes[0], nodo.ChildNodes[2]);
+                    case "^": return evaluarPOT(nodo.ChildNodes[0], nodo.ChildNodes[2]);
+                    case "&?": return evaluarNAND(nodo.ChildNodes[0], nodo.ChildNodes[2]);
+                    case "|?": return evaluarNOR(nodo.ChildNodes[0], nodo.ChildNodes[2]);
+                    */
                 }
             }
             #endregion
@@ -1054,6 +1079,8 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             #region "2 hijos"
             if (nodo.ChildNodes.Count == 2)
             {
+                MessageBox.Show("nodo con dos hijos!!");
+                Console.Write("j");
                 /*   if (nodo.Term.Name == "ACCESO_ARRAY")
                        return acceso_arreglo(nodo);
                    if (nodo.ChildNodes[0].Term.Name.Equals("!"))
@@ -1085,7 +1112,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                     case "tchar": return evaluarChar(nodo.ChildNodes[0]);
                         //case "NULL": return new nodo3d("NULL", "-300992");
                     case "ACCESO_ARRAY": return acceso_arreglo(nodo.ChildNodes[0]);                                                    /*     */
-                        //case "CALLFUN": return ejecutarCallMet(nodo.ChildNodes[0], true);
+                    case "CALLFUN": return ejecutarCALLFUN(nodo.ChildNodes[0]);
                         //case "ACCESO_OBJ": return acceso_a_objectos(nodo.ChildNodes[0]);
                 }
             }

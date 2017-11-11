@@ -25,37 +25,40 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
         private LinkedList<ambitos_llamadas> ambitos_llamadas;
         private int ptr = 0;
         public StringBuilder salida;
-        private Dictionary<string, double> lista_actual;
 
         public Interprete3d()
         {
             this.stack = new double[10000];
             this.heap = new double[100000];
             this.lista_nodos = new LinkedList<nodo_ejecucion>();
-            this.lista_temporales = new Dictionary<string, double>();
+            //this.lista_temporales = new Dictionary<string, double>();
             this.lista_metodos = new Dictionary<string,metodo3d>();
             this.lista_etiquetas = new Dictionary<string, int>();
             this.salida = new StringBuilder();
             this.lista_ambitos = new LinkedList<Dictionary<string, double>>();
             this.ambitos_llamadas = new LinkedList<ambitos_llamadas>();
 
+            this.lista_ambitos.AddFirst(new Dictionary<string, double>());
+            this.lista_temporales = lista_ambitos.First();
             lista_temporales.Add("P", 0);
             lista_temporales.Add("H", 0);
+
         }
 
 
         private void aumentar_ambito(ambitos_llamadas nuevo)
         {
             this.ambitos_llamadas.AddFirst(nuevo);
+            //aumento ambitos de variables temporales
             this.lista_ambitos.AddFirst(new Dictionary<string, double>());
-            this.lista_actual = lista_ambitos.First();
+            this.lista_temporales = lista_ambitos.First();
 
         }
 
         private void disminuir_ambito()
         {
             this.lista_ambitos.RemoveFirst();
-            this.lista_actual = lista_ambitos.First();
+            this.lista_temporales = lista_ambitos.First();
         }
 
         private void setPtr(int val)
@@ -199,6 +202,7 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
             //throw new NotImplementedException();
             int actual = ambitos_llamadas.First().inicio;
             ambitos_llamadas.RemoveFirst();
+            disminuir_ambito();
             setPtr(actual);
         }
 
@@ -266,7 +270,12 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
             double res = evaluarEXPRESION(raiz.ChildNodes[1]);
             int pos = Convert.ToInt32(res);
             double val = stack[pos];
-            if (lista_temporales.ContainsKey(tmp))
+
+            if (tmp.Equals("P") || tmp.Equals("H"))
+            {
+                lista_ambitos.Last().Remove(tmp);
+                lista_ambitos.Last().Add(tmp, val);
+            }else if (lista_temporales.ContainsKey(tmp))
             {
                 lista_temporales.Remove(tmp);
                 lista_temporales.Add(tmp, val);
@@ -309,7 +318,12 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
         {
             string tmp = raiz.ChildNodes[0].Token.Text;
             double res = evaluarEXPRESION(raiz.ChildNodes[1]);
-            if (lista_temporales.ContainsKey(tmp))
+
+            if (tmp.Equals("P") || tmp.Equals("H"))
+            {
+                lista_ambitos.Last().Remove(tmp);
+                lista_ambitos.Last().Add(tmp,res);
+            }else if (lista_temporales.ContainsKey(tmp))
             {
                 lista_temporales.Remove(tmp);
                 lista_temporales.Add(tmp, res);
@@ -518,11 +532,19 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
         {
             string tmp = nodo.Token.Text;
 
-            double res = -1;
-            if (lista_temporales.ContainsKey(tmp))
+            double res = -3092;
+
+            if (tmp.Equals("H") || tmp.Equals("P"))
             {
-                lista_temporales.TryGetValue(tmp, out res);
+                lista_ambitos.Last().TryGetValue(tmp, out res);
             }
+            else
+            {
+                if (lista_temporales.ContainsKey(tmp))
+                    lista_temporales.TryGetValue(tmp, out res);
+            }
+            if (res == -3092)
+                MessageBox.Show("no se encontro la variable: " + tmp);
             return res;
         }
 

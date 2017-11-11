@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Proyecto2_compi2_2sem_2017.Control3D;
 
 namespace Proyecto2_compi2_2sem_2017.Compilador
 {

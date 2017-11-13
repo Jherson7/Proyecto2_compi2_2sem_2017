@@ -12,6 +12,7 @@ using Proyecto2_compi2_2sem_2017.Compilador;
 using Proyecto2_compi2_2sem_2017.Control3D;
 using Proyecto2_compi2_2sem_2017.Ejecucion3D;
 using System.IO;
+using Proyecto2_compi2_2sem_2017.UML;
 
 namespace Proyecto2_compi2_2sem_2017
 {
@@ -33,23 +34,22 @@ namespace Proyecto2_compi2_2sem_2017
 
         private void btnCompilar_Click(object sender, EventArgs e)
         {
-            //try
-            //{
+
+            if (tabControl1.SelectedIndex > 0) {
                 Control3d.iniciar_controlador();
-                Control3d.limpiar();
                 pagina nuevo = (pagina)tabControl1.TabPages[tabControl1.SelectedIndex];
                 string contenido = nuevo.contenido.Text;
                 Interprete inter = new Interprete();
                 inter.analizar(contenido);
-                RichTextBox aux = (RichTextBox) control_salida.TabPages[1].Controls[0];
+                RichTextBox aux = (RichTextBox)control_salida.TabPages[1].Controls[0];
                 aux.Text = Convert.ToString(inter.errores);
-                foreach(errores err in Control3d.getErrores())
-            {
-                aux.AppendText(err.tipo + "  |  " + err.descripcion + "  |  " + err.linea + "  |  " + err.columna+"\n");
+                foreach (errores err in Control3d.getErrores())
+                {
+                    aux.AppendText(err.tipo + "  |  " + err.descripcion + "  |  " + err.linea + "  |  " + err.columna + "\n");
+                }
+                RichTextBox c3d = (RichTextBox)control_salida.TabPages[3].Controls[0];
+                c3d.Text = Convert.ToString(Control3d.retornarC3D().ToString());
             }
-            RichTextBox c3d = (RichTextBox)control_salida.TabPages[3].Controls[0];
-            c3d.Text = Convert.ToString(Control3d.retornarC3D().ToString());
-
         }
 
         private void btnNuevo_Click(object sender, EventArgs e)
@@ -101,6 +101,15 @@ namespace Proyecto2_compi2_2sem_2017
                 tipo = "tree";
             int pos = abrir.FileName.LastIndexOf("\\")+1;
             string nombre = abrir.FileName.Substring(abrir.FileName.LastIndexOf("\\", abrir.FileName.Length)).Replace("\\","");
+
+            foreach (TabPage item in tabControl1.TabPages)
+            {
+                if (item.Text.Equals(nombre)) {
+                    tabControl1.SelectTab(item);
+                    return;
+                }
+            }
+
             pagina pag = new pagina(tipo, contenido, nombre,abrir.FileName);
             
             tabControl1.TabPages.Add(pag);
@@ -218,6 +227,20 @@ namespace Proyecto2_compi2_2sem_2017
                 if (ruta.EndsWith("olc") || ruta.EndsWith("tree"))
                 {
                     ruta = ruta.Replace("\\\\", "\\");
+
+                    
+                    string nombre = ruta.Substring(ruta.LastIndexOf("\\", ruta.Length)).Replace("\\", "");
+
+                    foreach (TabPage item in tabControl1.TabPages)
+                    {
+                        if (item.Text.Equals(nombre))
+                        {
+                            tabControl1.SelectTab(item);
+                            return;
+                        }
+                    }
+
+
                     System.IO.StreamReader sr = new System.IO.StreamReader(ruta, System.Text.Encoding.UTF8);
                     String contenido = sr.ReadToEnd();
                     Console.WriteLine(contenido);
@@ -226,7 +249,7 @@ namespace Proyecto2_compi2_2sem_2017
                     string tipo = "olc";
                     if (ruta.EndsWith("tree"))
                         tipo = "tree";
-                    string nombre = ruta.Substring(ruta.LastIndexOf("\\", ruta.Length)).Replace("\\", "");
+
                     pagina pag = new pagina(tipo, contenido, nombre, ruta);
 
                     tabControl1.TabPages.Add(pag);
@@ -236,6 +259,19 @@ namespace Proyecto2_compi2_2sem_2017
             
         }
 
+        private void button1_Click(object sender, EventArgs e)
+        {
+            if (tabControl1.SelectedIndex > 0)
+            {
+                tabControl1.TabPages.RemoveAt(tabControl1.SelectedIndex);
+                tabControl1.SelectTab(tabControl1.TabPages.Count - 1);
+            }
+        }
 
+        private void aToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            uml_principal um = new uml_principal();
+            um.ShowDialog();
+        }
     }
 }

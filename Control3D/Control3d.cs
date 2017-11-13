@@ -30,25 +30,9 @@ namespace Proyecto2_compi2_2sem_2017.Control3D
 
         public static void iniciar_controlador()
         {
-            if (tabla == null)
-                tabla = new tablaSimbolos();
-            if (lista_errores == null)
-                lista_errores = new LinkedList<errores>();
-            if(c3d==null)
-                c3d= new StringBuilder();
-            if (contador_eti == -1)
-                contador_eti = 0;
-            if (contador_temp == -1)
-                contador_temp = 0;
-        }
-
-        public static void limpiar()
-        {
-            tabla.Clear();
-            //lista_clases.Clear();
-            //lista_metodos.Clear();
-            lista_errores.Clear();
-            c3d.Clear();
+            tabla = new tablaSimbolos();
+            lista_errores = new LinkedList<errores>();
+            c3d= new StringBuilder();
             contador_eti = 0;
             contador_temp = 0;
         }

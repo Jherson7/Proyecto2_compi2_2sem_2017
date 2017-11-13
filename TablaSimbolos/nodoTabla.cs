@@ -79,5 +79,11 @@ namespace Proyecto2_compi2_2sem_2017.TablaSimbolos
             this.exp = ex;
         }
 
+
+        public override string ToString()
+        {
+            return nombre + ", " + rol;
+        }
+
     }
 }

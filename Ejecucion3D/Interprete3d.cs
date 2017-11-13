@@ -356,7 +356,17 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
             #region "2 hijos"
             if (nodo.ChildNodes.Count == 2)
             {
-                if (nodo.ChildNodes[0].Term.Name.Equals("!")) { }
+                string signo = nodo.ChildNodes[0].Term.Name;
+                if (signo.Equals("!")) {
+
+                }else if (signo.Equals("-"))
+                {
+                    double aux = evaluarEXPRESION(nodo.ChildNodes[1]);
+                    return aux * -1;
+                }else
+                {
+                    MessageBox.Show("Falta: " + signo);
+                }
                     //return evaluarNOT(nodo.ChildNodes[1]);
 
             }
@@ -370,15 +380,12 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
                 String termino = nodo.ChildNodes[0].Term.Name;
                 switch (termino)
                 {
-
                     case "id": return evaluarID(nodo.ChildNodes[0]);
                     case "numero": return Convert.ToDouble((nodo.ChildNodes[0].Token.Text.Replace(".",",")));
                     case "EXP": return evaluarEXPRESION(nodo.ChildNodes[0]);
                    // case "tstring": return nodo.ChildNodes[0].Token.Text.Replace("\"", "");
                     //case "tchar": return nodo.ChildNodes[0].Token.Text.Replace("'", "");
                     default: break;
-
-
                 }
             }
             #endregion

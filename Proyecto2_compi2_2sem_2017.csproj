@@ -72,6 +72,12 @@
     <Compile Include="Editor\tipo_archivo.Designer.cs">
       <DependentUpon>tipo_archivo.cs</DependentUpon>
     </Compile>
+    <Compile Include="Editor\uml_principal.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Editor\uml_principal.Designer.cs">
+      <DependentUpon>uml_principal.cs</DependentUpon>
+    </Compile>
     <Compile Include="Ejecucion3D\Gramatica3d.cs" />
     <Compile Include="Ejecucion3D\Interprete3d.cs" />
     <Compile Include="Form1.cs">
@@ -85,8 +91,21 @@
     <Compile Include="TablaSimbolos\metodo.cs" />
     <Compile Include="TablaSimbolos\nodoTabla.cs" />
     <Compile Include="TablaSimbolos\tablaSimbolos.cs" />
+    <Compile Include="UML\clase_uml.cs" />
+    <Compile Include="UML\crear_clase.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UML\crear_clase.Designer.cs">
+      <DependentUpon>crear_clase.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UML\metodo_uml.cs" />
+    <Compile Include="UML\parametros.cs" />
+    <Compile Include="UML\variable_uml.cs" />
     <EmbeddedResource Include="Editor\tipo_archivo.resx">
       <DependentUpon>tipo_archivo.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Editor\uml_principal.resx">
+      <DependentUpon>uml_principal.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
@@ -100,6 +119,9 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="UML\crear_clase.resx">
+      <DependentUpon>crear_clase.cs</DependentUpon>
+    </EmbeddedResource>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

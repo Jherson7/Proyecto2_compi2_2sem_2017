@@ -75,9 +75,10 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             //Graficador g = new Graficador();
            // g.graficar(arbol);
             SentenciasGlobales(raiz);
-            iniciar();
-            traducir_clases();
-            //mostrarTablaSimbolos();
+            //iniciar();
+            iniciar_traduccion_clases();
+            
+            mostrarTablaSimbolos();
             Control3d.setListaClases(lista_clases);//seteo las clases
             Control3d.setListaMetodos(metodos);//seteo los metodos para traducirlos
             Control3d.set_clase_actual(clase_actual);
@@ -85,7 +86,182 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             //ejecutar(raiz);
         }
 
+        private void iniciar_traduccion_clases()
+        {
+            traducir_clases(clase_actual,true);
+            foreach (KeyValuePair<string, objeto_clase> Par in lista_clases)
+            {
+                if (Par.Value == clase_actual)
+                    continue;
+                string clase = Par.Key;
+                objeto_clase aux = Par.Value;
+                traducir_clases(aux,false);
+            }
+        }
+
         #endregion
+
+
+
+
+        private void traducir_clases(objeto_clase aux, Boolean main)
+        {
+            nodoTabla nuevo = new nodoTabla(aux.visibilidad, "CLASE", aux.nombre, "CLASE", -1, 0, "Global");
+            tabla.AddLast(nuevo);
+
+            //variable
+            #region "TRADUCIR LAS VARIABLE GLOBALES DE LAS CLASES"
+            int pos = 0;
+            //agregamos la referencia del this y del super
+            nodoTabla este = new nodoTabla("privado", "THIS", "this", "referencia", 0, 1, aux.nombre + "_Global");
+            tabla.AddLast(este);
+            nodoTabla super = new nodoTabla("privado", "SUPER", "super", "referencia", 1, 1, aux.nombre + "_Global");
+            tabla.AddLast(super);
+
+            /*antiguo*/ //int posActual = tabla.Count - 1;
+            int posActual = tabla.Count;/*antiguo*/
+            #region TRADUCCION DE VARIABLES
+            foreach (Variable a in aux.variables)
+            {
+                int tama = 1;
+                if (a.casilla != null)
+                {
+                    foreach (int x in a.casilla)
+                        tama *= x;
+                    nodoTabla variable = new nodoTabla(a.visibilidad, a.tipo, a.nombre, "var_array", pos++, tama, aux.nombre, a.casilla, a.valor);
+                    tabla.AddLast(variable);
+                    //tabla.posGlobal += tam;//me falta cuando sea
+                }
+                else
+                {
+                    nodoTabla variable = new nodoTabla(a.visibilidad, a.tipo, a.nombre, "var", pos++, 1, aux.nombre + "_Global");
+                    tabla.AddLast(variable);
+                    variable.setExp(a.valor);
+                    //tabla.posGlobal++;//me falta cuando sea
+                }
+
+            }
+
+            #endregion
+
+
+            int tam = 0;
+            for (; posActual < tabla.Count; posActual++)
+                tam += tabla.ElementAt(posActual).tam;
+            nuevo.tam = tam;
+            #endregion
+            //los constructores
+            #region "TRADUCCION DE LOS CONSTRUCTORES"
+            foreach (metodo a in aux.constructores)
+            {
+                //nuevo = new nodoTabla(a.visibilidad, a.tipo, aux.nombre + "_" + a.nombre + "_" + a.noMetodo, "CONSTRUCTOR", -1, 0, aux.nombre + "_Global");
+                nuevo = new nodoTabla(a.visibilidad, a.tipo, aux.nombre + "_Init_" + a.noMetodo, "CONSTRUCTOR", -1, 0, aux.nombre + "_Global");
+                //
+                tabla.AddLast(nuevo);
+                posActual = tabla.Count;// - 1;
+
+                nuevo.setNoMetodo(a.noMetodo);
+                //aumentarAmbito(aux.nombre + "_" + a.nombre + "_" + a.noMetodo);//ver si ocupo concatenarle el _noMetodo
+                aumentarAmbito(aux.nombre + "_Init_" + a.noMetodo);//ver si ocupo concatenarle el _noMetodo
+                este = new nodoTabla("privado", "THIS", "this", "referencia", 0, 1, aux.nombre + "_Init_" + a.noMetodo);
+                tabla.AddLast(este);
+                super = new nodoTabla("privado", "SUPER", "super", "referencia", 1, 1, aux.nombre + "_Init_" + a.noMetodo);
+                tabla.AddLast(super);
+
+
+                //en la posicion 0 del constructor va a ir la referencia
+                //de la variable creada en el heap
+                //entonces si se declaran mas variables dentro del constructor
+                //no afectaran la referencia
+                posicion.AddFirst(2);
+                //GUARDO LOS PARAMETROS
+                foreach (ParseTreeNode p in a.parametros.ChildNodes)
+                {
+                    string nombre = p.ChildNodes[1].Token.Text;
+                    string tipo = p.ChildNodes[0].ChildNodes[0].Token.Text;
+                    nodoTabla parametro = new nodoTabla("privado", tipo, nombre, "PARAMETRO", posicion.First(), 1, aux.nombre + "_Init_" + a.noMetodo);
+                    tabla.AddLast(parametro);
+                    int x = posicion.First();
+                    posicion.RemoveFirst();
+                    posicion.AddFirst(++x);
+                }
+
+
+                if (!a.nombre.ToUpper().Equals("PRINCIPAL"))
+                    ejecutar(a.sentencia, aux.nombre + "_Init_" + a.noMetodo);//ejecutamos las sentencias
+
+                posicion.RemoveFirst();
+                //recorrer para guardar guardar el tamanio
+                tam = 0;
+                for (; posActual < tabla.Count; posActual++)
+                    tam += tabla.ElementAt(posActual).tam;
+                nuevo.tam = tam;
+                disminuirAmbito();
+            }
+            #endregion
+            //los metodos/funciones
+            #region "TRADUCCION DE LOS METODOS"
+            foreach (metodo a in aux.metodos)
+            {
+                //para agregarlos a tabla de simbolos les voy a poner nombreclase_nombremetodo
+                //nuevo = new nodoTabla(a.visibilidad, a.tipo, a.nombre, "METODO", -1, 0, aux.nombre + "_Global");
+                
+                if (a.nombre.ToUpper().Equals("PRINCIPAL") && !main)
+                    continue;
+                if (a.nombre.ToUpper().Equals("PRINCIPAL") && main)
+                    nuevo = new nodoTabla(a.visibilidad, a.tipo, a.nombre, "METODO", -1, 0, aux.nombre + "_Global");
+                else
+                {
+                    string met = "METODO";
+                    if (a.tipo != "vacio")
+                        met = "FUNCION";
+                    nuevo = new nodoTabla(a.visibilidad, a.tipo, aux.nombre + "_" + a.nombre, met, -1, 0, aux.nombre + "_Global");
+                }
+                tabla.AddLast(nuevo);
+                posActual = tabla.Count;// - 1;
+
+                nuevo.setNoMetodo(a.noMetodo);
+                aumentarAmbito(aux.nombre + "_" + a.nombre);//ver si ocupo concatenarle el _noMetodo
+
+                este = new nodoTabla("privado", "THIS", "this", "referencia", 0, 1, aux.nombre + "_" + a.nombre);
+                tabla.AddLast(este);
+                super = new nodoTabla("privado", "SUPER", "super", "referencia", 1, 1, aux.nombre + "_" + a.nombre);
+                tabla.AddLast(super);
+                posicion.AddFirst(2);
+
+                if (a.tipo != "vacio")
+                {
+                    tabla.AddLast(new nodoTabla("privado", a.tipo, "retorno", "returno", 2, 1, a.nombre + "_" + a.noMetodo));
+                    posicion.RemoveFirst();
+                    posicion.AddFirst(3);
+                }
+
+                foreach (ParseTreeNode p in a.parametros.ChildNodes)
+                {
+                    string nombre = p.ChildNodes[1].Token.Text;
+                    string tipo = p.ChildNodes[0].ChildNodes[0].Token.Text;
+                    nodoTabla parametro = new nodoTabla("privado", tipo, nombre, "PARAMETRO", posicion.First(), 1, aux.nombre + "_" + a.nombre + "_" + a.noMetodo);
+                    tabla.AddLast(parametro);
+                    int x = posicion.First();
+                    posicion.RemoveFirst();
+                    posicion.AddFirst(++x);
+                }
+
+                ejecutar(a.sentencia, aux.nombre + "_" + a.nombre + "_" + a.noMetodo);//ejecutamos las sentencias
+
+                posicion.RemoveFirst();
+                //recorrer para guardar guardar el tamanio
+
+                tam = 0;
+                for (; posActual < tabla.Count; posActual++)
+                    tam += tabla.ElementAt(posActual).tam;
+                nuevo.tam = tam;
+                disminuirAmbito();
+
+            }
+            #endregion
+        }
+
 
         public void SentenciasGlobales(ParseTreeNode raiz)
         {
@@ -280,7 +456,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 }else if (aux.Term.Name.Equals("L_ARRAY")){
                     guardarArreglo(visibilidad, tipo, nombre, raiz.ChildNodes[3]);
                 }else if (aux.Term.Name.Equals("new")){
-                    guardarInstancia(visibilidad, tipo, nombre, raiz.ChildNodes[3].ChildNodes[1].Token.Text,raiz.ChildNodes[3].ChildNodes[2], nombre_clase);
+                    guardarInstancia(visibilidad, tipo, nombre, raiz.ChildNodes[3].ChildNodes[1].Token.Text,raiz.ChildNodes[3].ChildNodes[2], nombre_clase,raiz.ChildNodes[3]);
                 }
                 else//seria una declaracion asignacion
                 {
@@ -348,7 +524,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             //:D
         }
 
-        private void guardarInstancia(string visibilidad, string tipo, string nombre, string tipo2,ParseTreeNode raiz,string ambito)
+        private void guardarInstancia(string visibilidad, string tipo, string nombre, string tipo2,ParseTreeNode raiz,string ambito,ParseTreeNode exp)
         {
             //aqui tendria que ver si la clase existe,
             //si tiene constructor 
@@ -363,37 +539,35 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                     //suponiendo que todo va bien
                     if (comprobar_constructores(clase.constructores, tipo, nombre,tipo2, raiz))
                     {
-                        Variable var = new Variable(visibilidad, tipo, nombre, raiz);
-                        //guardarVariable(var, raiz.Span.Location.Line, raiz.Span.Location.Column);
-                        Boolean a = guardarVariable(var, raiz.Span.Location.Line, raiz.Span.Location.Column);
-                        if (a)
+                        //Variable var = new Variable(visibilidad, tipo, nombre, exp);
+                        //Boolean a = guardarVariable(var, raiz.Span.Location.Line, raiz.Span.Location.Column);
+                        /*if (a)
                         {
                             nodoTabla nuevo = new nodoTabla("local", tipo, nombre, "var", tabla.posGlobal++, 1, "Global");
                             tabla.AddLast(nuevo);
+                            nuevo.setExp(exp);
                             int x = posicion.First();
                             x++;
                             posicion.RemoveFirst();
                             posicion.AddFirst(x);
-                        }
+                        }*/
                     }
                     else
                     {
                         Control3d.agregarError(new Control3D.errores("semantico", raiz.Span.Location.Line, raiz.Span.Location.Column, "No existe constructor que acepte el numero de parametros:" + nombre));
-                        return;
+                        //return;
                     }
                 }else
                 {
                     //agregar error que no se puede instanciar la clase porque no tiene constructores
                     Control3d.agregarError(new Control3D.errores("semantico", raiz.Span.Location.Line, raiz.Span.Location.Column, "No se puede instanciar la variable:  " + nombre +", ya que la clase no tiene constructor"));
-                    return;
+                    //return;
                 }
-                //primero obtener la clase
-                //ver si tiene constructor
-                //comprobar si traer parametros el constructor
-                //ejecutar las sentencias del constructor quizas....
-                //quizas los tipos que se le envian o alguasil
+                //guardo la variable a pesar que haya herrores
+                //esto es nuevo, 
+                Variable var = new Variable(visibilidad, tipo, nombre, exp);
+                guardarVariable(var, raiz.Span.Location.Line, raiz.Span.Location.Column);
             }
-
         }
 
         private void guardar_instancia_local(ParseTreeNode raiz, string ambito)
@@ -596,7 +770,6 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                     nuevo.setExp(a.valor);
                     tabla.posGlobal++;//me falta cuando sea
                 }
-
             }
 
 
@@ -657,123 +830,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             }
         }
 
-        private void traducir_clases()
-        {
-            foreach (KeyValuePair<string, objeto_clase> Par in lista_clases)
-            {
-                //CertBuilder.AppendLine(string.Format("{0}:{1}", Par.Key, Par.Value));
-                if (Par.Value == clase_actual)
-                    continue;
-                string clase = Par.Key;
-                objeto_clase aux = Par.Value;
-
-                nodoTabla nuevo = new nodoTabla(aux.visibilidad, "CLASE", aux.nombre, "CLASE", -1, 0, "Global");
-                tabla.AddLast(nuevo);
-
-                //variable
-                #region "TRADUCIR LAS VARIABLE GLOBALES DE LAS CLASES"
-                int pos = 0;
-                int posActual = tabla.Count - 1;
-
-                foreach (Variable a in aux.variables)
-                {
-                    int tama = 1;
-                    if (a.casilla != null)
-                    {
-                        foreach (int x in a.casilla)
-                            tama *= x;
-                        nodoTabla variable = new nodoTabla(a.visibilidad, a.tipo, a.nombre, "var_array", pos++, tama, aux.nombre, a.casilla, a.valor);
-                        tabla.AddLast(variable);
-                        //tabla.posGlobal += tam;//me falta cuando sea
-                    }
-                    else
-                    {
-                        nodoTabla variable = new nodoTabla(a.visibilidad, a.tipo, a.nombre, "var", pos++, 1, aux.nombre + "_Global");
-                        tabla.AddLast(variable);
-                        //tabla.posGlobal++;//me falta cuando sea
-                    }
-
-                }
-
-                int tam = 0;
-                for (; posActual < tabla.Count; posActual++)
-                    tam += tabla.ElementAt(posActual).tam;
-                nuevo.tam = tam;
-                #endregion
-
-                #region "TRADUCCION DE LOS CONSTRUCTORES"
-                foreach (metodo a in aux.constructores)
-                {
-                    //nuevo = new nodoTabla(a.visibilidad, a.tipo, aux.nombre + "_" + a.nombre + "_" + a.noMetodo, "CONSTRUCTOR", -1, 0, aux.nombre + "_Global");
-                    nuevo = new nodoTabla(a.visibilidad, a.tipo, aux.nombre + "_Init_" + a.noMetodo, "CONSTRUCTOR", -1, 0, aux.nombre + "_Global");
-                    //
-                    tabla.AddLast(nuevo);
-                    posActual = tabla.Count - 1;
-
-                    nuevo.setNoMetodo(a.noMetodo);
-                    //aumentarAmbito(aux.nombre + "_" + a.nombre + "_" + a.noMetodo);//ver si ocupo concatenarle el _noMetodo
-                    aumentarAmbito(aux.nombre + "_Init_" + a.noMetodo);//ver si ocupo concatenarle el _noMetodo
-
-                   //en la posicion 0 del constructor va a ir la referencia
-                    //de la variable creada en el heap
-                    //entonces si se declaran mas variables dentro del constructor
-                    //no afectaran la referencia
-                    posicion.AddFirst(1);
-                    //GUARDO LOS PARAMETROS
-                    foreach (ParseTreeNode p in a.parametros.ChildNodes)
-                    {
-                        string nombre = p.ChildNodes[1].Token.Text;
-                        string tipo = p.ChildNodes[0].ChildNodes[0].Token.Text;
-                        nodoTabla parametro = new nodoTabla("privado", tipo, nombre, "PARAMETRO", posicion.First(), 1, aux.nombre + "_Init_" + a.noMetodo);
-                        tabla.AddLast(parametro);
-                        int x = posicion.First();
-                        posicion.RemoveFirst();
-                        posicion.AddFirst(++x);
-                    }
-
-
-                    if (!a.nombre.ToUpper().Equals("PRINCIPAL"))
-                        ejecutar(a.sentencia, aux.nombre + "_Init_" + a.noMetodo);//ejecutamos las sentencias
-
-                    posicion.RemoveFirst();
-                    //recorrer para guardar guardar el tamanio
-                    tam = 0;
-                    for (; posActual < tabla.Count; posActual++)
-                        tam += tabla.ElementAt(posActual).tam;
-                    nuevo.tam = tam;
-                    disminuirAmbito();
-                }
-                #endregion
-                //los constructores
-
-                #region "TRADUCCION DE LOS METODOS"
-                foreach (metodo a in aux.metodos)
-                {
-                    nuevo = new nodoTabla(a.visibilidad, a.tipo, a.nombre, "METODO", -1, 0, aux.nombre + "_Global");
-                    tabla.AddLast(nuevo);
-                    posActual = tabla.Count - 1;
-
-                    nuevo.setNoMetodo(a.noMetodo);
-                    aumentarAmbito(aux.nombre + "_" + a.nombre);//ver si ocupo concatenarle el _noMetodo
-                    posicion.AddFirst(0);
-                    if (!a.nombre.ToUpper().Equals("PRINCIPAL"))
-                        ejecutar(a.sentencia, aux.nombre + "_" + a.nombre + "_" + a.noMetodo);//ejecutamos las sentencias
-
-                    posicion.RemoveFirst();
-                    //recorrer para guardar guardar el tamanio
-
-                    tam = 0;
-                    for (; posActual < tabla.Count; posActual++)
-                        tam += tabla.ElementAt(posActual).tam;
-                    nuevo.tam = tam;
-                    disminuirAmbito();
-                }
-                #endregion
-
-
-            }
-        }
-
+        
         private Boolean guardarVariable(Variable v, int linea, int columna)
         {
             foreach(Variable a in listaActual)

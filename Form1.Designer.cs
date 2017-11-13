@@ -59,6 +59,8 @@
             this.btnCrear_carpeta = new System.Windows.Forms.Button();
             this.btnCompilar = new System.Windows.Forms.Button();
             this.btnEjecutar3d = new System.Windows.Forms.Button();
+            this.button1 = new System.Windows.Forms.Button();
+            this.aToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.control_salida.SuspendLayout();
             this.tabPage3.SuspendLayout();
@@ -90,6 +92,8 @@
             // 
             // uMLToolStripMenuItem
             // 
+            this.uMLToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.aToolStripMenuItem});
             this.uMLToolStripMenuItem.Name = "uMLToolStripMenuItem";
             this.uMLToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
             this.uMLToolStripMenuItem.Text = "UML";
@@ -330,11 +334,29 @@
             this.btnEjecutar3d.UseVisualStyleBackColor = true;
             this.btnEjecutar3d.Click += new System.EventHandler(this.btnEjecutar3d_Click);
             // 
+            // button1
+            // 
+            this.button1.Image = ((System.Drawing.Image)(resources.GetObject("button1.Image")));
+            this.button1.Location = new System.Drawing.Point(733, 27);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(75, 61);
+            this.button1.TabIndex = 12;
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
+            // aToolStripMenuItem
+            // 
+            this.aToolStripMenuItem.Name = "aToolStripMenuItem";
+            this.aToolStripMenuItem.Size = new System.Drawing.Size(162, 22);
+            this.aToolStripMenuItem.Text = "Abrir Editor UML";
+            this.aToolStripMenuItem.Click += new System.EventHandler(this.aToolStripMenuItem_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(831, 650);
+            this.Controls.Add(this.button1);
             this.Controls.Add(this.btnEjecutar3d);
             this.Controls.Add(this.btnCompilar);
             this.Controls.Add(this.btnCrear_carpeta);
@@ -397,6 +419,8 @@
         private System.Windows.Forms.RichTextBox richTextBox5;
         private System.Windows.Forms.RichTextBox richTextBox6;
         private System.Windows.Forms.Button btnEjecutar3d;
+        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.ToolStripMenuItem aToolStripMenuItem;
     }
 }
 

@@ -477,7 +477,9 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 nodo3d ret = evaluarEXPRESION(nodo.ChildNodes[0]);
                 if (ret.tipo > 1)
                 {
-                    put_to_stack("P", ret.val,"pongo el retorno en P");
+                    string t1 = Temp();
+                    escribir_operacion_asignacio(t1, "P", "+", "2", "para asignar el retornor");
+                    put_to_stack(t1, ret.val,"pongo el retorno en P+2");
                     //aqui podria preguntar si el tipo de retorno es el mismo que el del metodo
                 }else
                     agregar_error("evaluacion de retorno arroja valor nulo ALERTA!", nodo);
@@ -827,7 +829,6 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 {
                     if (comparar_parametros(r.parametros, lista_parametros))
                     {
-
                         //vamos a pasar la referencia del this, y del supers
 
                         string aux_ptr = Temp();
@@ -836,6 +837,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                         string t3 = Temp();
                         string t4 = Temp();
                         escribir_operacion_asignacio(aux_ptr, "P", "+", tamanio_ambitos.First().ToString(),"puntero para pasar los parametros");
+                        escribir_comentario("pasamos los punteros del objeto, this y super");
                         obtener_desde_stak(t1, "P","referencia del this actual");
                         put_to_stack(aux_ptr, t1,"referencia del this actual");
                         escribir_operacion_asignacio(t2, "P", "+", "1", "posicionamos la referencia del super");
@@ -847,6 +849,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                         int cont = 2;
                         if (r.tipo != "vacio")
                             cont = 3;
+                        escribir_comentario("pasamos los parametros del metodo si los tuviera");
                         foreach (nodo3d param in lista_parametros)
                         {
                             string tmp = Control3d.getTemp();
@@ -952,7 +955,10 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         private void ejecutarIMPRIMIR(ParseTreeNode nodo)
         {
             nodo3d res= evaluarEXPRESION(nodo.ChildNodes[0]);
+            if (res.tipo == -1)
+                return;
             string tipo = retornar_tipo_string(res.tipo_valor);
+
             if (tipo.Equals("num"))
             {
                 escribir3d("\tprint(\"%f\"," + res.val + ")", "Imprimimos valor del numero");
@@ -1849,21 +1855,30 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 }
                 else if(var.rol.Equals("var"))
                 {
-                    if (var.estado)
+                    if (!var.estado)
+                        Control3d.agregarError(new Control3D.errores("semantico", nodo.Span.Location.Line, nodo.Span.Location.Column, "La variable no ha sido inicializada: " + variable));
+                    string tmp = Temp();
+                    if (this.este || var.ambito.ToUpper().Contains("GLOBAL"))//tengo que ver esto para cuando este dentro de otras clases
                     {
-                        string tmp = Control3d.getTemp();
-                        if(this.este||var.ambito.ToUpper().Contains("GLOBAL"))//tengo que ver esto para cuando este dentro de otras clases
-                            //por el momento solo funciona para la clase actual
-                            escribir_operacion_asignacio(tmp, "0", "+", var.pos.ToString(),"posicion de la variable global: " +variable);
-                        else
-                            escribir_operacion_asignacio(tmp, "P", "+", var.pos.ToString(),"posicion de la variable local");
-                        string tmp2 = Control3d.getTemp();
-                        obtener_desde_stak(tmp2, tmp,"obtengo su valor");
+                        string t0 = Temp();
+                        string t1 = Temp();
+                        string t2 = Temp();
+                        obtener_desde_stak(t0, "P","accedo a la referencia de la variable actual");
+                        escribir_operacion_asignacio(t1, t0, "+", var.pos.ToString(), "posicion de la variable: " + var.nombre + ", en heap");
+                        obtener_de_heap(t2, t1, "valor de la variable: " + var.nombre);
+                        escribir_condicion_sin_goto(t2, "-3092", "==", salida_de_errores, "si la variable == null, throw null pointer exeption");
+                        string type = retornar_tipo_string(var.tipo);
+                        return new nodo3d(type, t2);
+                    }  //por el momento solo funciona para la clase actual
+                    else {
+                        escribir_operacion_asignacio(tmp, "P", "+", var.pos.ToString(), "posicion de la variable local");
+                        string tmp2 = Temp();
+                        obtener_desde_stak(tmp2, tmp, "obtengo su valor");
                         string type = retornar_tipo_string(var.tipo);
                         return new nodo3d(type, tmp2);
+                    }
                         //lo mas simple por el momento del ID
-                    }else
-                        Control3d.agregarError(new Control3D.errores("semantico", nodo.Span.Location.Line, nodo.Span.Location.Column, "La variable no" + variable));
+                   
                 }
                  
             }
@@ -2041,36 +2056,30 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         {
             string tmp = Control3d.getTemp();
             
+            if (dentro_de_constructor || ambito.ToUpper().Contains("GLOBAL"))
+            {
+                string tmp_aux = Control3d.getTemp();
+                string tmp_heap = Control3d.getTemp();
+                escribir_operacion_asignacio(tmp, "P", "+", "0", "posiciono ");
+                obtener_desde_stak(tmp_aux, tmp, "Obtengo desde stack el puntero para la variable: " + variable);
+                escribir_operacion_asignacio(tmp_heap, tmp_aux, "+", pos, "Sumo la posicion de variable: " + variable);
+                asignar_heap(tmp_heap, valor, "Asigno en heap el valor de la variable: " + variable);//por si es asignacion hacia un objeto 
 
-            Boolean val = false;
-           /* 
+            }
             else
-            {*/
-                if (dentro_de_constructor && ambito.ToUpper().Contains("GLOBAL"))
-                    val = true;
-                if (val)
-                {
-                    string tmp_aux = Control3d.getTemp();
-                    string tmp_heap = Control3d.getTemp();
-                    escribir_operacion_asignacio(tmp, "P", "+", "0","posiciono ");
-                    obtener_desde_stak(tmp_aux, tmp,"Obtengo desde stack el puntero para la variable: " +variable);
-                    escribir_operacion_asignacio(tmp_heap, tmp_aux, "+", pos,"Sumo la posicion de variable: "+variable);
-                    asignar_heap(tmp_heap, valor,"Asigno en heap el valor de la variable: "+variable);//por si es asignacion hacia un objeto 
-                }
+            {
+                escribir_operacion_asignacio(tmp, "P", "+", pos, "en " + tmp + "esta la posicion de la variable: " + variable);
+                put_to_stack(tmp, valor, "Asigno a stack, el valor de la variable: " + variable);
+            } 
+                
 
-                else if (this.este || ambito.ToUpper().Contains("GLOBAL"))
-                {
-                //aqui tengo que cambiar porque ahora va en el heap todo
-                    escribir_operacion_asignacio(tmp, "0", "+", pos, "su suma 0 porque es variable global");
-                    put_to_stack(tmp, valor, "Asigno a stack, el valor de la variable: " + variable);
-                }
-                else
-                {
-                  escribir_operacion_asignacio(tmp, "P", "+", pos,"en "+tmp+"esta la posicion de la variable: "+variable);
-                  put_to_stack(tmp, valor, "Asigno a stack, el valor de la variable: " + variable);
-                }
-            //}//
-            
+            /* else if (this.este || ambito.ToUpper().Contains("GLOBAL"))
+             {
+             //aqui tengo que cambiar porque ahora va en el heap todo
+                 escribir_operacion_asignacio(tmp, "0", "+", pos, "su suma 0 porque es variable global");
+                 put_to_stack(tmp, valor, "Asigno a stack, el valor de la variable: " + variable);
+             }*/
+
         }
 
         private string poner_temp_en_pos(string pos)
@@ -2191,7 +2200,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             {
                 foreach (nodoTabla a in tabla)
                 {
-                    if (a.nombre.Equals(nombre) && a.ambito.ToUpper().Contains("GLOBAL"))
+                    if (a.nombre.Equals(nombre) && a.ambito.Equals(ambitos_clase.First().nombre + "_Global"))
                     {
                         this.este = false;
                         return a;
@@ -2274,5 +2283,6 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
     }
 }
+
 
 

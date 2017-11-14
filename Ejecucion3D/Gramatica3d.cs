@@ -103,13 +103,13 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
                         | EXP + ToTerm("*") + EXP
                         | EXP + ToTerm("/") + EXP
                         | EXP + ToTerm("^") + EXP
-                        | ToTerm("-") + E
                         | E
                         
                        ;
 
             E.Rule =      id
-                        | numero;
+                        | numero
+                        | ToTerm("-") + E;
 
             COND.Rule =   E + ToTerm("==") + E
                         | E + ToTerm("!=") + E
@@ -117,7 +117,6 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
                         | E + ToTerm("<") + E
                         | E + ToTerm(">=") + E
                         | E + ToTerm("<=") + E
-                        
                         ;
 
             CALLFUN.Rule = id + apar + cpar

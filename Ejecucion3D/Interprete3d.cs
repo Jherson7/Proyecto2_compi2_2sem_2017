@@ -43,6 +43,10 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
             lista_temporales.Add("P", 0);
             lista_temporales.Add("H", 0);
 
+            for (int i = 0; i < 10000; i++)
+                stack[i] = -3092;
+            for (int i = 0; i < 100000; i++)
+                heap[i] = -3092;
         }
 
 
@@ -303,6 +307,14 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
                     char x = (char)(int)res;
                     this.salida.Append(x);
                     break;
+                case "d":
+                    string a = Convert.ToInt32(res).ToString();
+                    this.salida.Append(a);
+                    break;
+                case "f":
+                    a = res.ToString();
+                    this.salida.Append(a);
+                    break;
             }
         }
 
@@ -551,7 +563,11 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
                     lista_temporales.TryGetValue(tmp, out res);
             }
             if (res == -3092)
-                MessageBox.Show("no se encontro la variable: " + tmp);
+            {
+                MessageBox.Show("NullPointerExeption() en la linea: " + nodo.Span.Location.Line);
+                throw new NullReferenceException();
+            }
+               
             return res;
         }
 

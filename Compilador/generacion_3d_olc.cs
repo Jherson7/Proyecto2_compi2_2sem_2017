@@ -28,9 +28,12 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         private string salida_de_errores;
         private LinkedList<String> salida_metodos = new LinkedList<string>();
         private Boolean este;
-
+        private Boolean acceso;
         private LinkedList<objeto_clase> ambitos_clase;
         private objeto_clase clase_actual;
+        private LinkedList<string> temporales_de_acceso;
+        private LinkedList<Boolean> hacer_cond;
+
 
         public generacion_3d_olc()
         {
@@ -45,16 +48,20 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             salida_de_errores = Etiqueta();
             salida_metodos.AddFirst(salida_de_errores);//por si viene un return en el principal
             this.tamanio_ambitos = new LinkedList<int>();//para llevar los tamanios de los ambitos
+            this.temporales_de_acceso = new LinkedList<string>();
+            this.acceso = false;
+            this.hacer_cond = new LinkedList<bool>();
             //creo que debo aumentarle el ambito
 
             //para manejar los ambitos de las clases
             this.ambitos_clase = new LinkedList<objeto_clase>();
+
             aumentar_ambito_clase(Control3d.get_clase_actual());
             //-*--------------*-----------
             iniciar_variables_globales();
             traducirMain();
-            this.lista_metodos = clase_actual.metodos;
-            traducirMetodos();
+            //this.lista_metodos = clase_actual.metodos;
+            //traducirMetodos();
 
             iniciar_traduccion_clases();
 
@@ -68,6 +75,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         private void iniciar_traduccion_clases()
         {
             objeto_clase actual_clase = Control3d.get_clase_actual();
+            traducir_clases(actual_clase);
             foreach (KeyValuePair<string, objeto_clase> Par in lista_clases)
             {
                 if (Par.Value == actual_clase)
@@ -90,7 +98,6 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             this.ambitos_clase.RemoveFirst();
             this.clase_actual = ambitos_clase.First();
         }
-
 
         private void aumentarAmbito(String ambito)
         {
@@ -235,7 +242,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 {
                     if (a.nombre.Equals("PRINCIPAL"))
                     {
-                        aumentarAmbito(a.nombre);
+                        aumentarAmbito(clase_actual.nombre+"_"+ a.nombre);
                         aumentar_3d();
                         escribir3d("\nvoid " + a.nombre + "(){", "Traduccion del metodo: principal");
                         //LE SETEO EL TAMANIO DEL PRINICIPAL
@@ -245,7 +252,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
                         foreach (ParseTreeNode sent in a.sentencia.ChildNodes)
                         {
-                            ejecutar(sent, a.nombre);
+                            ejecutar(sent, clase_actual.nombre + "_" + a.nombre);
                         }
                         goto_etiqueta(terminar_ejecucion,"para que termine la ejecucion");
                         escribir3d("}", "Fin de traduccion del metodo: principal");
@@ -436,10 +443,57 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 case "ESTE":
                     ejecutarSENTENCIAS_THIS(nodo, ambito);
                     break;
+                case "ASIG_INSTANCIA":
+                    ejecutarASIGNACION_INSTANCIA(nodo, ambito);
+                    break;
+                case "ASIGNACION_OBJECTO":
+                    ejecutarASIGNACION_OBJETO(nodo, ambito);
+                    break;
+                case "ACCESO_OBJ":
+                    ejecutar_acceso_a_objeto(nodo, ambito);
+                    break;
                 default:
                     MessageBox.Show("ME FALTA: " + nodo.Term.Name.ToString());
                     break;
             }
+        }
+
+        private void ejecutar_acceso_a_objeto(ParseTreeNode nodo, string ambito)
+        {
+            nodo3d prueba = evaluarEXPRESION(nodo);
+        }
+
+        private void ejecutarASIGNACION_OBJETO(ParseTreeNode nodo, string ambito)
+        {
+            //throw new NotImplementedException();
+            ParseTreeNode no_acceso = nodo.ChildNodes[0];
+            ParseTreeNode exp = nodo.ChildNodes[1];
+
+            nodo3d ultimo = acceso_a_objectos(no_acceso,true);
+
+            acceso = true;//
+
+            if (exp.ChildNodes.Count > 1)
+            {
+                //es declaracion de instancia
+                if (ultimo.categoria == 5)
+                {
+                    string clase2 = exp.ChildNodes[1].Token.Text;
+                    temporales_de_acceso.AddFirst(ultimo.refe);
+                    acceso = true;
+                    ejecutarINSTANCIA_DE_ACCESOS(ultimo.get_nombre_ultimo(), ultimo.tipo_valor, clase2, exp.ChildNodes[2]);
+                    temporales_de_acceso.RemoveFirst();
+                }
+            }else
+            {
+                //es una asignacion normal
+                nodo3d res = evaluarEXPRESION(exp);
+                if(res.tipo>0 && res.tipo_valor.Equals(ultimo.tipo_valor))
+                {
+                    escribir_asignacion(ultimo.val, res.val, ambito, "la ultima hahaha");
+                }
+            }
+            acceso = false;
         }
 
         private void ejecutarSENTENCIAS_THIS(ParseTreeNode nodo, string ambito)
@@ -566,7 +620,6 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
         private Boolean ejecutarINSTANCIA(ParseTreeNode raiz, string ambito)
         {
-            Console.Write("J");
             string clase = raiz.ChildNodes[0].Token.Text;
             string clase2 = raiz.ChildNodes[3].Token.Text;
             string id = raiz.ChildNodes[1].Token.Text;
@@ -593,6 +646,69 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 }
             }
 
+            return true;
+        }
+
+        private Boolean ejecutarINSTANCIA_DE_ACCESOS(string id,string clase,string clase2,ParseTreeNode raiz)
+        {
+            //suponiendo que existe el constructor, vamos a comparar los parametros
+            if (lista_clases.ContainsKey(clase))
+            {
+                objeto_clase aux_clase;
+                lista_clases.TryGetValue(clase, out aux_clase);
+                nodoTabla nodo_clase = retornar_clase(aux_clase.nombre);
+                if (aux_clase.constructores.Count > 0)
+                {
+                    //suponiendo que todo va bien
+                    if (!comprobar_constructores(aux_clase.constructores, clase, id, clase2, raiz, nodo_clase.tam, "P"))
+                    {
+                        Control3d.agregarError(new Control3D.errores("semantico", raiz.Span.Location.Line, raiz.Span.Location.Column, "No existe constructor que acepte el numero de parametros:" + id));
+                        return false;
+                    }
+                }
+                else
+                {
+                    //agregar error que no se puede instanciar la clase porque no tiene constructores
+                    Control3d.agregarError(new Control3D.errores("semantico", raiz.Span.Location.Line, raiz.Span.Location.Column, "No se puede instanciar la variable:  " + id + ", ya que la clase no tiene constructor"));
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private bool ejecutarASIGNACION_INSTANCIA(ParseTreeNode raiz, string ambito)
+        {
+            //string clase = raiz.ChildNodes[0].Token.Text;
+            string clase2 = raiz.ChildNodes[2].Token.Text;
+            string id = raiz.ChildNodes[0].Token.Text;
+            nodoTabla var = get_variable(id, ambito);
+            string clase = var.tipo;
+
+            if (var != null)
+            {
+                if (lista_clases.ContainsKey(clase))
+                {
+                    objeto_clase aux_clase;
+                    lista_clases.TryGetValue(clase, out aux_clase);
+                    nodoTabla nodo_clase = retornar_clase(aux_clase.nombre);
+                    if (aux_clase.constructores.Count > 0)
+                    {
+                        //suponiendo que todo va bien
+                        if (!comprobar_constructores(aux_clase.constructores, clase, id, clase2, raiz.ChildNodes[3], nodo_clase.tam, "P"))
+                        {
+                            Control3d.agregarError(new Control3D.errores("semantico", raiz.Span.Location.Line, raiz.Span.Location.Column, "No existe constructor que acepte el numero de parametros:" + id));
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        //agregar error que no se puede instanciar la clase porque no tiene constructores
+                        Control3d.agregarError(new Control3D.errores("semantico", raiz.Span.Location.Line, raiz.Span.Location.Column, "No se puede instanciar la variable:  " + id + ", ya que la clase no tiene constructor"));
+                        return false;
+                    }
+                }
+            }
+            //suponiendo que existe el constructor, vamos a comparar los parametros
             return true;
         }
 
@@ -674,20 +790,31 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                     string pos_var  = Temp();
                     string pos_heap = Temp();
 
+
+                    if (acceso)
+                        pos_var = temporales_de_acceso.First();
+
                     //en ptr tiene que venir la direccion del heap del  objeto
-                    escribir_operacion_asignacio(pos_var, ptr, "+", var.pos.ToString(), "posicion de la variable en el ambito actual");//posicion de la variable en el ambito actual
+                    else if (var.ambito.Contains("Global"))
+                    {
+                        string t0 = Temp();
+                        obtener_desde_stak(t0, "P","accedo a la referencia de la clase: "+ambitos_clase.First().nombre+", de la var: "+var.nombre);
+                        escribir_operacion_asignacio(pos_var, t0, "+", var.pos.ToString(), "posicion de la variable: " + var.nombre + " en ambito global");//posicion de la variable en el ambito actual
+                    }
+                    else
+                        escribir_operacion_asignacio(pos_var, ptr, "+", var.pos.ToString(), "posicion de la variable: "+var.nombre+", dentro de constructor");//posicion de la variable en el ambito actual
 
                     escribir_operacion_asignacio(pos_heap, "H", "+", "0", "guardo el ultimo puntero del heap");//guardo el ultimo puntero del heap
                     escribir_operacion_asignacio("H", "H", "+", tam_clase.ToString(), "reservo el espacio del objeto");//reservo el espacio del objeto
    /*antiguo*/      // put_to_stack(pos_var, pos_heap, "asigno en el stack la poscion del objeto");//asigno en el estack la poscion del objeto
-   /*nuevo*/        asignar_heap(pos_var, pos_heap, "asigno en el stack la poscion del objeto");//asigno en el estack la poscion del objeto
+   /*nuevo*/        asignar_heap(pos_var, pos_heap, "le asigno a la variable:  "+nombre+"su posicion en el heap");//asigno en el estack la poscion del objeto
                                                     //ver que el tamanio actual este correcto sino esto no funciona
                                                     //es decir que independientemente del ambito que este, se agregue a la lista de tamanio_ambito
                     string aux = Temp();
-                    escribir_operacion_asignacio(aux, "P", "+", tamanio_ambitos.First().ToString(), "vamos a pasar la referencia del valor de la instancia (heap)");//vamos a pasar la referencia del valor de la instancia (heap)
-                    put_to_stack(aux, pos_heap, "pasamos la referencia");//pasamos la referencia
-                    escribir_operacion_asignacio(aux, aux, "+", "1", "vamos a pasar la referencia del super, que aun no la tengo jajaja");//vamos a pasar la referencia del valor de la instancia (heap)
-                    put_to_stack(aux, pos_heap, "aqui tengo que pasar la referencia del super :D aun no esta");//pasamos la referencia
+                    escribir_operacion_asignacio(aux, "P", "+", tamanio_ambitos.First().ToString(), "referencia del nuevo valor de la instancia(heap)");//vamos a pasar la referencia del valor de la instancia (heap)
+                    put_to_stack(aux, pos_heap, "pasamos la referencia del objeto: "+var.nombre);//pasamos la referencia
+                    escribir_operacion_asignacio(aux, aux, "+", "1", "referencia del super, que aun no la tengo jajaja");//vamos a pasar la referencia del valor de la instancia (heap)
+                    put_to_stack(aux, pos_heap, "aqui tengo que pasar la referencia del super :D");//pasamos la referencia
                     //aumentamos el puntero porque vamos a llamar al constructor
                     escribir_operacion_asignacio("P", "P", "+", tamanio_ambitos.First().ToString(), "//aumentamos el puntero porque vamos a llamar al constructor");
                     //llamamos al constructor
@@ -1310,20 +1437,15 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                     string tmp = Temp();
                     escribir_operacion_asignacio(tmp, aux.val, "*", "-1","multiplico el unario");
                     return new nodo3d(aux.tipo_valor, tmp);
+                }else if (nodo.Term.Name.Equals("CALLFUN"))
+                    return ejecutarCALLFUN(nodo);
+                else if(nodo.Term.Name.Equals("ACCESO_OBJ"))
+                {
+                    hacer_cond.AddFirst(true);
+                    nodo3d ret = acceso_a_objectos(nodo, false);
+                    return ret;
                 }
-               
-                /*   if (nodo.Term.Name == "ACCESO_ARRAY")
-                       return acceso_arreglo(nodo);
-                   if (nodo.ChildNodes[0].Term.Name.Equals("!"))
-                       return evaluarNOT(nodo.ChildNodes[1]);
-                   if (nodo.ChildNodes[0].Term.Name.Equals("-"))
-                       return evaluarUnario(nodo.ChildNodes[1]);
-
-                   /* if (nodo.Term.Name.Equals("CALLMET"))
-                    {
-                        ejecutarLLamadasMetodos(nodo);
-                        return retorn;
-                    }*/
+             //ver que mas me falta
             }
             #endregion
             //---------------------> Si tiene 1 hijo
@@ -1334,84 +1456,121 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 String termino = nodo.ChildNodes[0].Term.Name;
                 switch (termino)
                 {
-                    case "EXP": return evaluarEXPRESION(nodo.ChildNodes[0]);
-                    case "numero": return new nodo3d("num", nodo.ChildNodes[0].Token.Text);
-                    case "tstring": return evaluarString(nodo.ChildNodes[0]);
-                    case "id": return evaluarID(nodo.ChildNodes[0]);
-                    case "false": return new nodo3d("bool","0");
-                    case "true":  return new nodo3d("bool", "1");
-                    case "tchar": return evaluarChar(nodo.ChildNodes[0]);
-                    case "ACCESO_ARRAY": return acceso_arreglo(nodo.ChildNodes[0]);                                                    /*     */
-                    case "CALLFUN": return ejecutarCALLFUN(nodo.ChildNodes[0]);
-                    case "ESTE":   return evaluarESTE(nodo.ChildNodes[0]);
-                    case "ACCESO_OBJ": return acceso_a_objectos(nodo.ChildNodes[0]);
-                        //case "NULL": return new nodo3d("NULL", "-300992");
+                    case "EXP":         return evaluarEXPRESION(nodo.ChildNodes[0]);
+                    case "numero":      return new nodo3d("num", nodo.ChildNodes[0].Token.Text);
+                    case "tstring":     return evaluarString(nodo.ChildNodes[0]);
+                    case "id":          return evaluarID(nodo.ChildNodes[0].Token.Text,nodo.ChildNodes[0]);
+                    case "false":       return new nodo3d("bool","0");
+                    case "true":        return new nodo3d("bool", "1");
+                    case "tchar":       return evaluarChar(nodo.ChildNodes[0]);
+                    case "ACCESO_ARRAY":return acceso_arreglo(nodo.ChildNodes[0]);                                                    /*     */
+                    case "CALLFUN":     return ejecutarCALLFUN(nodo.ChildNodes[0]);
+                    case "ESTE":        return evaluarESTE(nodo.ChildNodes[0]);
+
+                    case "ACCESO_OBJ":
+                        hacer_cond.AddFirst(true);
+                        nodo3d ret = acceso_a_objectos(nodo.ChildNodes[0],false);
+                        return ret;                        //case "NULL": return new nodo3d("NULL", "-300992");
 
                 }
             }
-            #endregion
-            return new nodo3d();//error
+            if (nodo.ChildNodes.Count == 0)
+            {
+                string tipo = nodo.Term.Name;
+
+                switch (tipo)
+                {
+                    case "id":
+                        return evaluarID(nodo.Token.Text,nodo);
+                }
+
+            }
+                #endregion
+                return new nodo3d();//error
         }
 
-        private nodo3d acceso_a_objectos(ParseTreeNode nodo)
+        private nodo3d acceso_a_objectos(ParseTreeNode nodo,bool ban)
         {
             /// throw new NotImplementedException();
             string nombre = nodo.ChildNodes[0].Token.Text;
             ParseTreeNode accesos = nodo.ChildNodes[1];
-            Console.Write("j");
 
             nodoTabla var = get_variable(nombre, lista_ambito.First().nombre);
+            nodo3d retorno = new nodo3d();
+
+            
+            nodo3d id = evaluarID(var.nombre,nodo);
 
             if (var != null)
             {
-                if(var.tipo!="entero"&& var.tipo != "decimal"&& var.tipo != "cadena"&& var.tipo != "caracter")
+                int tam = accesos.ChildNodes.Count;
+                if (var.tipo != "entero" && var.tipo != "decimal" && var.tipo != "cadena" && var.tipo != "caracter")
                 {
-                    if (var.estado)
+                    if (!var.estado)//verifico si la variable se asigno previamente
+                        Control3d.agregarError(new Control3D.errores("semantico", nodo.Span.Location.Line, nodo.Span.Location.Column, "La variable no ha sido inicializada: " + var.nombre));
+
+                    string tmp = Temp();
+                    /******obtenemos la clase para aumentar el ambito de la clase****/
+                    objeto_clase clase;
+                    lista_clases.TryGetValue(var.tipo, out clase);
+
+                    if (clase == null)
                     {
-                        int tam = accesos.ChildNodes.Count;
+                        agregar_error("No existe la clase: " + var.tipo + ", error", nodo);
+                        return new nodo3d();
+                    }
+                    int numero_aumentos = 0;
+                    int numero_temporales = 0;
 
-                        string pos_actual = Temp();
-                        if(var.ambito.ToUpper().Equals("GLOBAL"))
-                            escribir_operacion_asignacio(pos_actual, "0", "+", var.pos.ToString(),"posicion de la variable global: "+nombre);
-                        else
-                            escribir_operacion_asignacio(pos_actual, "P", "+", var.pos.ToString(),"posicion de la variable" +nombre);
-                        string ambito_clase = var.tipo+"_Global";
+                    acceso = true;
+                    aumentar_ambito_clase(clase);
+                    aumentarAmbito(clase.nombre + "_Global");
+                    temporales_de_acceso.AddFirst(id.val);
+                    numero_temporales++;
+                    
+                    for (int i = 0; i < tam;)
+                    {
+                        ParseTreeNode item = accesos.ChildNodes[i];
+                        i++;
 
-                        for (int i =0; i < tam; i++)
+                        if (ban && i == tam)
+                            hacer_cond.AddFirst(false);
+                        else if (ban && i < tam)
+                            hacer_cond.AddFirst(true);
+
+                        retorno = evaluarEXPRESION(item);//ver si es 
+
+                        if (retorno.categoria == 5 && i < tam)
                         {
-                            ParseTreeNode item = accesos.ChildNodes[i];
-                            switch (item.Term.Name)
-                            {
-                                case "id":
-                                    nodoTabla var_aux = get_variable_exclusiva(item.Token.Text,ambito_clase);
-                                    if (var_aux != null)
-                                    {
-                                        string tmp = Temp();
-                                        escribir_operacion_asignacio(tmp, pos_actual, "+", var_aux.pos.ToString(),"posicion de la variable: "+item.Token.Text);
-                                        string res = Temp();
-                                        obtener_de_heap(res, tmp,"obtengo su valor desde heap porque es var de objeto");
-                                        return new nodo3d(retornar_tipo_string(var_aux.tipo), res);
-                                    }
-                                    break;
-                                case "CALLFUN":
-                                    break;
-                                default:
-                                    break;
-                            }
+                            objeto_clase nueva;
+                            lista_clases.TryGetValue(retorno.tipo_valor, out nueva);
+                            aumentar_ambito_clase(nueva);
+                            temporales_de_acceso.AddFirst(retorno.val);
+                            numero_aumentos++;
+                            numero_temporales++;
+                        }
+                        else if (retorno.tipo > 0 && retorno.tipo < 5 && i < tam)
+                        {
+                            agregar_error("la variable: " + item.ChildNodes[0].Token.Text + "No es de tipo objeto para acceder", nodo);
+                            retorno = new nodo3d();//ver si es necesario esto
+                            break;
                         }
                     }
+                    for (; numero_aumentos > 0; numero_aumentos--)
+                        disminuir_ambito_clase();//disminuyo todos los accesos a objetos
+                    for (; numero_temporales > 0 && temporales_de_acceso.Count>0; numero_temporales--)
+                        temporales_de_acceso.RemoveFirst();//disminuyo todos los temporales
+
+                    disminuirAmbito();
+                    disminuir_ambito_clase();//disminuyo el ambito del primer id
+                    
                 }
-                return new nodo3d();
+                else
+                    agregar_error("La variable: " + var.nombre + ", no es de tipo objeto para acceder", nodo);
             }
-
-            //primero busco la variable
-
-            //verificar que sea de tipo archivo
-
-            //traer la clase
-
-            //ver si tiene esta variable
-            return new nodo3d();
+            acceso = false;
+            hacer_cond.Clear();
+            return retorno;
         }
 
         private nodo3d evaluarDIV(ParseTreeNode uno, ParseTreeNode dos)
@@ -1837,13 +1996,12 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             return new nodo3d("char", val.ToString());
         }
 
-        private nodo3d evaluarID(ParseTreeNode nodo)
+        private nodo3d evaluarID(string variable,ParseTreeNode nodo)
         {
-            string variable = nodo.Token.Text;
-
             nodoTabla var = get_variable(variable, lista_ambito.First().nombre);
             if (var != null)
             {
+                
                 if (var.rol.Equals("PARAMETRO"))
                 {
                     string tmp = Control3d.getTemp();
@@ -1858,7 +2016,28 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                     if (!var.estado)
                         Control3d.agregarError(new Control3D.errores("semantico", nodo.Span.Location.Line, nodo.Span.Location.Column, "La variable no ha sido inicializada: " + variable));
                     string tmp = Temp();
-                    if (this.este || var.ambito.ToUpper().Contains("GLOBAL"))//tengo que ver esto para cuando este dentro de otras clases
+
+                    if (acceso)
+                    {//aqui me queda perfecto preguntar si quieren que retorno el valor de la variable o solo su posicion
+                        string t1 = Temp();
+                        string t2 = Temp();
+                        escribir_operacion_asignacio(t1, temporales_de_acceso.First(), "+", var.pos.ToString(), "posicion de la variable: " + var.nombre + ", en heap");
+
+                        //esto es nuevo 21:11 martes
+                        if (hacer_cond.First())
+                        {
+                            //aqui debo preguntar si se quiere el valor poner la condicion sino solo retornamos el nodo, con la refe
+                            obtener_de_heap(t2, t1, "valor de la variable: " + var.nombre);
+                            escribir_condicion_sin_goto(t2, "-3092", "==", salida_de_errores, "si la variable == null, throw null pointer exeption");
+                        }
+                        //retornamos el tipo de la variable 
+                        string type = retornar_tipo_string(var.tipo);
+                        nodo3d retorno = new nodo3d(type, t2,t1);//lleva el valor y la referencia
+                        retorno.setNombreUltimo(var.nombre);
+                        return retorno;
+                    }
+
+                    else if (this.este || var.ambito.ToUpper().Contains("GLOBAL"))//tengo que ver esto para cuando este dentro de otras clases
                     {
                         string t0 = Temp();
                         string t1 = Temp();
@@ -2055,16 +2234,21 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         private void escribir_asignacion(string pos,string valor,string ambito,string variable)
         {
             string tmp = Control3d.getTemp();
-            
+
+            ///ver si aqui va tambien que si se activo acceso a objetos va otra cosa
+            if (acceso)
+            {
+                asignar_heap(pos, valor, "le asigno a la variable: " + variable + ", su valor: " + valor + ", en el heap");
+                return;
+            }
+
             if (dentro_de_constructor || ambito.ToUpper().Contains("GLOBAL"))
             {
                 string tmp_aux = Control3d.getTemp();
                 string tmp_heap = Control3d.getTemp();
-                escribir_operacion_asignacio(tmp, "P", "+", "0", "posiciono ");
-                obtener_desde_stak(tmp_aux, tmp, "Obtengo desde stack el puntero para la variable: " + variable);
+                obtener_desde_stak(tmp_aux, "P", "Obtengo desde stack el puntero para la variable: " + variable);
                 escribir_operacion_asignacio(tmp_heap, tmp_aux, "+", pos, "Sumo la posicion de variable: " + variable);
                 asignar_heap(tmp_heap, valor, "Asigno en heap el valor de la variable: " + variable);//por si es asignacion hacia un objeto 
-
             }
             else
             {

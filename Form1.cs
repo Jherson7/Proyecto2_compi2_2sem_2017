@@ -40,7 +40,12 @@ namespace Proyecto2_compi2_2sem_2017
                 pagina nuevo = (pagina)tabControl1.TabPages[tabControl1.SelectedIndex];
                 string contenido = nuevo.contenido.Text;
                 Interprete inter = new Interprete();
-                inter.analizar(contenido);
+
+                if (nuevo.tipo.Equals("olc"))
+                    inter.analizar(contenido);
+                else
+                    inter.analizar_TREE(contenido);
+
                 RichTextBox aux = (RichTextBox)control_salida.TabPages[1].Controls[0];
                 aux.Text = Convert.ToString(inter.errores);
                 foreach (errores err in Control3d.getErrores())
@@ -167,10 +172,12 @@ namespace Proyecto2_compi2_2sem_2017
                     if (saveFileDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                     {
                         string ruta_file = saveFileDialog.FileName;
-                        string nombre = ruta_file.Substring(ruta_file.LastIndexOf("\\", ruta_file.Length)).Replace("\\","");
+                        string nombre = ruta_file.Substring(ruta_file.LastIndexOf("\\", ruta_file.Length)).Replace("\\", "");
                         nuevo.ruta = ruta_file;
                         nuevo.Text = nombre;
                     }
+                    else
+                        return;
                 }
 
                 System.IO.File.WriteAllText(@""+nuevo.ruta, contenido);
@@ -195,6 +202,7 @@ namespace Proyecto2_compi2_2sem_2017
 
             }
         }
+
         private TreeNode retornar_arbol(DirectoryInfo dir)
         {
             TreeNode arbol = new TreeNode(dir.FullName);
@@ -272,6 +280,51 @@ namespace Proyecto2_compi2_2sem_2017
         {
             uml_principal um = new uml_principal();
             um.ShowDialog();
+        }
+
+        private void realizarOptimizacionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void cOMPILARTREEToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (tabControl1.SelectedIndex > 0)
+            {
+                Control3d.iniciar_controlador();
+                pagina nuevo = (pagina)tabControl1.TabPages[tabControl1.SelectedIndex];
+                string contenido = nuevo.contenido.Text;
+                Interprete inter = new Interprete();
+                inter.analizar_TREE(contenido);
+                RichTextBox aux = (RichTextBox)control_salida.TabPages[1].Controls[0];
+                aux.Text = Convert.ToString(inter.errores);
+                foreach (errores err in Control3d.getErrores())
+                {
+                    aux.AppendText(err.tipo + "  |  " + err.descripcion + "  |  " + err.linea + "  |  " + err.columna + "\n");
+                }
+                RichTextBox c3d = (RichTextBox)control_salida.TabPages[3].Controls[0];
+                c3d.Text = Convert.ToString(Control3d.retornarC3D().ToString());
+            }
+        }
+
+        private void arbolOlcToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (tabControl1.SelectedIndex > 0)
+            {
+                Control3d.iniciar_controlador();
+                pagina nuevo = (pagina)tabControl1.TabPages[tabControl1.SelectedIndex];
+                string contenido = nuevo.contenido.Text;
+                Interprete inter = new Interprete();
+                inter.solo_arbol(contenido);
+                RichTextBox aux = (RichTextBox)control_salida.TabPages[1].Controls[0];
+                aux.Text = Convert.ToString(inter.errores);
+                foreach (errores err in Control3d.getErrores())
+                {
+                    aux.AppendText(err.tipo + "  |  " + err.descripcion + "  |  " + err.linea + "  |  " + err.columna + "\n");
+                }
+                RichTextBox c3d = (RichTextBox)control_salida.TabPages[3].Controls[0];
+                c3d.Text = Convert.ToString(Control3d.retornarC3D().ToString());
+            }
         }
     }
 }

@@ -50,6 +50,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AnalizadorTree\gramaticaTree.cs" />
     <Compile Include="Compilador\ambitos.cs" />
     <Compile Include="Compilador\generacion_3d_olc.cs" />
     <Compile Include="Compilador\Graficador.cs" />
@@ -80,6 +81,7 @@
     </Compile>
     <Compile Include="Ejecucion3D\Gramatica3d.cs" />
     <Compile Include="Ejecucion3D\Interprete3d.cs" />
+    <Compile Include="Ejecucion3D\Optimizador3D.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>

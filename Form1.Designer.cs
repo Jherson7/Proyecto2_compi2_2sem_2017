@@ -33,9 +33,12 @@
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.uMLToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.aToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.depurarToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.codigoCompartidoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.reportesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.optimizacionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.realizarOptimizacionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.panel1 = new System.Windows.Forms.Panel();
             this.tree_view = new System.Windows.Forms.TreeView();
             this.control_salida = new System.Windows.Forms.TabControl();
@@ -60,7 +63,8 @@
             this.btnCompilar = new System.Windows.Forms.Button();
             this.btnEjecutar3d = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
-            this.aToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.cOMPILARTREEToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.arbolOlcToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.control_salida.SuspendLayout();
             this.tabPage3.SuspendLayout();
@@ -83,7 +87,8 @@
             this.uMLToolStripMenuItem,
             this.depurarToolStripMenuItem,
             this.codigoCompartidoToolStripMenuItem,
-            this.reportesToolStripMenuItem});
+            this.reportesToolStripMenuItem,
+            this.optimizacionToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Size = new System.Drawing.Size(831, 24);
@@ -98,6 +103,13 @@
             this.uMLToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
             this.uMLToolStripMenuItem.Text = "UML";
             // 
+            // aToolStripMenuItem
+            // 
+            this.aToolStripMenuItem.Name = "aToolStripMenuItem";
+            this.aToolStripMenuItem.Size = new System.Drawing.Size(162, 22);
+            this.aToolStripMenuItem.Text = "Abrir Editor UML";
+            this.aToolStripMenuItem.Click += new System.EventHandler(this.aToolStripMenuItem_Click);
+            // 
             // depurarToolStripMenuItem
             // 
             this.depurarToolStripMenuItem.Name = "depurarToolStripMenuItem";
@@ -106,6 +118,9 @@
             // 
             // codigoCompartidoToolStripMenuItem
             // 
+            this.codigoCompartidoToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.cOMPILARTREEToolStripMenuItem,
+            this.arbolOlcToolStripMenuItem});
             this.codigoCompartidoToolStripMenuItem.Name = "codigoCompartidoToolStripMenuItem";
             this.codigoCompartidoToolStripMenuItem.Size = new System.Drawing.Size(125, 20);
             this.codigoCompartidoToolStripMenuItem.Text = "Codigo Compartido";
@@ -115,6 +130,21 @@
             this.reportesToolStripMenuItem.Name = "reportesToolStripMenuItem";
             this.reportesToolStripMenuItem.Size = new System.Drawing.Size(65, 20);
             this.reportesToolStripMenuItem.Text = "Reportes";
+            // 
+            // optimizacionToolStripMenuItem
+            // 
+            this.optimizacionToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.realizarOptimizacionToolStripMenuItem});
+            this.optimizacionToolStripMenuItem.Name = "optimizacionToolStripMenuItem";
+            this.optimizacionToolStripMenuItem.Size = new System.Drawing.Size(90, 20);
+            this.optimizacionToolStripMenuItem.Text = "Optimizacion";
+            // 
+            // realizarOptimizacionToolStripMenuItem
+            // 
+            this.realizarOptimizacionToolStripMenuItem.Name = "realizarOptimizacionToolStripMenuItem";
+            this.realizarOptimizacionToolStripMenuItem.Size = new System.Drawing.Size(188, 22);
+            this.realizarOptimizacionToolStripMenuItem.Text = "Realizar Optimizacion";
+            this.realizarOptimizacionToolStripMenuItem.Click += new System.EventHandler(this.realizarOptimizacionToolStripMenuItem_Click);
             // 
             // panel1
             // 
@@ -344,12 +374,19 @@
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
-            // aToolStripMenuItem
+            // cOMPILARTREEToolStripMenuItem
             // 
-            this.aToolStripMenuItem.Name = "aToolStripMenuItem";
-            this.aToolStripMenuItem.Size = new System.Drawing.Size(162, 22);
-            this.aToolStripMenuItem.Text = "Abrir Editor UML";
-            this.aToolStripMenuItem.Click += new System.EventHandler(this.aToolStripMenuItem_Click);
+            this.cOMPILARTREEToolStripMenuItem.Name = "cOMPILARTREEToolStripMenuItem";
+            this.cOMPILARTREEToolStripMenuItem.Size = new System.Drawing.Size(162, 22);
+            this.cOMPILARTREEToolStripMenuItem.Text = "COMPILAR TREE";
+            this.cOMPILARTREEToolStripMenuItem.Click += new System.EventHandler(this.cOMPILARTREEToolStripMenuItem_Click);
+            // 
+            // arbolOlcToolStripMenuItem
+            // 
+            this.arbolOlcToolStripMenuItem.Name = "arbolOlcToolStripMenuItem";
+            this.arbolOlcToolStripMenuItem.Size = new System.Drawing.Size(162, 22);
+            this.arbolOlcToolStripMenuItem.Text = "arbol olc";
+            this.arbolOlcToolStripMenuItem.Click += new System.EventHandler(this.arbolOlcToolStripMenuItem_Click);
             // 
             // Form1
             // 
@@ -421,6 +458,10 @@
         private System.Windows.Forms.Button btnEjecutar3d;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.ToolStripMenuItem aToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem optimizacionToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem realizarOptimizacionToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem cOMPILARTREEToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem arbolOlcToolStripMenuItem;
     }
 }
 

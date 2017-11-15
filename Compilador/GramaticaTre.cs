@@ -14,7 +14,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         public GramaticaTre() : base(caseSensitive: false)
         {
             CommentTerminal COMENTARIO_SIMPLE = new CommentTerminal("comentario_simple", "##", "\n", "\r\n");
-            CommentTerminal COMENTARIO_MULT = new CommentTerminal("comentario_mult", "{-", "-}");
+            CommentTerminal COMENTARIO_MULT = new CommentTerminal("comentario_mult", "{--", "--}");
             NonGrammarTerminals.Add(COMENTARIO_SIMPLE);
             NonGrammarTerminals.Add(COMENTARIO_MULT);
 
@@ -31,8 +31,9 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             MarkReservedWords("publico");
             MarkReservedWords("protegido");
             MarkReservedWords("privado");
+            MarkReservedWords("funcion");
 
-            MarkReservedWords("@Sobrescribir");
+            MarkReservedWords("sobrescribir");
             MarkReservedWords("retornar");
             MarkReservedWords("principal");
             MarkReservedWords("llamar");
@@ -40,21 +41,24 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             MarkReservedWords("new");
 
             MarkReservedWords("si");
-            MarkReservedWords("Sino Si");
+            MarkReservedWords("Sino_Si");
             MarkReservedWords("Sino");
-            MarkReservedWords("Mientras");
-            MarkReservedWords("Hacer");
+            MarkReservedWords("MIENTRAS");
+            MarkReservedWords("HACER");
             MarkReservedWords("x");
             MarkReservedWords("repetir");
             MarkReservedWords("until");
             MarkReservedWords("Para");
             MarkReservedWords("imprimir");
+            MarkReservedWords("loop");
+            MarkReservedWords("super");
+            MarkReservedWords("self"); ;
 
             var str = ToTerm("cadena");
             var entero = ToTerm("entero");
             var BOOL = ToTerm("booleano");
             var dec = ToTerm("decimal");
-            var vacio = ToTerm("void");
+            var vacio = ToTerm("metodo");
             var caracter = ToTerm("caracter");
             var privado = ToTerm("privado");
             var publico = ToTerm("publico");
@@ -78,11 +82,17 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             var clase = ToTerm("clase");
             var asig = ToTerm("=>");
             var nuevo = ToTerm("new");
+            var loop = ToTerm("loop");
 
             NumberLiteral numero = TerminalFactory.CreateCSharpNumber("numero");
             IdentifierTerminal id = TerminalFactory.CreateCSharpIdentifier("id");
             var tstring = new StringLiteral("tstring", "\"", StringOptions.AllowsDoubledQuote);
             var tchar = new StringLiteral("tchar", "'", StringOptions.AllowsDoubledQuote);
+
+
+            RegexBasedTerminal archivo = new RegexBasedTerminal("archivo", "[a-zA-Z][0-9a-zA-Z]*.(tree|olc)");
+            RegexBasedTerminal ruta = new RegexBasedTerminal("ruta", "C://([a-zA-Z][0-9a-zA-Z]*/)*[a-zA-Z][0-9a-zA-Z]*.(tree|olc)");
+            RegexBasedTerminal url = new RegexBasedTerminal("url", "http://([a-zA-Z][0-9a-zA-Z]*/)*[a-zA-Z][0-9a-zA-Z]*.(tree|olc)");
 
 
             var INICIO = new NonTerminal("INICIO");
@@ -131,6 +141,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             var ASIGNACION = new NonTerminal("ASIGNACION");
             var BREAK = new NonTerminal("BREAK");
             var CONTINUAR = new NonTerminal("CONTINUAR");
+            var SWITCH = new NonTerminal("SWITCH");
             var CASE = new NonTerminal("CASE");
             var CASO = new NonTerminal("CASO");
             var CASOS = new NonTerminal("CASOS");
@@ -160,82 +171,153 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             var SUPER = new NonTerminal("SUPER");
             var LISTA_IMPORT = new NonTerminal("IMPORTS");
             var SENT_IMPOTAR = new NonTerminal("SENT_IMPORT");
+            var LISTA_ARCHIVOS = new NonTerminal("lista_imports");
+            var ARCHIVO = new NonTerminal("clase_importar");
+            var IDENT_SENT = new NonTerminal("IDENT");
+            var SENTENCIA_HEAD = new NonTerminal("HEAD");
+            var AUXILIAR_INSTANCIA = new NonTerminal("instance");
+            var IDENT_LISTA = new NonTerminal("IDENT");
+            var PARSE_INT = new NonTerminal("PARSE_INT");
+            var PARSE_DOUBLE = new NonTerminal("PARSE_DOUBLE");
+            var INT_TO_STR = new NonTerminal("INT_TO_STR");
+            var double_TO_STR = new NonTerminal("DOUBLE_TO_STR");
+            var double_TO_INT = new NonTerminal("DOUBLE_TO_INT");
+            var NATIVAS = new NonTerminal("NATIVAS");
+            var HEREDA = new NonTerminal("HEREDA");
+            var ESTE = new NonTerminal("ESTE");
+            var auxiliar = new NonTerminal("auxiliar");
+
+
             this.Root = INICIO;
 
 
             visibilidad.Rule = privado
-                            | publico
-                            | protegido;
-
-            INICIO.Rule = BODYSENT;
+                            |  publico
+                            |  protegido
+                            ;
+            INICIO.Rule = LISTA_IMPORT + BODYSENT
+                        | BODYSENT;
 
             BODYSENT.Rule = MakeStarRule(BODYSENT, BODY);
 
-            BODY.Rule =
-                         PRINCIPAL
-                       | STRUCT //LA UTILIZO PARA DECLARAR LOS METODOS DE LA CLASE
-                       | IMPORTAR
+            BODY.Rule = 
+                         STRUCT //LA UTILIZO PARA DECLARAR Las clases
+                       //| IMPORTAR 
                        ;
 
-            IMPORTAR.Rule = "importar" + LISTA_IMPORT;
+            STRUCT.Rule = clase + id + cora + HEREDA + corc + dosp + Eos + IDENT_SENT;//clase que hereda
 
-            LISTA_IMPORT.Rule = MakeStarRule(LISTA_IMPORT,ToTerm(",")+SENT_IMPOTAR);
+            HEREDA.Rule =  id
+                        | Empty;
 
-            SENT_IMPOTAR.Rule = id + tree
-                                |id + olc ;
-            //| desde el http
-
-            PRINCIPAL.Rule = "principal" + cora + corc + alla + SENTENCIAS_CLASE + clla;
-
-            STRUCT.Rule = clase + id + cora +  corc+ dosp+ SENTENCIAS_CLASE//clase simple
-                        | clase + id + cora + id +corc + dosp + SENTENCIAS_CLASE;//clase que hereda
+            IDENT_SENT.Rule = Indent + SENTENCIAS_CLASE + Dedent;
 
             SENTENCIAS_CLASE.Rule = MakeStarRule(SENTENCIAS_CLASE, CLASE_SENT);
 
-            METODO.Rule = visibilidad + TIPO_M + apar + cpar + alla + SENTENCIAS + clla
-                        | visibilidad + TIPO_M + apar + cpar + PARAMETROS + alla + SENTENCIAS + clla; ;
-
-            TIPO_M.Rule = TIPO_V//PRODUCCION PARA DECLARAR EL TIPO DE LOS METODOS
-                        | vacio;
-
-            OVERRIDE.Rule = "/**" + "sobrescribir" + "**/" +METODO;
-
-            CONSTRUCTOR.Rule = ToTerm("__")+  id + cora + corc + dosp + SENTENCIAS
-                             | ToTerm("__") + id + cora + PARAMETROS + corc + dosp + SENTENCIAS
+            CLASE_SENT.Rule =
+                              ToTerm("__") + CONSTRUCTOR
+                            | visibilidad + TIPO_M + id + SENTENCIA_HEAD
+                            | OVERRIDE
+                             // | PRINCIPAL
                              ;
-            INSTANCIA.Rule = id + id + asig + nuevo + id + cora + corc
-                           | id + id + asig + nuevo + id + cora + PARAMETROS2 + corc;
 
-            DECLARAR.Rule = TIPO_V + LISTA_ID;//PRODUCCION PARA DECLARAR
+            SENTENCIA_HEAD.Rule = Eos//declarar
+                                | cora + METODO//metodo
+                                | asig + nuevo + id + cora + PARAMETROS2 + corc + Eos//instanciar objeto
+                                | asig + EXP + Eos//declarar asignar;   
+                                | L_ARRAY + Eos//declarar arreglo
+                                ;
 
-            LISTA_ID.Rule = MakeStarRule(LISTA_ID, ToTerm(","), id);// SE PUEDEN DECLARAR MAS DE UN ID
+            CONSTRUCTOR.Rule = id + cora + corc + dosp + Eos + IDENT_LISTA
+                             ;
 
-            ASIGNACION.Rule = id + ToTerm("=>") + EXP;//PRODUCCION PARA LA ASIGNACION
+            METODO.Rule = PARAMETROS + corc + dosp + Eos + IDENT_LISTA;
 
-            DECLARAR_ASIG.Rule = TIPO_V + LISTA_ID + asig + EXP;//PRODUCCION PARA DECLARAR Y ASIGNAR
+            TIPO_M.Rule =  //PRODUCCION PARA DECLARAR EL TIPO DE LOS METODOS
+                           ToTerm("funcion") + id
+                         | vacio
+                         | TIPO_V 
+                         ;
+
+            IMPORTAR.Rule = "importar" + LISTA_IMPORT + Eos ;
+
+            LISTA_IMPORT.Rule = MakeStarRule(LISTA_IMPORT,ToTerm(",")+SENT_IMPOTAR);
+
+            SENT_IMPOTAR.Rule =   ruta
+                                | archivo 
+                                | url ;
+
+            LISTA_IMPORT.Rule = MakeStarRule(LISTA_IMPORT, IMPORTAR);
+
+            IMPORTAR.Rule = ToTerm("importar") + LISTA_ARCHIVOS + Eos;
+
+            LISTA_ARCHIVOS.Rule = MakeStarRule(LISTA_ARCHIVOS, ToTerm(","), ARCHIVO);
+
+            ARCHIVO.Rule = ruta
+                | archivo
+                | url;
+            /*
+            PRINCIPAL.Rule = "principal" + cora + corc + alla + IDENT_SENT + clla;
+            */
+
+
+            OVERRIDE.Rule = ToTerm("/**")  + ToTerm("sobrescribir") +ToTerm( "**/") +Eos+
+                            visibilidad + TIPO_M + id + cora+METODO;
+            
+
+            PARAMETROS.Rule = MakeStarRule(PARAMETROS, ToTerm(","), PARAMETRO);
+
+            PARAMETRO.Rule = TIPO_V + id
+                           ;
+
+
+            IDENT_LISTA.Rule = Indent + SENTENCIAS + Dedent;
 
             SENTENCIAS.Rule = MakeStarRule(SENTENCIAS, SENTENCIA);
 
-            SENTENCIA.Rule = DECLARAR + ppt
-                            | DECLARAR_ASIG + ppt
-                            | DECLARAR_ARRAY + ppt
-                            | ASIGNACION + ppt
+            SENTENCIA.Rule = DECLARAR + Eos
+                            | ASIGNACION + Eos
+                            | DECLARAR_ASIG + Eos
+                            | RETORNO + Eos
                             | IF
-                            | IMPRIMIR + ppt
-                            | FOR
-                            | CASE
                             | WHILE
                             | DOWHILE
-                            | WHILEX
                             | REPEAT
-                            | RETORNO + ppt
-                            | CALLFUN + ppt
-                            | ACCESO_OBJ + ppt
-                            | BREAK + ppt
-                            | CONTINUAR + ppt
-                            | asigacion_objeto + ppt
-                            | DECREMENTOS + ppt
+                            | FOR
+                            | LOOP
+                            | IMPRIMIR + Eos
+                            | CONTINUAR + Eos
+                            | BREAK + Eos
+                            | SWITCH
+                            | NATIVAS + Eos
+                            | CALLFUN + Eos
+                            | INSTANCIA + Eos
+                            | ESTE 
+                            | SUPER
+                            | DECLARAR_ARRAY + Eos
+                            | ASIG_ARRAY + Eos
+                            | asigacion_objeto + Eos
+                           
                             ;
+
+            DECLARAR.Rule = TIPO_V + LISTA_ID;//PRODUCCION PARA DECLARAR
+
+            DECLARAR_ASIG.Rule = TIPO_V + LISTA_ID + asig + EXP;
+
+            LISTA_ID.Rule = MakeStarRule(LISTA_ID, ToTerm(","), id);// SE PUEDEN DECLARAR MAS DE UN ID
+
+            INSTANCIA.Rule = id + id + asig + nuevo + id + cora + PARAMETROS2 + corc;
+
+            DECLARAR_ARRAY.Rule = TIPO_V + id + L_ARRAY; //+ asig + LLAVE;
+
+            L_ARRAY.Rule = MakeStarRule(L_ARRAY, CASILLA);
+
+            CASILLA.Rule = cora + EXP + corc;
+
+            ACCESO_ARRAY.Rule = id + L_ARRAY;
+
+            ASIG_ARRAY.Rule = id + L_ARRAY + asig + EXP;
+
 
             TIPO_V.Rule =
                           entero
@@ -244,94 +326,120 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                         | BOOL
                         ;
 
-            DECREMENTOS.Rule = id + "++"
-                            | id + "--";
+            ASIGNACION.Rule = id + ToTerm("=>") + EXP;
 
-            DECLARAR_ARRAY.Rule = TIPO_V + id + L_ARRAY + asig + LLAVE;
-
-            L_ARRAY.Rule = MakeStarRule(L_ARRAY, CASILLA);
-
-            CASILLA.Rule = cora + EXP + corc;
-
-            LLAVE.Rule = alla + PARAMETROS2 + clla;
-
-            ACCESO_ARRAY.Rule = id + L_ARRAY;
-
-            ASIG_ARRAY.Rule = id + L_ARRAY + asig + EXP;
-
-            IMPRIMIR.Rule = ToTerm("imprimir") + apar + EXP + cpar;
-
+            /*ciclos de bifurcacion*/
             IF.Rule =
-                        "Si" + cora + EXP + corc + dosp + SENTENCIAS 
-                    |   "Si" + cora + EXP + corc + dosp + SENTENCIAS + L_ELIF
-                    |   "Si" + cora + EXP + corc + dosp + SENTENCIAS + L_ELIF + ELSE;
+                        "Si" + cora + EXP + corc + dosp + Eos + IDENT_LISTA
+                   |    "Si" + cora + EXP + corc + dosp + Eos + IDENT_LISTA + L_ELIF
+                   |    "Si" + cora + EXP + corc + dosp + Eos + IDENT_LISTA + L_ELIF + ELSE;
             ;
 
             L_ELIF.Rule = MakeStarRule(L_ELIF, ELIF);
 
-            ELIF.Rule = "Si_NO_Si" + cora + EXP + corc + dosp + SENTENCIAS;
+            ELIF.Rule = "Si_NO_Si" + cora + EXP + corc + dosp + Eos + IDENT_LISTA;
 
-            ELSE.Rule = "Si_NO" + dosp + SENTENCIAS;
+            ELSE.Rule = "Si_NO" + dosp + Eos + IDENT_LISTA;
 
-            WHILE.Rule = ToTerm("MIENTRAS") + cora + EXP + cora + dosp + SENTENCIAS;
+            WHILE.Rule = ToTerm("MIENTRAS") + cora + EXP + corc + dosp + Eos + IDENT_LISTA;
 
-            DOWHILE.Rule = ToTerm("HACER") + dosp + SENTENCIAS  + ToTerm("MIENTRAS") + cora + EXP + corc;
+            DOWHILE.Rule = ToTerm("HACER") + dosp + Eos + IDENT_LISTA + ToTerm("MIENTRAS") + cora + EXP + corc + Eos;
 
-            WHILEX.Rule = ToTerm("X") + apar + EXP + ToTerm(",") + EXP + cpar + alla + SENTENCIAS + clla;
+            REPEAT.Rule = ToTerm("REPETIR")+ dosp+ Eos + IDENT_LISTA + ToTerm("HASTA") + cora + EXP + corc + Eos;
 
-            REPEAT.Rule = ToTerm("REPETIR") + dosp + SENTENCIAS + clla + ToTerm("HASTA") + cora + EXP + corc;
+            FOR.Rule = ToTerm("PARA") + cora + CONDFOR + dosp + cora + EXP + corc + dosp + DECREMENTOS + corc + dosp + Eos + IDENT_LISTA;
 
-            FOR.Rule = ToTerm("PARA") + cora + CONDFOR + dosp +cora + EXP+corc + dosp +apar+ DECREMENTOS + cpar + corc +dosp+ SENTENCIAS;
+            DECREMENTOS.Rule = id + "++"
+                            |  id + "--";
 
-            //me falta loop
+            LOOP.Rule = loop + dosp + Eos + IDENT_LISTA;
+
+            SWITCH.Rule = ToTerm("ELEGIR") + ToTerm("CASO") + EXP + dosp + Eos + CASE;
+
+            CASE.Rule =  Indent + CASOS + DEFAULT + Dedent
+                        |Indent + CASOS + Dedent;
+
+            CASOS.Rule = MakeStarRule(CASOS, CASO);
+
+            CASO.Rule = EXP + dosp + Eos + IDENT_LISTA;
+
+            DEFAULT.Rule = ToTerm("defecto") + dosp + Eos + IDENT_LISTA;
 
             CONDFOR.Rule = ASIGNACION
                          | DECLARAR_ASIG;
 
-            RETORNO.Rule = retorno + EXP
-                        | retorno;
 
-            PARAMETROS.Rule = MakeStarRule(PARAMETROS, ToTerm(","), PARAMETRO);
+            IMPRIMIR.Rule =  ToTerm("out_string") + cora + EXP + corc
+                            | ToTerm("imprimir") + cora + EXP + corc;
 
-            PARAMETRO.Rule = TIPO_V + id
-                           ;
-            BREAK.Rule = ToTerm("break");
+            BREAK.Rule = ToTerm("salir");
 
-            CONTINUAR.Rule = ToTerm("continue");
+            CONTINUAR.Rule = ToTerm("continuar");
 
-            EXP.Rule =    EXP + EXP + ToTerm("||")
-                        | EXP + EXP + ToTerm("&&") 
-                        | EXP + EXP + ToTerm("??") 
-                        | EXP + EXP + ToTerm("==")
-                        | EXP + EXP + ToTerm("!=")
-                        | EXP + EXP + ToTerm(">") 
-                        | EXP + EXP + ToTerm("<") 
-                        | EXP + EXP + ToTerm(">=")
-                        | EXP + EXP + ToTerm("<=")
-                        | EXP + EXP + ToTerm("+")
-                        | EXP + EXP + ToTerm("-")
-                        | EXP + EXP + ToTerm("*")
-                        | EXP + EXP + ToTerm("/")
-                        | EXP + EXP + ToTerm("%")
-                        | EXP + EXP + ToTerm("pow") 
-                        | apar + EXP + cpar
-                        | ToTerm("-") + EXP
-                        | ToTerm("NOT") + EXP
-                        | id
-                        | numero
-                        | tstring
-                        | tchar
-                        | TRUE
-                        | FALSE
-                        | ACCESO_OBJ
-                        | CALLFUN
-                        | LLAVE
-                       ;
+            NATIVAS.Rule = PARSE_INT
+                         | PARSE_DOUBLE
+                         | INT_TO_STR
+                         | double_TO_INT
+                         | double_TO_STR
+                         ;
 
-            CALLFUN.Rule = id + cora + corc
-                          | id + cora + PARAMETROS2 + corc
+            PARSE_INT.Rule = ToTerm("ParseInt") + cora + EXP + corc;
+
+            PARSE_DOUBLE.Rule = ToTerm("ParseDouble") + cora + EXP + corc;
+
+            INT_TO_STR.Rule = ToTerm("intToSTR") + cora + EXP + corc;
+
+            double_TO_STR.Rule = ToTerm("doubleToSTR") + cora + EXP + corc;
+
+            double_TO_INT.Rule = ToTerm("doubleToINT") + cora + EXP + corc;
+
+            EXP.Rule = EXP + EXP + ToTerm("||")
+                       | EXP + EXP + ToTerm("&&")
+                       | EXP + EXP + ToTerm("??")
+                       | EXP + EXP + ToTerm("==")
+                       | EXP + EXP + ToTerm("!=")
+                       | EXP + EXP + ToTerm(">")
+                       | EXP + EXP + ToTerm("<")
+                       | EXP + EXP + ToTerm(">=")
+                       | EXP + EXP + ToTerm("<=")
+                       | EXP + EXP + ToTerm("+")
+                       | EXP + EXP + ToTerm("-")
+                       | EXP + EXP + ToTerm("*")
+                       | EXP + EXP + ToTerm("/")
+                       | EXP + EXP + ToTerm("%")
+                       | EXP + EXP + ToTerm("pow")
+                       | apar + EXP + cpar
+                       | ToTerm("-") + EXP
+                       | ToTerm("NOT") + EXP
+                       | id
+                       | numero
+                       | tstring
+                       | tchar
+                       | TRUE
+                       | FALSE
+                       | ACCESO_ARRAY
+                       | ACCESO_OBJ
+                       | CALLFUN
+                      ;
+
+            CALLFUN.Rule =  id + cora + PARAMETROS2 + corc//probar si funciona con las condiciones que tengo :D
                         ;
             PARAMETROS2.Rule = MakeStarRule(PARAMETROS2, ToTerm(","), EXP);
+
+            RETORNO.Rule = ToTerm("retornar")
+                        | ToTerm("retornar") + EXP;
+
+            /*self y super*/
+
+
+            ESTE.Rule = ToTerm("self") + ToTerm(".") + SENTENCIA;
+
+            SUPER.Rule =
+                          ToTerm("super") + ToTerm(".") + id + Eos  
+                        | ToTerm("super") + cora + PARAMETROS2 + corc + Eos
+                        | ToTerm("super") + ToTerm(".") + SENTENCIA
+                        
+                        ;
 
             ACCESO_OBJ.Rule = id + ToTerm(".") + LISTA_ACCESO
                             | CALLFUN + ToTerm(".") + LISTA_ACCESO
@@ -339,10 +447,17 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
             LISTA_ACCESO.Rule = MakeListRule(LISTA_ACCESO, ToTerm("."), ACCESO);
 
-            asigacion_objeto.Rule = ACCESO_OBJ + ToTerm("=") + EXP;
-
             ACCESO.Rule = id
                         | CALLFUN;
+
+            asigacion_objeto.Rule = ACCESO_OBJ + asig + auxiliar;
+
+            auxiliar.Rule =  EXP
+                          |  nuevo + id + cora + PARAMETROS2 +  corc;//ver en el interprete que debo hacer
+
+
+
+
 
             SENTENCIA.ErrorRule = SyntaxError + SENTENCIA;
 
@@ -359,13 +474,19 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             RegisterOperators(9, Associativity.Right, "!");                 //NOT
 
 
-            this.MarkPunctuation("(", ")", ";", ":", "{", "}", "=", ".", ",", "[", "]", "then");
-            this.MarkPunctuation("outStr", "if", "else", "switch", "case", "default", "do", "while", "for");
-            this.MarkPunctuation("whilex", "whilexorand", "repeat", "count", "loop", "create", "Principal");
-            this.MarkPunctuation("..");
-            this.MarkPunctuation("element", "of", "array", "outNum", "inStr", "inNum", "getLength", "show");
-            this.MarkTransient(SENTENCIA, CONDFOR, BODY, ARRAY, SENT, ACCESO);
+            this.MarkPunctuation("(", ")", ";", ":", "{", "}", "=>", ".", ",", "[", "]", "sobrescribir","/**","**/");
+            this.MarkPunctuation("repetir", "hasta", "out_string", "principal", "loop", "retornar", "self");
+            this.MarkPunctuation("Si", "Sino", "Sino Si", "Mientras", "Hacer", "para", "llamar", "clase", "hereda_de");
+            this.MarkPunctuation("__","SUPER", "funcion", "imprimir");
+            this.MarkTransient(SENTENCIA, CONDFOR, BODY,IDENT_LISTA,IDENT_SENT);//ARRAY, SENT, ACCESO);
 
+        }
+        public override void CreateTokenFilters(LanguageData language, TokenFilterList filters)
+        {
+            var outlineFilter = new CodeOutlineFilter(language.GrammarData,
+                OutlineOptions.ProduceIndents | OutlineOptions.CheckBraces,
+                ToTerm(@"\"));
+            filters.Add(outlineFilter);
         }
 
     }

@@ -11,9 +11,11 @@ namespace Proyecto2_compi2_2sem_2017.Control3D
         public string etv;
         public string etf;
         public string val;
+        public string refe;
         public int tipo;
         public string tipo_valor;
         public int categoria;
+        private string nombre;
         //public Boolean destino;
 
         public nodo3d()
@@ -21,6 +23,7 @@ namespace Proyecto2_compi2_2sem_2017.Control3D
             this.etf = "";
             this.etv = "";
             this.tipo = -1;
+            this.refe = "";
         }
 
 
@@ -66,8 +69,46 @@ namespace Proyecto2_compi2_2sem_2017.Control3D
             this.etf = etf;
             this.tipo = 1; 
         }
-        
 
+        public nodo3d(string tipo, string valor,string referencia)
+        {
+            this.tipo = 3;
+            this.tipo_valor = tipo;
+            this.val = valor;
+            this.refe = referencia;
+            //this.destino = destino;
+            switch (tipo)
+            {
+                case ("cad"):
+                    this.categoria = 1;
+                    break;
+                case ("num"):
+                case "entero":
+                    this.categoria = 2;
+                    break;
+                case ("char"):
+                    this.categoria = 3;
+                    break;
+                case ("bool"):
+                    this.categoria = 4;
+                    break;
+                default:
+                    this.categoria = 5;
+                    break;
+            }
+        }
+
+
+
+        public void setNombreUltimo(string nombre)
+        {
+            this.nombre = nombre;
+        }
+
+        public string get_nombre_ultimo()
+        {
+            return this.nombre;
+        }
 
     }
 }

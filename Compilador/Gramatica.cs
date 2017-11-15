@@ -80,7 +80,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             var tstring = new StringLiteral("tstring", "\"", StringOptions.AllowsDoubledQuote);
             var tchar = new StringLiteral("tchar", "'", StringOptions.AllowsDoubledQuote);
 
-            
+
             var INICIO = new NonTerminal("INICIO");
             var BODYSENT = new NonTerminal("SENTENCIAS");
             var BODY = new NonTerminal("SENTBODY");
@@ -145,6 +145,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             var DECREMENTOS = new NonTerminal("DECREMENTOS");
             var OVERRIDE = new NonTerminal("OVERRIDE");
             var INSTANCIA = new NonTerminal("INSTANCIA");
+            var ASIGNAR_INSTANCE = new NonTerminal("ASIG_INSTANCIA");
             var ELIF = new NonTerminal("ELIF");
             var ELSE = new NonTerminal("ELSE");
             var L_ELIF = new NonTerminal("L_ELIF");
@@ -160,7 +161,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             var SENTENCIAS_THIS = new NonTerminal("SENT_THIS");
             var SENTENCIAS_THIS2 = new NonTerminal("SENT_THIS");
             var ESTE2 = new NonTerminal("ESTE");
-
+            var auxiliar = new NonTerminal("auxiliar");
 
             this.Root = INICIO;
 
@@ -173,8 +174,8 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
             BODYSENT.Rule = MakeStarRule(BODYSENT, BODY);
 
-            BODY.Rule =                                  
-                          
+            BODY.Rule =
+
                           STRUCT //LA UTILIZO PARA DECLARAR LOS METODOS DE LA CLASE
                         | IMPORTAR
                         | LLAMAR
@@ -182,9 +183,9 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
             IMPORTAR.Rule = "importar" + apar + tstring + cpar;
 
-            PRINCIPAL.Rule =  "principal" + apar + cpar + alla + SENTENCIAS + clla;
+            PRINCIPAL.Rule = "principal" + apar + cpar + alla + SENTENCIAS + clla;
 
-            STRUCT.Rule = visibilidad + clase + id +HEREDA+ alla + SENTENCIAS_CLASE + clla;
+            STRUCT.Rule = visibilidad + clase + id + HEREDA + alla + SENTENCIAS_CLASE + clla;
 
             SENTENCIAS_CLASE.Rule = MakeStarRule(SENTENCIAS_CLASE, CLASE_SENT);
 
@@ -205,14 +206,14 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                                 | L_ARRAY + asig + LLAVE + ppt//declarar arreglo
                                 ;
             METODO.Rule =  cpar + alla + SENTENCIAS + clla
-                         | PARAMETROS+  cpar +alla + SENTENCIAS + clla; 
+                         | PARAMETROS + cpar + alla + SENTENCIAS + clla;
 
-            TIPO_M.Rule =  TIPO_V//PRODUCCION PARA DECLARAR EL TIPO DE LOS METODOS
+            TIPO_M.Rule = TIPO_V//PRODUCCION PARA DECLARAR EL TIPO DE LOS METODOS
                          | vacio
                          ;
 
 
-            OVERRIDE.Rule =  ToTerm("@sobrescribir") + visibilidad + TIPO_M + id+ apar + METODO;
+            OVERRIDE.Rule = ToTerm("@sobrescribir") + visibilidad + TIPO_M + id + apar + METODO;
 
 
             CONSTRUCTOR.Rule = id + apar + cpar + alla + SENTENCIAS + clla
@@ -220,14 +221,15 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             ;
 
 
-            DECLARAR.Rule =  TIPO_V + LISTA_ID
+            DECLARAR.Rule = TIPO_V + LISTA_ID
                           ;
-
-                            //PRODUCCION PARA DECLARAR
 
             LISTA_ID.Rule = MakeStarRule(LISTA_ID, ToTerm(","), id);// SE PUEDEN DECLARAR MAS DE UN ID
 
-            INSTANCIA.Rule =  id + id + asig + nuevo + id + AUXILIAR_INSTANCIA;
+            INSTANCIA.Rule = id + id + asig + nuevo + id + AUXILIAR_INSTANCIA
+                           ;
+
+            ASIGNAR_INSTANCE.Rule = id + asig + nuevo + id + AUXILIAR_INSTANCIA;
 
             AUXILIAR_INSTANCIA.Rule =  apar + cpar
                                      | apar + PARAMETROS2 + cpar;
@@ -241,7 +243,8 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             SENTENCIAS.Rule = MakeStarRule(SENTENCIAS, SENTENCIA);
 
             SENTENCIA.Rule =
-                                INSTANCIA + ppt
+                               ASIGNAR_INSTANCE + ppt
+                             | INSTANCIA + ppt
                              | ASIGNACION + ppt
                              | DECLARAR_ASIG + ppt
                              | DECLARAR_ARRAY + ppt
@@ -261,13 +264,19 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                              | asigacion_objeto + ppt
                              | DECREMENTOS+ ppt
                              | ESTE
+                             | SyntaxError
                              
                             //| LLAMAR
                             ;
 
-            SENTENCIAS_THIS.Rule = asigacion_objeto
+            SENTENCIAS_THIS.Rule =
+                                   ASIGNAR_INSTANCE
+                                 | asigacion_objeto
                                  | ASIGNACION
-                                 | ASIG_ARRAY;
+                                 | ASIG_ARRAY
+                                 | CALLFUN;
+
+            
 
             ESTE2.Rule = ToTerm("este") + ToTerm(".") + SENTENCIAS_THIS2;
 
@@ -385,10 +394,16 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
             LISTA_ACCESO.Rule = MakeListRule(LISTA_ACCESO, ToTerm("."), ACCESO);
 
-            asigacion_objeto.Rule = ACCESO_OBJ + ToTerm("=") + EXP;
+            asigacion_objeto.Rule = ACCESO_OBJ + ToTerm("=") + auxiliar;
+
+            auxiliar.Rule = EXP
+                         | nuevo + id + AUXILIAR_INSTANCIA;
+
 
             ACCESO.Rule = id
                         | CALLFUN;
+
+
 
             SENTENCIA.ErrorRule = SyntaxError + SENTENCIA;
 

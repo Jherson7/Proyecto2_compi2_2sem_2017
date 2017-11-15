@@ -50,6 +50,8 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             ambitos.AddFirst(listaActual);
         }
        
+
+        
         public void analizar(String entrada)
         {
             Gramatica gramatica = new Gramatica();
@@ -84,6 +86,58 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             Control3d.set_clase_actual(clase_actual);
             generacion_3d_olc gen = new generacion_3d_olc();
             //ejecutar(raiz);
+        }
+
+        public void analizar_TREE(String entrada)
+        {
+            GramaticaTre gramatica = new GramaticaTre();
+            Parser parser = new Parser(gramatica);
+
+            ParseTree arbol = parser.Parse(entrada);
+            ParseTreeNode raiz = arbol.Root;
+
+            if (raiz == null || arbol.ParserMessages.Count > 0 || arbol.HasErrors())
+            {
+                //---------------------> Hay Errores      
+                MessageBox.Show("Hay Errores");
+                errores.Append("hay errores:\n");
+                foreach (var item in arbol.ParserMessages)
+                {
+                    errores.Append(item.Location.Line + " ");
+                    errores.Append(item.Location.Column + " ");
+                    errores.Append(item.Message + "\n");
+                }
+                return;
+            }
+             Graficador g = new Graficador();
+             g.graficar(arbol);
+        }
+
+        
+        internal void solo_arbol(string contenido)
+        {
+            Gramatica gramatica = new Gramatica();
+            Parser parser = new Parser(gramatica);
+
+            ParseTree arbol = parser.Parse(contenido);
+            ParseTreeNode raiz = arbol.Root;
+
+            if (raiz == null || arbol.ParserMessages.Count > 0 || arbol.HasErrors())
+            {
+                //---------------------> Hay Errores      
+                MessageBox.Show("Hay Errores");
+                errores.Append("hay errores:\n");
+                foreach (var item in arbol.ParserMessages)
+                {
+                    errores.Append(item.Location.Line + " ");
+                    errores.Append(item.Location.Column + " ");
+                    errores.Append(item.Message + "\n");
+                }
+                return;
+            }
+
+            Graficador g = new Graficador();
+            g.graficar(arbol);
         }
 
         private void iniciar_traduccion_clases()
@@ -205,7 +259,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             {
                 //para agregarlos a tabla de simbolos les voy a poner nombreclase_nombremetodo
                 //nuevo = new nodoTabla(a.visibilidad, a.tipo, a.nombre, "METODO", -1, 0, aux.nombre + "_Global");
-                
+                //ver si ocupo concatenarle el _noMetodo
                 if (a.nombre.ToUpper().Equals("PRINCIPAL") && !main)
                     continue;
                 if (a.nombre.ToUpper().Equals("PRINCIPAL") && main)
@@ -219,9 +273,9 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 }
                 tabla.AddLast(nuevo);
                 posActual = tabla.Count;// - 1;
-
+                //aumentarAmbito(aux.nombre + "_" + a.nombre);
                 nuevo.setNoMetodo(a.noMetodo);
-                aumentarAmbito(aux.nombre + "_" + a.nombre);//ver si ocupo concatenarle el _noMetodo
+                
 
                 este = new nodoTabla("privado", "THIS", "this", "referencia", 0, 1, aux.nombre + "_" + a.nombre);
                 tabla.AddLast(este);
@@ -247,7 +301,13 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                     posicion.AddFirst(++x);
                 }
 
-                ejecutar(a.sentencia, aux.nombre + "_" + a.nombre + "_" + a.noMetodo);//ejecutamos las sentencias
+                string ambito = aux.nombre + "_" + a.nombre + "_" + a.noMetodo;
+                if (a.nombre.ToUpper().Equals("PRINCIPAL") && main)
+                    ambito = aux.nombre + "_" + a.nombre;
+
+                aumentarAmbito(ambito);
+
+                ejecutar(a.sentencia, ambito);//ejecutamos las sentencias
 
                 posicion.RemoveFirst();
                 //recorrer para guardar guardar el tamanio
@@ -262,6 +322,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             #endregion
         }
 
+        
 
         public void SentenciasGlobales(ParseTreeNode raiz)
         {

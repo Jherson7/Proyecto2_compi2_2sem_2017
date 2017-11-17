@@ -174,7 +174,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
             /*antiguo*/ //int posActual = tabla.Count - 1;
             int posActual = tabla.Count;/*antiguo*/
-            #region TRADUCCION DE VARIABLES
+
             foreach (Variable a in aux.variables)
             {
                 int tama = 1;
@@ -182,7 +182,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 {
                     foreach (int x in a.casilla)
                         tama *= x;
-                    nodoTabla variable = new nodoTabla(a.visibilidad, a.tipo, a.nombre, "var_array", pos++, tama, aux.nombre, a.casilla, a.valor);
+                    nodoTabla variable = new nodoTabla(a.visibilidad, a.tipo, a.nombre, "var_array", pos++, tama, aux.nombre + "_Global", a.casilla, a.valor);
                     tabla.AddLast(variable);
                     //tabla.posGlobal += tam;//me falta cuando sea
                 }
@@ -193,15 +193,17 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                     variable.setExp(a.valor);
                     //tabla.posGlobal++;//me falta cuando sea
                 }
-
             }
-
-            #endregion
-
 
             int tam = 0;
             for (; posActual < tabla.Count; posActual++)
-                tam += tabla.ElementAt(posActual).tam;
+            {
+                int tam_aux = tabla.ElementAt(posActual).tam;
+                if (tabla.ElementAt(posActual).rol.Contains("array"))
+                    tam_aux = 1;
+                //tam += tabla.ElementAt(posActual).tam;
+                tam += tam_aux;
+            }
             nuevo.tam = tam;
             #endregion
             //los constructores
@@ -342,7 +344,47 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 case "LLAMAR":
                     ejecutarLlamar(raiz);
                     break;
+                case "IMPORTAR":
+                    ejecutarIMPORTAR(raiz);
+                    break;
+                case "STRUCT":
+                    guardar_clase_tree(raiz);
+                    break;
             }
+        }
+
+        private void ejecutarIMPORTAR(ParseTreeNode raiz)
+        {
+            string archivo = raiz.ChildNodes[0].Token.Text;
+            string nombre = "";
+            ///1 preguntar si continene http
+            ///2 preguntar si tiene / de ruta
+            ///3 si no es porque esta en la carpeta local
+            if (archivo.Contains("//"))
+            {
+
+            }else
+            {
+                nombre = archivo.Replace("\"", "").Replace(".tree", "");
+
+            }
+            if (!lista_clases.ContainsKey(nombre))
+            {
+                string ruta = Control3d.getRuta() + nombre + ".tree";//cambiar la ruta  cuando se abra un archivo
+                string cont = retornarContenido(ruta);
+
+                if (cont != "")
+                {
+                    //ejecutar el parse y retonar y NodoArbol
+                    ParseTreeNode aux = retonrarRaizTREE(cont, nombre);
+                    if (aux != null)
+                        SentenciasGlobales(aux);
+                    else
+                        Control3d.agregarError(new Control3D.errores("semantico", raiz.Span.Location.Line, raiz.Span.Location.Column, "ERROR AL ANALIZAR EL CONTENIDO DEL ARCHIVO tree: " + nombre));
+                }
+            }
+            else
+                Control3d.agregarError(new Control3D.errores("semantico", raiz.Span.Location.Line, raiz.Span.Location.Column, "Ya se importo un archivo con nombre:  " + nombre));
         }
 
         private void ejecutarLlamar(ParseTreeNode raiz)
@@ -352,7 +394,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
             if (!lista_clases.ContainsKey(nombre_archivo))
             {
-                string ruta = Control3d.getRuta() + nombre_archivo+".olc";
+                string ruta = Control3d.getRuta() + nombre_archivo+".olc";//cambiar la ruta  cuando se abra un archivo
                 string cont = retornarContenido(ruta);
 
                 if (cont != "")
@@ -410,6 +452,30 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             return raiz;
         }
 
+        public ParseTreeNode retonrarRaizTREE(string cont,string nombre_archivo)
+        {
+            GramaticaTre gramatica = new GramaticaTre();
+            Parser parser = new Parser(gramatica);
+
+            ParseTree arbol = parser.Parse(cont);
+            ParseTreeNode raiz = arbol.Root;
+
+            if (raiz == null || arbol.ParserMessages.Count > 0 || arbol.HasErrors())
+            {
+                //---------------------> Hay Errores      
+                MessageBox.Show("Hay Errores en el archivo TREE:  "+nombre_archivo);
+                errores.Append("hay errores: en el archivo: "+nombre_archivo+"\n");
+                foreach (var item in arbol.ParserMessages)
+                {
+                    errores.Append(item.Location.Line + " ");
+                    errores.Append(item.Location.Column + " ");
+                    errores.Append(item.Message + "\n");
+                }
+                return null;
+            }
+            return raiz;
+        }
+
         private void guardarClase(ParseTreeNode raiz)
         {
             //tendria que guardar el nombre de la clase y su visibilidad o algo asi
@@ -435,6 +501,31 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 }
             }
             
+        }
+
+        private void guardar_clase_tree(ParseTreeNode raiz)
+        {
+            string nombre = raiz.ChildNodes[0].Token.Text;
+            
+            if (!lista_clases.ContainsKey(nombre))
+            {
+                objeto_clase nuevo = new objeto_clase(nombre);
+                lista_clases.Add(nombre, nuevo);
+                metodos = nuevo.metodos;
+                clase_actual = nuevo;//guarda la ultima clase que se tradujo// tendria que ser la que se se esta ejecutando
+                listaActual = nuevo.variables;
+                constructores = nuevo.constructores;
+                //y tambien el constructor;
+                //si tiene hereda mandar a ejecutar ese nodo y regresar a ejecutar las sentencias
+                if (raiz.ChildNodes[1].ChildNodes.Count > 0)
+                    ejecutarHeredar(raiz.ChildNodes[1]);//probar herencia del tree
+                foreach (ParseTreeNode a in raiz.ChildNodes[2].ChildNodes)
+                {
+                    posicion.AddFirst(0);
+                    sentencias_clase(a, nombre);
+                    posicion.RemoveFirst();
+                }
+            }
         }
 
         private void ejecutarHeredar(ParseTreeNode raiz)
@@ -477,9 +568,10 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         private void sentencias_clase(ParseTreeNode raiz,string nombre_clase)
         {
 
-            //verificar el constructor de la clase
-            //verificar las instancias declaracion y creacion
-            //verificar los arreglos
+            ///parametro 0 visibilidad
+            ///parametro 1 tipo de variable, metodo, arreglo, instancia etc.
+            ///parametro 2 iden
+            ///parametro 3 head
             string visibilidad = "publico";
             string nombre="";
             string tipo="";
@@ -493,15 +585,19 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             if (raiz.ChildNodes[0].Term.Name.Equals("MAIN")){
                 guardarMain(raiz.ChildNodes[0]);
                 return;
+            }else if (raiz.ChildNodes[0].Term.Name.Equals("CONSTRUCTOR"))//es de tipo tree
+            {
+                guardarConstructor(visibilidad, raiz.ChildNodes[0], nombre_clase);
+                return;
             }
-            if (raiz.ChildNodes[0].ChildNodes.Count > 0)
-                visibilidad = raiz.ChildNodes[0].ChildNodes[0].Token.Text;
+            if (raiz.ChildNodes[0].ChildNodes.Count > 0)//pregunto si la trae visibilidad
+                visibilidad = raiz.ChildNodes[0].ChildNodes[0].Token.Text;//la guardo
             if (raiz.ChildNodes[1].Term.Name.Equals("CONSTRUCTOR"))
             {
                 guardarConstructor(visibilidad, raiz.ChildNodes[1],nombre_clase);
                 return;
             }
-            if (raiz.ChildNodes[1].ChildNodes[0].ChildNodes.Count > 0) 
+            if (raiz.ChildNodes[1].ChildNodes[0].ChildNodes.Count > 0) //pregunto si eno es de tipo void
                 tipo = raiz.ChildNodes[1].ChildNodes[0].ChildNodes[0].Token.Text;
             else
                 tipo = "vacio";//me falta probar esto
@@ -509,7 +605,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             if(raiz.ChildNodes.Count>2)
                 nombre = raiz.ChildNodes[2].Token.Text;
 
-            if (raiz.ChildNodes[3].ChildNodes.Count > 0)
+            if (raiz.ChildNodes[3].ChildNodes.Count > 0)//si no entonces es de tipo variable
             {
                 ParseTreeNode aux = raiz.ChildNodes[3].ChildNodes[0];
                 if (aux.Term.Name.Equals("METODO")){
@@ -703,8 +799,17 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         private void guardarArreglo(string visibilidad, string tipo, string nombre, ParseTreeNode aux)
         {
             LinkedList<int> lista = new LinkedList<int>();
+            ///viene l_array
+            bool fl = true;
+            ParseTreeNode l_array;
+            l_array = aux.ChildNodes[0];
 
-            foreach(ParseTreeNode a in aux.ChildNodes[0].ChildNodes)
+            if (aux.ChildNodes.Count == 2)
+                fl = true;
+            else
+                fl = false;
+
+            foreach(ParseTreeNode a in l_array.ChildNodes)
             {
                 int dim;
                 try
@@ -730,8 +835,11 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 lista.AddFirst(fila);
                 lista.AddFirst(colum);
             }
-
-            Variable var = new Variable(visibilidad, tipo, nombre, aux.ChildNodes[1], lista);
+            Variable var;
+            if (fl)
+               var = new Variable(visibilidad, tipo, nombre, aux.ChildNodes[1], lista);
+            else
+                var = new Variable(visibilidad, tipo, nombre, null, lista);
             guardarVariable(var, aux.Span.Location.Line, aux.Span.Location.Column);
         }
 
@@ -891,7 +999,6 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             }
         }
 
-        
         private Boolean guardarVariable(Variable v, int linea, int columna)
         {
             foreach(Variable a in listaActual)
@@ -962,12 +1069,95 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                     ejecutarWHILEX(nodo, ambito);
                     //guardar las variables del whilex
                     break;
-                
+                case "LOOP":
+                    ejecutarLOOP(nodo, ambito);
+                    break;
                 //me falta traducir declarar array en metodos y funciones y contructores
-
+                case "SWTICH":
+                    ejecutarSWITCH(nodo, ambito);
+                    break;
+                case "DECLARAR_ARRAY":
+                    ejecutarDECLARAR_ARRAY(nodo, ambito);
+                    break;
                 default:
                     break;
             }
+        }
+
+        private void ejecutarDECLARAR_ARRAY(ParseTreeNode nodo, string ambito)
+        {
+            LinkedList<int> lista = new LinkedList<int>();
+
+       
+            foreach (ParseTreeNode a in nodo.ChildNodes[2].ChildNodes)
+            {
+                int dim;
+                try
+                {
+                    dim = Int32.Parse(a.ChildNodes[0].Token.Text);
+                    lista.AddLast(dim);
+                }
+                catch (FormatException)
+                {
+                    Control3d.agregarError(new errores("semantico", a.Span.Location.Line, a.Span.Location.Column, "Valor incorrecto en declaracion de array"));
+                    return;
+                    // Return? Loop round? Whatever.
+                }
+            }
+
+
+            if (lista.Count >= 1)//hago el cambio para que todo quede nitido
+            {//acceso de la forma columna fila
+                int colum = lista.ElementAt(1);
+                int fila = lista.ElementAt(0);
+                lista.RemoveFirst();
+                lista.RemoveFirst();
+                lista.AddFirst(fila);
+                lista.AddFirst(colum);
+            }
+
+            String nombre = nodo.ChildNodes[1].Token.Text;
+            string tipo = nodo.ChildNodes[0].ChildNodes[0].Term.Name;
+            Variable var;
+            bool fl = true;
+            try
+            {
+                var = new Variable("local", tipo, nombre, nodo.ChildNodes[3], lista);
+            }
+            catch
+            {
+                var = new Variable("local", tipo, nombre, null, lista);//es de tipo tree
+                fl = false;
+            }
+             
+            Boolean z = guardarVariable(var, nodo.Span.Location.Line, nodo.Span.Location.Column);
+
+            if (z)
+            {
+                nodoTabla nuevo = new nodoTabla("local", tipo, nombre, "var_array", posicion.First(), 1, ambito, var.casilla, var.valor);
+
+                tabla.AddLast(nuevo);
+                if((fl))
+                    nuevo.setExp(nodo.ChildNodes[3]);
+                int x = posicion.First();
+                x++;
+                posicion.RemoveFirst();
+                posicion.AddFirst(x);
+            }
+        }
+
+        private void ejecutarSWITCH(ParseTreeNode nodo, string ambito)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void ejecutarLOOP(ParseTreeNode nodo, string ambito)
+        {
+            MessageBox.Show("Hay que revisar esto del loop");
+            string nuevo_ambito = ambito + "_loop" + listaActual.noX++;
+            aumentarAmbito(nuevo_ambito);
+            ejecutar(nodo.ChildNodes[0], nuevo_ambito);
+            disminuirAmbito();
         }
 
         private void ejecutarWHILEX(ParseTreeNode nodo, string ambito)
@@ -1140,6 +1330,8 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         }
 
         #endregion
+
+
 
         private void mostrarTablaSimbolos()
         {

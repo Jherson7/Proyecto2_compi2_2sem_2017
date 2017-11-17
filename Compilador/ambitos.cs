@@ -16,13 +16,19 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         public int doWhile;
         public int noUntil;
         public int noX;
+        public int noLoop;
         public int no_else_if;
+        public int no_switch;
+        public string salida;
+        public string continuar;
         //le puedo agregar mas cosas
 
         public ambitos(string nombre)
         {
             this.nombre = nombre;
-            noIf = noFor = noWhile = noWhile = noUntil = noX = no_else_if= 0;
+            noIf = noFor = noWhile = noWhile = noUntil = noX = no_else_if= noLoop= no_switch= 0;
+            this.salida = "";
+            this.continuar = "";
         }
     }
 }

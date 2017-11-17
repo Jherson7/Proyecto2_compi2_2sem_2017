@@ -36,6 +36,9 @@
             this.aToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.depurarToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.codigoCompartidoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.cOMPILARTREEToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.arbolOlcToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.cERRARSESIONToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.reportesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.optimizacionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.realizarOptimizacionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -56,15 +59,15 @@
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.richTextBox1 = new System.Windows.Forms.RichTextBox();
             this.tabControl1 = new System.Windows.Forms.TabControl();
-            this.btnNuevo = new System.Windows.Forms.Button();
-            this.btnGuardar = new System.Windows.Forms.Button();
-            this.btnAbrir = new System.Windows.Forms.Button();
-            this.btnCrear_carpeta = new System.Windows.Forms.Button();
-            this.btnCompilar = new System.Windows.Forms.Button();
-            this.btnEjecutar3d = new System.Windows.Forms.Button();
+            this.tablaSimbolosToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.reporteDeLaGramaticaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.button1 = new System.Windows.Forms.Button();
-            this.cOMPILARTREEToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.arbolOlcToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.btnEjecutar3d = new System.Windows.Forms.Button();
+            this.btnCompilar = new System.Windows.Forms.Button();
+            this.btnCrear_carpeta = new System.Windows.Forms.Button();
+            this.btnAbrir = new System.Windows.Forms.Button();
+            this.btnGuardar = new System.Windows.Forms.Button();
+            this.btnNuevo = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             this.control_salida.SuspendLayout();
             this.tabPage3.SuspendLayout();
@@ -120,13 +123,38 @@
             // 
             this.codigoCompartidoToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.cOMPILARTREEToolStripMenuItem,
-            this.arbolOlcToolStripMenuItem});
+            this.arbolOlcToolStripMenuItem,
+            this.cERRARSESIONToolStripMenuItem});
             this.codigoCompartidoToolStripMenuItem.Name = "codigoCompartidoToolStripMenuItem";
             this.codigoCompartidoToolStripMenuItem.Size = new System.Drawing.Size(125, 20);
             this.codigoCompartidoToolStripMenuItem.Text = "Codigo Compartido";
             // 
+            // cOMPILARTREEToolStripMenuItem
+            // 
+            this.cOMPILARTREEToolStripMenuItem.Name = "cOMPILARTREEToolStripMenuItem";
+            this.cOMPILARTREEToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
+            this.cOMPILARTREEToolStripMenuItem.Text = "INICIAR SESION";
+            this.cOMPILARTREEToolStripMenuItem.Click += new System.EventHandler(this.cOMPILARTREEToolStripMenuItem_Click);
+            // 
+            // arbolOlcToolStripMenuItem
+            // 
+            this.arbolOlcToolStripMenuItem.Name = "arbolOlcToolStripMenuItem";
+            this.arbolOlcToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
+            this.arbolOlcToolStripMenuItem.Text = "COMPARTIR CLASE";
+            this.arbolOlcToolStripMenuItem.Click += new System.EventHandler(this.arbolOlcToolStripMenuItem_Click);
+            // 
+            // cERRARSESIONToolStripMenuItem
+            // 
+            this.cERRARSESIONToolStripMenuItem.Name = "cERRARSESIONToolStripMenuItem";
+            this.cERRARSESIONToolStripMenuItem.Size = new System.Drawing.Size(176, 22);
+            this.cERRARSESIONToolStripMenuItem.Text = "CERRAR SESION";
+            this.cERRARSESIONToolStripMenuItem.Click += new System.EventHandler(this.cERRARSESIONToolStripMenuItem_Click);
+            // 
             // reportesToolStripMenuItem
             // 
+            this.reportesToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tablaSimbolosToolStripMenuItem,
+            this.reporteDeLaGramaticaToolStripMenuItem});
             this.reportesToolStripMenuItem.Name = "reportesToolStripMenuItem";
             this.reportesToolStripMenuItem.Size = new System.Drawing.Size(65, 20);
             this.reportesToolStripMenuItem.Text = "Reportes";
@@ -159,7 +187,6 @@
             this.tree_view.Name = "tree_view";
             this.tree_view.Size = new System.Drawing.Size(144, 322);
             this.tree_view.TabIndex = 3;
-            this.tree_view.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.tree_view_AfterSelect);
             this.tree_view.DoubleClick += new System.EventHandler(this.tree_view_DoubleClick);
             // 
             // control_salida
@@ -304,45 +331,38 @@
             this.tabControl1.Size = new System.Drawing.Size(657, 344);
             this.tabControl1.TabIndex = 0;
             // 
-            // btnNuevo
+            // tablaSimbolosToolStripMenuItem
             // 
-            this.btnNuevo.Image = ((System.Drawing.Image)(resources.GetObject("btnNuevo.Image")));
-            this.btnNuevo.Location = new System.Drawing.Point(12, 27);
-            this.btnNuevo.Name = "btnNuevo";
-            this.btnNuevo.Size = new System.Drawing.Size(77, 61);
-            this.btnNuevo.TabIndex = 6;
-            this.btnNuevo.UseVisualStyleBackColor = true;
-            this.btnNuevo.Click += new System.EventHandler(this.btnNuevo_Click);
+            this.tablaSimbolosToolStripMenuItem.Name = "tablaSimbolosToolStripMenuItem";
+            this.tablaSimbolosToolStripMenuItem.Size = new System.Drawing.Size(200, 22);
+            this.tablaSimbolosToolStripMenuItem.Text = "Tabla Simbolos";
+            this.tablaSimbolosToolStripMenuItem.Click += new System.EventHandler(this.tablaSimbolosToolStripMenuItem_Click);
             // 
-            // btnGuardar
+            // reporteDeLaGramaticaToolStripMenuItem
             // 
-            this.btnGuardar.Image = ((System.Drawing.Image)(resources.GetObject("btnGuardar.Image")));
-            this.btnGuardar.Location = new System.Drawing.Point(95, 27);
-            this.btnGuardar.Name = "btnGuardar";
-            this.btnGuardar.Size = new System.Drawing.Size(75, 61);
-            this.btnGuardar.TabIndex = 7;
-            this.btnGuardar.UseVisualStyleBackColor = true;
-            this.btnGuardar.Click += new System.EventHandler(this.btnGuardar_Click);
+            this.reporteDeLaGramaticaToolStripMenuItem.Name = "reporteDeLaGramaticaToolStripMenuItem";
+            this.reporteDeLaGramaticaToolStripMenuItem.Size = new System.Drawing.Size(200, 22);
+            this.reporteDeLaGramaticaToolStripMenuItem.Text = "Reporte de la Gramatica";
             // 
-            // btnAbrir
+            // button1
             // 
-            this.btnAbrir.Image = ((System.Drawing.Image)(resources.GetObject("btnAbrir.Image")));
-            this.btnAbrir.Location = new System.Drawing.Point(177, 27);
-            this.btnAbrir.Name = "btnAbrir";
-            this.btnAbrir.Size = new System.Drawing.Size(75, 60);
-            this.btnAbrir.TabIndex = 8;
-            this.btnAbrir.UseVisualStyleBackColor = true;
-            this.btnAbrir.Click += new System.EventHandler(this.btnAbrir_Click);
+            this.button1.Image = ((System.Drawing.Image)(resources.GetObject("button1.Image")));
+            this.button1.Location = new System.Drawing.Point(504, 26);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(75, 61);
+            this.button1.TabIndex = 12;
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
-            // btnCrear_carpeta
+            // btnEjecutar3d
             // 
-            this.btnCrear_carpeta.Image = ((System.Drawing.Image)(resources.GetObject("btnCrear_carpeta.Image")));
-            this.btnCrear_carpeta.Location = new System.Drawing.Point(259, 27);
-            this.btnCrear_carpeta.Name = "btnCrear_carpeta";
-            this.btnCrear_carpeta.Size = new System.Drawing.Size(75, 59);
-            this.btnCrear_carpeta.TabIndex = 9;
-            this.btnCrear_carpeta.UseVisualStyleBackColor = true;
-            this.btnCrear_carpeta.Click += new System.EventHandler(this.btnCrear_carpeta_Click);
+            this.btnEjecutar3d.Image = global::Proyecto2_compi2_2sem_2017.Properties.Resources.play3d;
+            this.btnEjecutar3d.Location = new System.Drawing.Point(423, 27);
+            this.btnEjecutar3d.Name = "btnEjecutar3d";
+            this.btnEjecutar3d.Size = new System.Drawing.Size(75, 59);
+            this.btnEjecutar3d.TabIndex = 11;
+            this.btnEjecutar3d.UseVisualStyleBackColor = true;
+            this.btnEjecutar3d.Click += new System.EventHandler(this.btnEjecutar3d_Click);
             // 
             // btnCompilar
             // 
@@ -354,39 +374,45 @@
             this.btnCompilar.UseVisualStyleBackColor = true;
             this.btnCompilar.Click += new System.EventHandler(this.btnCompilar_Click);
             // 
-            // btnEjecutar3d
+            // btnCrear_carpeta
             // 
-            this.btnEjecutar3d.Location = new System.Drawing.Point(423, 27);
-            this.btnEjecutar3d.Name = "btnEjecutar3d";
-            this.btnEjecutar3d.Size = new System.Drawing.Size(75, 59);
-            this.btnEjecutar3d.TabIndex = 11;
-            this.btnEjecutar3d.Text = "ejecutar3d";
-            this.btnEjecutar3d.UseVisualStyleBackColor = true;
-            this.btnEjecutar3d.Click += new System.EventHandler(this.btnEjecutar3d_Click);
+            this.btnCrear_carpeta.Image = ((System.Drawing.Image)(resources.GetObject("btnCrear_carpeta.Image")));
+            this.btnCrear_carpeta.Location = new System.Drawing.Point(259, 27);
+            this.btnCrear_carpeta.Name = "btnCrear_carpeta";
+            this.btnCrear_carpeta.Size = new System.Drawing.Size(75, 59);
+            this.btnCrear_carpeta.TabIndex = 9;
+            this.btnCrear_carpeta.UseVisualStyleBackColor = true;
+            this.btnCrear_carpeta.Click += new System.EventHandler(this.btnCrear_carpeta_Click);
             // 
-            // button1
+            // btnAbrir
             // 
-            this.button1.Image = ((System.Drawing.Image)(resources.GetObject("button1.Image")));
-            this.button1.Location = new System.Drawing.Point(733, 27);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 61);
-            this.button1.TabIndex = 12;
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
+            this.btnAbrir.Image = ((System.Drawing.Image)(resources.GetObject("btnAbrir.Image")));
+            this.btnAbrir.Location = new System.Drawing.Point(177, 27);
+            this.btnAbrir.Name = "btnAbrir";
+            this.btnAbrir.Size = new System.Drawing.Size(75, 60);
+            this.btnAbrir.TabIndex = 8;
+            this.btnAbrir.UseVisualStyleBackColor = true;
+            this.btnAbrir.Click += new System.EventHandler(this.btnAbrir_Click);
             // 
-            // cOMPILARTREEToolStripMenuItem
+            // btnGuardar
             // 
-            this.cOMPILARTREEToolStripMenuItem.Name = "cOMPILARTREEToolStripMenuItem";
-            this.cOMPILARTREEToolStripMenuItem.Size = new System.Drawing.Size(162, 22);
-            this.cOMPILARTREEToolStripMenuItem.Text = "COMPILAR TREE";
-            this.cOMPILARTREEToolStripMenuItem.Click += new System.EventHandler(this.cOMPILARTREEToolStripMenuItem_Click);
+            this.btnGuardar.Image = ((System.Drawing.Image)(resources.GetObject("btnGuardar.Image")));
+            this.btnGuardar.Location = new System.Drawing.Point(95, 27);
+            this.btnGuardar.Name = "btnGuardar";
+            this.btnGuardar.Size = new System.Drawing.Size(75, 61);
+            this.btnGuardar.TabIndex = 7;
+            this.btnGuardar.UseVisualStyleBackColor = true;
+            this.btnGuardar.Click += new System.EventHandler(this.btnGuardar_Click);
             // 
-            // arbolOlcToolStripMenuItem
+            // btnNuevo
             // 
-            this.arbolOlcToolStripMenuItem.Name = "arbolOlcToolStripMenuItem";
-            this.arbolOlcToolStripMenuItem.Size = new System.Drawing.Size(162, 22);
-            this.arbolOlcToolStripMenuItem.Text = "arbol olc";
-            this.arbolOlcToolStripMenuItem.Click += new System.EventHandler(this.arbolOlcToolStripMenuItem_Click);
+            this.btnNuevo.Image = ((System.Drawing.Image)(resources.GetObject("btnNuevo.Image")));
+            this.btnNuevo.Location = new System.Drawing.Point(12, 27);
+            this.btnNuevo.Name = "btnNuevo";
+            this.btnNuevo.Size = new System.Drawing.Size(77, 61);
+            this.btnNuevo.TabIndex = 6;
+            this.btnNuevo.UseVisualStyleBackColor = true;
+            this.btnNuevo.Click += new System.EventHandler(this.btnNuevo_Click);
             // 
             // Form1
             // 
@@ -462,6 +488,9 @@
         private System.Windows.Forms.ToolStripMenuItem realizarOptimizacionToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem cOMPILARTREEToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem arbolOlcToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem cERRARSESIONToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem tablaSimbolosToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem reporteDeLaGramaticaToolStripMenuItem;
     }
 }
 

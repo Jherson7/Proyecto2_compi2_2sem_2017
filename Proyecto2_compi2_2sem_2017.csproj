@@ -33,6 +33,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="FastColoredTextBox, Version=2.11.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>bin\Debug\FastColoredTextBox.dll</HintPath>
+    </Reference>
     <Reference Include="Irony, Version=1.0.0.0, Culture=neutral, PublicKeyToken=ca48ace7223ead47, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>Librerias\Irony.dll</HintPath>
@@ -63,6 +67,21 @@
     <Compile Include="Control3D\Control3d.cs" />
     <Compile Include="Control3D\errores.cs" />
     <Compile Include="Control3D\nodo3d.cs" />
+    <Compile Include="Editor\conexion.cs" />
+    <Compile Include="Editor\Controlador_base.cs" />
+    <Compile Include="Editor\Descripcion.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Editor\Descripcion.Designer.cs">
+      <DependentUpon>Descripcion.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Editor\login.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Editor\login.Designer.cs">
+      <DependentUpon>login.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Editor\master.cs" />
     <Compile Include="Editor\nodo_tree_view.cs" />
     <Compile Include="Editor\pagina.cs">
       <SubType>Component</SubType>
@@ -79,6 +98,7 @@
     <Compile Include="Editor\uml_principal.Designer.cs">
       <DependentUpon>uml_principal.cs</DependentUpon>
     </Compile>
+    <Compile Include="Editor\usuario_logeado.cs" />
     <Compile Include="Ejecucion3D\Gramatica3d.cs" />
     <Compile Include="Ejecucion3D\Interprete3d.cs" />
     <Compile Include="Ejecucion3D\Optimizador3D.cs" />
@@ -87,6 +107,9 @@
     </Compile>
     <Compile Include="Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Editor\IronyFCTB.cs">
+      <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -100,9 +123,21 @@
     <Compile Include="UML\crear_clase.Designer.cs">
       <DependentUpon>crear_clase.cs</DependentUpon>
     </Compile>
+    <Compile Include="UML\crear_relacion.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UML\crear_relacion.Designer.cs">
+      <DependentUpon>crear_relacion.cs</DependentUpon>
+    </Compile>
     <Compile Include="UML\metodo_uml.cs" />
     <Compile Include="UML\parametros.cs" />
     <Compile Include="UML\variable_uml.cs" />
+    <EmbeddedResource Include="Editor\Descripcion.resx">
+      <DependentUpon>Descripcion.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Editor\login.resx">
+      <DependentUpon>login.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Editor\tipo_archivo.resx">
       <DependentUpon>tipo_archivo.cs</DependentUpon>
     </EmbeddedResource>
@@ -120,9 +155,13 @@
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
     </Compile>
     <EmbeddedResource Include="UML\crear_clase.resx">
       <DependentUpon>crear_clase.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UML\crear_relacion.resx">
+      <DependentUpon>crear_relacion.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -137,10 +176,16 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
-    <Folder Include="Imagenes\" />
-  </ItemGroup>
-  <ItemGroup>
+    <None Include="Imagenes\composicion.PNG" />
+    <None Include="Imagenes\dependencia.PNG" />
+    <None Include="Imagenes\generalizacion.PNG" />
+    <None Include="Imagenes\Captura.PNG" />
+    <None Include="Imagenes\izq.PNG" />
+    <None Include="Imagenes\der.PNG" />
+    <None Include="Imagenes\play.png" />
+    <None Include="Imagenes\play3d.png" />
     <Content Include="Librerias\Irony.dll" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

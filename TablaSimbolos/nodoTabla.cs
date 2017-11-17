@@ -20,7 +20,7 @@ namespace Proyecto2_compi2_2sem_2017.TablaSimbolos
         public int noMetodo;
         public LinkedList<int> dimArray;
         public Boolean estado;
-
+        public int tam_array_oculto;
       
         public nodoTabla(string visibilidad,string type,string name,string rol, int pos,int tam,string ambito)
         {
@@ -62,6 +62,11 @@ namespace Proyecto2_compi2_2sem_2017.TablaSimbolos
             this.exp = expr;
             this.dimArray = casilla;
             estado = false;
+        }
+
+        public void set_tam_oculto(int num)
+        {
+            this.tam_array_oculto = num;
         }
 
         public void setNoMetodo(int numero)

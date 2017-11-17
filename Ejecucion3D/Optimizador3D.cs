@@ -19,7 +19,10 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
         private LinkedList<Dictionary<string, double>> lista_ambitos;
         private LinkedList<ambitos_llamadas> ambitos_llamadas;
         private int ptr = 0;
-        public StringBuilder salida;
+        public  StringBuilder salida;
+        public StringBuilder reporte_optimizacion;
+
+
         public Optimizador3D()
         {
             this.lista_nodos = new LinkedList<nodo_ejecucion>();
@@ -34,6 +37,9 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
             this.lista_temporales = lista_ambitos.First();
             lista_temporales.Add("P", 0);
             lista_temporales.Add("H", 0);
+
+            this.salida = new StringBuilder();
+            this.reporte_optimizacion = new StringBuilder();
         }
 
         private void aumentar_ambito(ambitos_llamadas nuevo)
@@ -99,12 +105,9 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
                         traducir_a_lista(a);
                     break;
                 case ("METODO"):
-                    string nombre = raiz.ChildNodes[0].Token.Text;
-                    int inicio = lista_nodos.Count;
+                    lista_nodos.AddLast(new nodo_ejecucion("METODO", raiz));
                     foreach (ParseTreeNode a in raiz.ChildNodes[1].ChildNodes)
                         traducir_a_lista(a);
-                    int fin = lista_nodos.Count - 1;
-                    lista_metodos.Add(nombre, new metodo3d(nombre, inicio, fin));
                     lista_nodos.AddLast(new nodo_ejecucion("FIN_METODO", raiz));
                     break;
                 case "LABEL":
@@ -147,7 +150,7 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
                     ejecutarAsignar(raiz.nodo);
                     break;
                 case ("METODO"):
-                    MessageBox.Show("hay erro en llamada en metodo en ejeucuion");
+                    salida.Append("void "+ raiz.nodo.ChildNodes[0].Token.Text+"(){\n");
                     //ejecutarMetodo(raiz.nodo);
                     break;
                 case "PUT_TO_HEAP":
@@ -175,140 +178,285 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
                     ejecutarLLAMADA(raiz.nodo);
                     break;
                 case "FIN_METODO":
-                    ejecutarFIN_METODO();
+                    salida.Append("}\n");
                     break;
                 case "THROW":
-                    MessageBox.Show("GRAVE ERROR INTENTO ACCEDER A UNA POSICION NULA O VACIA CERCA DE LA LINEA: " + ptr);
-                    throw new NullReferenceException();
+                    salida.Append("throw[]\n");
+                    break;
                 default:
-                    if (!raiz.nombre.Equals("LABEL"))
-                        MessageBox.Show("me falta: " + raiz.nombre);
+                    Console.WriteLine( raiz.nodo.ChildNodes[0].Token.Text);
+                    salida.Append(raiz.nodo.ChildNodes[0].Token.Text+":\n");
                     break;
             }
-        }
-
-        private void ejecutarFIN_METODO()
-        {
-            //throw new NotImplementedException();
-            int actual = ambitos_llamadas.First().inicio;
-            ambitos_llamadas.RemoveFirst();
-            disminuir_ambito();
-            setPtr(actual);
         }
 
         private void ejecutarLLAMADA(ParseTreeNode raiz)
         {
-            try
-            {
                 string nombre = raiz.ChildNodes[0].Token.Text;
-                metodo3d aux;
-                this.lista_metodos.TryGetValue(nombre, out aux);
-                //aumentar ambito 3d
-                ambitos_llamadas nuevo = new ambitos_llamadas(ptr, aux.fin);
-                aumentar_ambito(nuevo);//ahi guarde la posicion actual del puntero para recuperarlos despues
-                setPtr(aux.inicio - 1);
-            }
-            catch
-            {
-                MessageBox.Show("ERRor en llamada a metodo no se encotro");
-            }
+                salida.Append(nombre+"()\n");
         }
 
         private void put_to_stack(ParseTreeNode raiz)
         {
-            double pos = evaluarEXPRESION(raiz.ChildNodes[0]);
+            salida.Append("stack[" + raiz.ChildNodes[0].Token.Text + "]= " + raiz.ChildNodes[1].Token.Text+"\n");
+
+           /* double pos = evaluarEXPRESION(raiz.ChildNodes[0]);
             double val = evaluarEXPRESION(raiz.ChildNodes[1]);
-            int posi = Convert.ToInt32(pos);
+            int posi = Convert.ToInt32(pos);*/
         }
 
         private void get_from_heap(ParseTreeNode raiz)
         {
-            string tmp = raiz.ChildNodes[0].Token.Text;
+            salida.Append(raiz.ChildNodes[0].Token.Text +" = heap[" + raiz.ChildNodes[1].Token.Text + "]\n");
+
+            /*  string tmp = raiz.ChildNodes[0].Token.Text;
             double res = evaluarEXPRESION(raiz.ChildNodes[1]);
             int pos = Convert.ToInt32(res);
-            
+            */
         }
 
         private void ejecutarIF(ParseTreeNode raiz)
         {
-            try
+            //salida.Append("if ");
+
+            string eti = raiz.ChildNodes[1].Token.Text;
+            int pos = 0;
+            lista_etiquetas.TryGetValue(eti, out pos);
+
+            ParseTreeNode aux = raiz.ChildNodes[0];
+
+            string uno = aux.ChildNodes[0].Token.Text;
+            string op = aux.ChildNodes[1].Token.Text;
+            string dos = aux.ChildNodes[2].Token.Text;
+
+            //vamos a tratar de optimizar con la regla 7
+            //if cond goto L0
+            //L0: goto L1 ==>  if cond goto L1
+            nodo_ejecucion nodo = lista_nodos.ElementAt(pos + 1);
+            if (nodo.nombre.Equals("GOTO"))
             {
-                if ((Boolean)evaluarCOND(raiz.ChildNodes[0]))
+                salida.Append("if " + uno + " " + op + " " + dos + " goto " + nodo.nodo.ChildNodes[0].Token.Text + "\n");
+                agregar_notificacion(7, raiz);
+                return;
+            }
+
+
+            //vamos a tratar de optimizar con la regla 5
+            //if 1==0 goto l1
+            //goto l2
+            //=> goto l2
+            nodo = lista_nodos.ElementAt(ptr + 1);
+            if (uno.Equals("1") && dos.Equals("0")){
+                
+                if (nodo.nombre.Equals("GOTO"))
                 {
-                    string eti = raiz.ChildNodes[1].Token.Text;
-                    int pos = -1;
-                    lista_etiquetas.TryGetValue(eti, out pos);
-                    setPtr(pos);
+                    salida.Append("goto " + nodo.nodo.ChildNodes[0].Token.Text + "\n");
+                    setPtr(ptr + 1);
+                    agregar_notificacion(5, raiz);
+                    return;
                 }
             }
-            catch
-            {
-
+            //vamos a tratar de optimizar con la regla 4
+            //if 1==1 goto l1
+            //goto l2
+            //=> goto l1
+            if (uno.Equals("1") && dos.Equals("1")){
+                if (nodo.nombre.Equals("GOTO"))
+                {
+                    salida.Append("goto " + eti + "\n");
+                    setPtr(ptr + 1);
+                    agregar_notificacion(4, raiz);
+                    return;
+                }
             }
+
+            //vamos a tratar de optimizar con la regla 3
+            //la del complemento
+            if (nodo.nombre.Equals("GOTO"))
+            {
+                salida.Append("if " +uno + " " + complemento(op) + " " + dos + " goto " +nodo.nodo.ChildNodes[0].Token.Text + "\n");
+                setPtr(ptr + 1);
+                agregar_notificacion(3, raiz);
+                return;
+            }
+            salida.Append("if " + uno + " " + op + " " + dos + " goto " + eti+"\n");
+
+        }
+
+
+        private string complemento(string op)
+        {
+            switch(op)
+            {
+                case "==":
+                    return "!=";
+                case "!=":
+                    return "==";
+                case "<":
+                    return ">=";
+                case ">":
+                    return "<=";
+                case "<=":
+                    return ">";
+                case ">=":
+                    return "<";
+            }
+            return op;
         }
 
         private void get_from_stack(ParseTreeNode raiz)
         {
-            string tmp = raiz.ChildNodes[0].Token.Text;
+            salida.Append(raiz.ChildNodes[0].Token.Text + " = stack[" + raiz.ChildNodes[1].Token.Text + "]\n");
+
+           /* string tmp = raiz.ChildNodes[0].Token.Text;
             double res = evaluarEXPRESION(raiz.ChildNodes[1]);
-            int pos = Convert.ToInt32(res);
+            int pos = Convert.ToInt32(res);*/
             
         }
 
         private void ejecutarGOTO(ParseTreeNode raiz)
         {
             string eti = raiz.ChildNodes[0].Token.Text;
+            //obtengo la posicion de la etiqueta a donde esta saltando
+            int pos = 0;
+            lista_etiquetas.TryGetValue(eti, out pos);
+
+            //vamos a tratar de optimizar con la regla 6
+            //goto l1
+            //L1: goto L2 ==>  gotol2
+            if (!(pos + 1 >= lista_nodos.Count))
+            {
+                nodo_ejecucion nodo = lista_nodos.ElementAt(pos + 1);
+
+                if (nodo.nombre.Equals("GOTO"))
+                {
+                    salida.Append("goto " + nodo.nodo.ChildNodes[0].Token.Text + "\n");
+                    agregar_notificacion(7, raiz);
+                    return;
+                }
+
+                //vamos a trata de optimizar la regla 2
+                bool a = true;
+                if (ptr< pos)
+                {
+                    for (int x = ptr + 1; x < pos; x++)
+                    {
+                        nodo_ejecucion aux = lista_nodos.ElementAt(x);
+                        if (aux.nombre.Equals("LABEL"))
+                        {
+                            a = false;
+                            break;
+                        }
+                    }
+
+                    if (a)
+                    {
+                        agregar_notificacion(2, raiz);
+                        setPtr(pos - 1);
+                        return;
+                    }
+                }
+            }
+
+            salida.Append("goto " + eti+"\n");
+            /*
             int pos = -1;
             lista_etiquetas.TryGetValue(eti, out pos);
-            setPtr(pos);
+            setPtr(pos);*/
         }
 
         private void imprimir(ParseTreeNode raiz)
         {
             //Console.Write(';');
-            double res = evaluarEXPRESION(raiz.ChildNodes[1]);
-
-            switch (raiz.ChildNodes[0].Token.Text)
-            {
-                case "c":
-                    char x = (char)(int)res;
-                    this.salida.Append(x);
-                    break;
-                case "d":
-                    string a = Convert.ToInt32(res).ToString();
-                    this.salida.Append(a);
-                    break;
-                case "f":
-                    a = res.ToString();
-                    this.salida.Append(a);
-                    break;
-            }
+            // double res = evaluarEXPRESION(raiz.ChildNodes[1]);
+            salida.Append("print(\"%" + raiz.ChildNodes[0].Token.Text + "\"," +raiz.ChildNodes[1].Token.Text + ")\n");
         }
 
         private void put_to_heap(ParseTreeNode raiz)
         {
-            double pos = evaluarEXPRESION(raiz.ChildNodes[0]);
+
+            salida.Append("heap[" + raiz.ChildNodes[0].Token.Text + "]= " + raiz.ChildNodes[1].Token.Text+"\n");
+
+            /*double pos = evaluarEXPRESION(raiz.ChildNodes[0]);
             double val = evaluarEXPRESION(raiz.ChildNodes[1]);
-            int posi = Convert.ToInt32(pos);
+            int posi = Convert.ToInt32(pos);*/
         }
 
         private void ejecutarAsignar(ParseTreeNode raiz)
         {
             string tmp = raiz.ChildNodes[0].Token.Text;
-            double res = evaluarEXPRESION(raiz.ChildNodes[1]);
 
-            if (tmp.Equals("P") || tmp.Equals("H"))
+            ParseTreeNode aux = raiz.ChildNodes[1];
+            string uno = "";
+            try
             {
-                lista_ambitos.Last().Remove(tmp);
-                lista_ambitos.Last().Add(tmp, res);
+                uno = aux.ChildNodes[0].ChildNodes[0].Token.Text;
+            }catch
+            {
+                uno = aux.ChildNodes[0].Token.Text;
             }
-            else if (lista_temporales.ContainsKey(tmp))
+               
+            
+            if (aux.ChildNodes.Count == 3)
             {
-                lista_temporales.Remove(tmp);
-                lista_temporales.Add(tmp, res);
+                string signo = aux.ChildNodes[1].Token.Text;
+                string dos = aux.ChildNodes[2].ChildNodes[0].Token.Text;
+
+                if (uno.Equals(tmp) || dos.Equals(tmp)) {
+
+                    switch (signo)
+                    {
+                        case "+":
+                            if (uno.Equals("0") || dos.Equals("0"))
+                            {
+                                agregar_notificacion(8, raiz);
+                                return;
+                            }
+                         break;
+                        case "-":
+                            if (dos.Equals("0"))
+                            {
+                                agregar_notificacion(9, raiz);
+                                return;
+                            }
+                            break;
+                        case "*":
+                            if (uno.Equals("1") || dos.Equals("1"))
+                            {
+                                agregar_notificacion(10, raiz);
+                                return;
+                            }
+                            break;
+                        case "/":
+                            if (dos.Equals("1"))
+                            {
+                                agregar_notificacion(11, raiz);
+                                return;
+                            }
+                            break;
+
+                    }
+                }
+                
+            }
+            if (aux.ChildNodes.Count == 1)
+            {
+                salida.Append(tmp + " = ");
+                salida.Append(aux.ChildNodes[0].Token.Text);
+            }else if (aux.ChildNodes.Count == 2)
+            {
+                salida.Append(tmp + " = -");
+                salida.Append(aux.ChildNodes[1].Token.Text);
             }
             else
-                lista_temporales.Add(tmp, res);
+            {
+                salida.Append(tmp + " = ");
+                evaluarEXPRESION(raiz.ChildNodes[1]);
+            }
+            
+            /* double res = evaluarEXPRESION(raiz.ChildNodes[1]);*/
+            salida.Append("\n");
+            
         }
 
         private Double evaluarEXPRESION(ParseTreeNode nodo)
@@ -339,7 +487,7 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
                 string signo = nodo.ChildNodes[0].Term.Name;
                 if (signo.Equals("!"))
                 {
-
+                    MessageBox.Show("Falta: " + signo);
                 }
                 else if (signo.Equals("-"))
                 {
@@ -394,6 +542,18 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
             double val1 = evaluarEXPRESION(uno);
             double val2 = evaluarEXPRESION(dos);
 
+            string a = uno.ChildNodes[0]. Token.Text;
+            string b = dos.ChildNodes[0].Token.Text;
+
+            if (val1 == 0 || val2 == 0) {
+                if (val1 == 0)
+                    salida.Append(b);
+                else
+                    salida.Append(a);
+                agregar_notificacion(12, uno);
+             }
+            else
+                salida.Append(a + " + "+b);
             return val1 + val2;
         }
 
@@ -401,6 +561,20 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
         {
             double val1 = evaluarEXPRESION(uno);
             double val2 = evaluarEXPRESION(dos);
+
+            string a = uno.ChildNodes[0].Token.Text;
+            string b = dos.ChildNodes[0].Token.Text;
+
+            if (val1 == 0) { 
+                salida.Append("0");
+                agregar_notificacion(19, uno);
+            }
+            else if (val2 == 1) { 
+                salida.Append(a);
+                agregar_notificacion(15, uno);
+            }
+            else
+                salida.Append(a + " / " + b);
 
             return val1 / val2;
         }
@@ -410,6 +584,28 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
             double val1 = evaluarEXPRESION(uno);
             double val2 = evaluarEXPRESION(dos);
 
+            string a = uno.ChildNodes[0].Token.Text;
+            string b = dos.ChildNodes[0].Token.Text;
+
+            if (val1 == 0 || val2 == 0) { 
+                salida.Append("0"); agregar_notificacion(18, uno);
+            }
+            else if (val1 == 1) { 
+                salida.Append(b);
+                agregar_notificacion(14, uno);
+            }
+            else if (val2 == 1) { 
+                salida.Append(a);
+                agregar_notificacion(14, uno);
+            }
+            else if (val2 == 2)
+            {
+                salida.Append(a + " + " + a);
+                agregar_notificacion(17, uno);
+            }
+            else
+                salida.Append(a + " * " + b);
+
             return val1 * val2;
         }
 
@@ -418,7 +614,17 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
             double val1 = evaluarEXPRESION(uno);
             double val2 = evaluarEXPRESION(dos);
 
-            return val1 - val2;
+            string a = uno.ChildNodes[0]. Token.Text;
+            string b = dos.ChildNodes[0].Token.Text;
+
+            if (val2 == 0) { 
+                salida.Append(a);
+                agregar_notificacion(13, uno);
+            }
+            else
+                salida.Append(a + " - " + b);
+
+                return val1 - val2;
         }
 
         private object evaluarCOND(ParseTreeNode nodo)
@@ -521,9 +727,7 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
         private double evaluarID(ParseTreeNode nodo)
         {
             string tmp = nodo.Token.Text;
-
-            double res = -3092;
-
+            return -3092;/*
             if (tmp.Equals("H") || tmp.Equals("P"))
             {
                 lista_ambitos.Last().TryGetValue(tmp, out res);
@@ -533,13 +737,14 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
                 if (lista_temporales.ContainsKey(tmp))
                     lista_temporales.TryGetValue(tmp, out res);
             }
-            if (res == -3092)
-            {
-                MessageBox.Show("NullPointerExeption() en la linea: " + nodo.Span.Location.Line);
-                throw new NullReferenceException();
-            }
 
-            return res;
+            return res;*/
+        }
+
+
+        public void agregar_notificacion(int numero,ParseTreeNode lina)
+        {
+            reporte_optimizacion.Append("se optimizo con la regla: " + numero + ", en la linea: " + lina.Span.Location.Line + "\n");
         }
     }
 }

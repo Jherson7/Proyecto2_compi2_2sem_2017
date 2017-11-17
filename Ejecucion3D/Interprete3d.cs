@@ -565,7 +565,6 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
             if (res == -3092)
             {
                 MessageBox.Show("NullPointerExeption() en la linea: " + nodo.Span.Location.Line);
-                throw new NullReferenceException();
             }
                
             return res;

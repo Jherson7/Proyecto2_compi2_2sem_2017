@@ -8,6 +8,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Proyecto2_compi2_2sem_2017.UML;
+using Proyecto2_compi2_2sem_2017.Editor;
+
 
 namespace Proyecto2_compi2_2sem_2017.UML
 {
@@ -16,6 +18,7 @@ namespace Proyecto2_compi2_2sem_2017.UML
 
 
         static clase_uml actual;
+        private static crear_clase holis;
         public crear_clase()
         {
             InitializeComponent();
@@ -60,10 +63,8 @@ namespace Proyecto2_compi2_2sem_2017.UML
 
         private void button1_Click(object sender, EventArgs e)
         {
-            string nombre = txt_nombre_var.Text; ;
-            string tipo = cbm_tipo_clase.SelectedItem.ToString();
-            string visi = cmb_visibilidad_clase.SelectedItem.ToString();
-            actual = new clase_uml(nombre, tipo,visi);
+            string nombre = txt_nombre_clase.Text; ;
+            actual = new clase_uml(nombre);
         }
 
         private void combo_variables_MouseDoubleClick(object sender, MouseEventArgs e)
@@ -187,5 +188,105 @@ namespace Proyecto2_compi2_2sem_2017.UML
 
             cargar_parametros_metodo(aux);
         }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            uml_principal.lista_clases.AddLast(actual);
+            this.Dispose();
+
+            generar_dot_clases();
+
+
+        }
+
+        private void generar_dot_clases()
+        {
+            StringBuilder dot = new StringBuilder();
+
+            LinkedList<clase_uml> lista = uml_principal.lista_clases;
+
+
+            dot.Append("digraph{  node[shape = record color = \"blue\"];\n");
+            foreach(clase_uml a in lista)
+            {
+                dot.Append(a.nombre+"[ label= \"{"+a.nombre+"|ATRIBUTOS| ");
+                foreach(variable_uml var in a.variables)
+                {
+                    string signo = "(+)";
+                    if (var.visiblidad.Equals("privado"))
+                        signo = "(-)";
+                    else if (var.visiblidad.Equals("protegido"))
+                        signo = "(#)";
+                    dot.Append(signo + " " + var.nombre + ": " + var.tipo + "\\n");
+                }
+
+                dot.Append("|METODOS|");
+                foreach (metodo_uml met in a.metodos)
+                {
+                    string signo = "(+)";
+                    if (met.visibilidad.Equals("privado"))
+                        signo = "(-)";
+                    else if (met.visibilidad.Equals("protegido"))
+                        signo = "(#)";
+                    dot.Append(signo + " " + met.nombre + "():  " + met.tipo + "\\n");
+                }
+
+                dot.Append("}\"];\n");
+
+            }
+            
+
+            LinkedList<relacion> relaciones = uml_principal.lista_relaciones;
+
+
+            foreach(relacion r in relaciones)
+            {
+                switch (r.tipo_rel)
+                {
+                    case 1:
+                        dot.Append( r.origen + "->" + r.destino + " [arrowhead = odiamond];\n");
+                        break;
+                    case 2:
+                        dot.Append(r.origen + "->" + r.destino + "  ;\n");
+                        break;
+                    case 3:
+                        dot.Append(r.origen + "->" + r.destino + " [arrowhead = diamond];\n");
+                        break;
+                    case 4:
+                        dot.Append(r.origen + "->" + r.destino + " [arrowhead = vee style = dashed];\n");
+                        break;
+                    default:
+                        dot.Append(r.origen + "->" + r.destino + " [arrowhead = o];\n");
+                        break;
+                }
+                
+            }
+            dot.Append("}");
+
+            generarDOT_PNG(dot.ToString(), "C:\\compiladores\\imagenes_uml\\uml.dot", "C:\\compiladores\\imagenes_uml\\diagrama.png");
+            /*digraph{
+               
+
+                struct3[shape = record, label = "{ Nombre clase|atributos|c| d|e|| metodos|uno|dos|tres}"];
+                struct4[shape = record, label = "{ Nombre clase|atributos|c| d|e|| metodos|uno|dos|tres}"];
+
+                struct3->struct4;
+
+            }*/
+
+        }
+
+        private void generarDOT_PNG(string graphviz, String rdot, String rpng)
+        {
+            System.IO.File.WriteAllText(rdot, graphviz);
+            String comandodot = "C:\\Graphviz\\bin\\dot.exe -Tpng " + rdot + " -o " + rpng + " ";
+            var command = string.Format(comandodot);
+            var procStartInfo = new System.Diagnostics.ProcessStartInfo("cmd", "/C" + command);
+            var proc = new System.Diagnostics.Process();
+            proc.StartInfo = procStartInfo;
+            proc.Start();
+            proc.WaitForExit();
+        }
+
     }
 }

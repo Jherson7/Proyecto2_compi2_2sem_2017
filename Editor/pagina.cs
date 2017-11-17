@@ -5,19 +5,31 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Proyecto2_compi2_2sem_2017;
+using Proyecto2_compi2_2sem_2017.Compilador;
+using Proyecto2_compi2_2sem_2017.Ejecucion3D;
 
 namespace Proyecto2_compi2_2sem_2017.Editor
 {
     class pagina:TabPage
     {
-        public RichTextBox contenido;
+        public FastColoredTextBoxNS.IronyFCTB contenido;
+        
         public string ruta;
         public string tipo;
         //aqui le voy a poner mas
 
         public pagina(string type)
         {
-            this.contenido = new RichTextBox();
+            if (type.Equals("olc"))
+            {
+                this.contenido = new FastColoredTextBoxNS.IronyFCTB();
+                this.contenido.SetParser(new Gramatica());
+            }else
+            {
+                this.contenido = new FastColoredTextBoxNS.IronyFCTB();
+                this.contenido.SetParser(new GramaticaTre());
+            }
+                
             this.ruta = "";
             this.tipo = type;
             this.contenido.SetBounds(-1, 0, 650, 322);
@@ -30,7 +42,16 @@ namespace Proyecto2_compi2_2sem_2017.Editor
 
         public pagina(string tipo,string cont,string nombre,string ruta)
         {
-            this.contenido = new RichTextBox();
+            if (tipo.Equals("olc"))
+            {
+                this.contenido = new FastColoredTextBoxNS.IronyFCTB();
+                this.contenido.SetParser(new Gramatica());
+            }
+            else
+            {
+                this.contenido = new FastColoredTextBoxNS.IronyFCTB();
+                this.contenido.SetParser(new GramaticaTre());
+            }
             this.ruta = "";
             this.tipo = tipo;
             this.contenido.SetBounds(-1, 0, 650, 322);
@@ -39,6 +60,18 @@ namespace Proyecto2_compi2_2sem_2017.Editor
             this.Text = nombre;
             this.ruta = ruta;
 
+        }
+
+
+        public pagina(int type)
+        {
+            this.contenido = new FastColoredTextBoxNS.IronyFCTB();
+            this.contenido.SetParser(new Gramatica3d());
+                
+            this.ruta = "";
+            this.tipo = "3d";
+            this.contenido.SetBounds(-1, 0, 793,163);
+            this.Controls.Add(contenido);
         }
     }
 }

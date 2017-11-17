@@ -13,6 +13,7 @@ using Proyecto2_compi2_2sem_2017.Control3D;
 using Proyecto2_compi2_2sem_2017.Ejecucion3D;
 using System.IO;
 using Proyecto2_compi2_2sem_2017.UML;
+using Proyecto2_compi2_2sem_2017.Editor;
 
 namespace Proyecto2_compi2_2sem_2017
 {
@@ -27,8 +28,41 @@ namespace Proyecto2_compi2_2sem_2017
         public Form1()
         {
             InitializeComponent();
+
             this.rutas_proyectos = new LinkedList<string>();
             this.rutas_proyectos.AddFirst("C:\\Users\\Jherson Sazo\\Documents\\COMPI2\\Archivos Proyecto2 2sem 2017");
+
+            //configurar_salida3d();
+            
+        }
+
+        private void configurar_salida3d()
+        {
+            control_salida.TabPages.Clear();
+            for (int i =0; i< 5; i++)
+            {
+                pagina pag = new pagina(3);
+                control_salida.TabPages.Add(pag);
+                switch (i)
+                {
+                    case 0:
+                        pag.Text = "CONSOLA";
+                            break;
+                    case 1:
+                        pag.Text = "CONSOLA";
+                        break;
+                    case 2:
+                        pag.Text = "CONSOLA";
+                        break;
+                    case 3:
+                        pag.Text = "CONSOLA";
+                        break;
+                    case 4:
+                        pag.Text = "CONSOLA";
+                        break;
+                }
+            }
+            
             
         }
 
@@ -284,47 +318,92 @@ namespace Proyecto2_compi2_2sem_2017
 
         private void realizarOptimizacionToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            //
+            string contenido = control_salida.TabPages[3].Controls[0].Text;
+            Optimizador3D nuevo = new Optimizador3D();
+            nuevo.analizar(contenido);
+            string optimizado = nuevo.salida.ToString();
+            RichTextBox salida = (RichTextBox)control_salida.TabPages[4].Controls[0];
+            salida.Text = optimizado;
+            string secuencia = nuevo.reporte_optimizacion.ToString();
+            salida = (RichTextBox)control_salida.TabPages[2].Controls[0];
+            salida.Text = secuencia;
 
         }
 
         private void cOMPILARTREEToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (tabControl1.SelectedIndex > 0)
-            {
-                Control3d.iniciar_controlador();
-                pagina nuevo = (pagina)tabControl1.TabPages[tabControl1.SelectedIndex];
-                string contenido = nuevo.contenido.Text;
-                Interprete inter = new Interprete();
-                inter.analizar_TREE(contenido);
-                RichTextBox aux = (RichTextBox)control_salida.TabPages[1].Controls[0];
-                aux.Text = Convert.ToString(inter.errores);
-                foreach (errores err in Control3d.getErrores())
-                {
-                    aux.AppendText(err.tipo + "  |  " + err.descripcion + "  |  " + err.linea + "  |  " + err.columna + "\n");
-                }
-                RichTextBox c3d = (RichTextBox)control_salida.TabPages[3].Controls[0];
-                c3d.Text = Convert.ToString(Control3d.retornarC3D().ToString());
-            }
+            login LOG = new login();
+            LOG.ShowDialog();
         }
 
         private void arbolOlcToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (tabControl1.SelectedIndex > 0)
+            //VAMO A INSERTAR UNA NUEVA CLASE
+            if (master.get_usuario() != null)
             {
-                Control3d.iniciar_controlador();
-                pagina nuevo = (pagina)tabControl1.TabPages[tabControl1.SelectedIndex];
-                string contenido = nuevo.contenido.Text;
-                Interprete inter = new Interprete();
-                inter.solo_arbol(contenido);
-                RichTextBox aux = (RichTextBox)control_salida.TabPages[1].Controls[0];
-                aux.Text = Convert.ToString(inter.errores);
-                foreach (errores err in Control3d.getErrores())
+                if (tabControl1.SelectedIndex > 0)
                 {
-                    aux.AppendText(err.tipo + "  |  " + err.descripcion + "  |  " + err.linea + "  |  " + err.columna + "\n");
-                }
-                RichTextBox c3d = (RichTextBox)control_salida.TabPages[3].Controls[0];
-                c3d.Text = Convert.ToString(Control3d.retornarC3D().ToString());
+                    string nombre = "";
+                    string ruta_file = "";
+                    pagina nuevo = (pagina)tabControl1.TabPages[tabControl1.SelectedIndex];
+                    string contenido = nuevo.contenido.Text;
+
+                    if (nuevo.ruta.Equals(""))
+                    {
+                        SaveFileDialog saveFileDialog = new SaveFileDialog();
+                        if (nuevo.tipo.Equals("olc"))
+                            saveFileDialog.Filter = "Archivos OLC++,TREE (*.olc)|*.olc";
+                        else
+                            saveFileDialog.Filter = "Archivos OLC++,TREE (*.tree)|*.tree";
+                        saveFileDialog.RestoreDirectory = true;
+
+                        if (saveFileDialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                        {
+                            ruta_file = saveFileDialog.FileName;
+                            nombre = ruta_file.Substring(ruta_file.LastIndexOf("\\", ruta_file.Length)).Replace("\\", "");
+                            nuevo.ruta = ruta_file;
+                            nuevo.Text = nombre;
+                        }
+                        else
+                        {
+                            MessageBox.Show("Debe guardar primero la clase");
+                            return;
+                        }
+
+                    }
+                    else
+                    {
+                        int pos = nuevo.ruta.LastIndexOf('\\')+1;
+                        int fin = nuevo.ruta.Length ;
+                        nombre = nuevo.ruta.Substring(pos, fin - pos);
+
+                    }
+                        
+                    string des = Descripcion.get_des();
+                    string fecha = DateTime.Today.Year + "-" + DateTime.Today.Month + "-" + DateTime.Today.Day;
+                    master.getControlador().insertar_clase(nombre, master.get_usuario().id, nuevo.ruta, des, fecha,contenido);
+                    System.IO.File.WriteAllText(@"" + nuevo.ruta, contenido);
+
+                }  
             }
+
+        }
+
+        private void cERRARSESIONToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (master.get_usuario() != null)
+            {
+                master.set_usuario(null);
+            }
+            else
+                MessageBox.Show("No se ha iniciado sesion");
+        }
+
+        private void tablaSimbolosToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Graficador g = new Graficador();
+            g.abrirArbol(@"C:\compiladores\tablaSym.html");
         }
     }
 }

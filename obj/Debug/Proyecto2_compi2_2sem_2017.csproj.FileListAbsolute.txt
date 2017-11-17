@@ -11,3 +11,7 @@ C:\Users\Jherson Sazo\Documents\Visual Studio 2015\Projects\Proyecto2_compi2_2se
 C:\Users\Jherson Sazo\Documents\Visual Studio 2015\Projects\Proyecto2_compi2_2sem_2017\Proyecto2_compi2_2sem_2017\obj\Debug\Proyecto2_compi2_2sem_2017.pdb
 C:\Users\Jherson Sazo\documents\visual studio 2015\Projects\Proyecto2_compi2_2sem_2017\Proyecto2_compi2_2sem_2017\obj\Debug\Proyecto2_compi2_2sem_2017.Editor.uml_principal.resources
 C:\Users\Jherson Sazo\documents\visual studio 2015\Projects\Proyecto2_compi2_2sem_2017\Proyecto2_compi2_2sem_2017\obj\Debug\Proyecto2_compi2_2sem_2017.UML.crear_clase.resources
+C:\Users\Jherson Sazo\Documents\Visual Studio 2015\Projects\Proyecto2_compi2_2sem_2017\Proyecto2_compi2_2sem_2017\obj\Debug\Proyecto2_compi2_2sem_2017.Editor.Descripcion.resources
+C:\Users\Jherson Sazo\Documents\Visual Studio 2015\Projects\Proyecto2_compi2_2sem_2017\Proyecto2_compi2_2sem_2017\obj\Debug\Proyecto2_compi2_2sem_2017.Editor.login.resources
+C:\Users\Jherson Sazo\documents\visual studio 2015\Projects\Proyecto2_compi2_2sem_2017\Proyecto2_compi2_2sem_2017\bin\Debug\FastColoredTextBox.xml
+C:\Users\Jherson Sazo\documents\visual studio 2015\Projects\Proyecto2_compi2_2sem_2017\Proyecto2_compi2_2sem_2017\obj\Debug\Proyecto2_compi2_2sem_2017.UML.crear_relacion.resources

@@ -183,6 +183,9 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
             IMPORTAR.Rule = "importar" + apar + tstring + cpar;
 
+            LLAMAR.Rule = llamar + apar + tstring + cpar + ppt;
+
+
             PRINCIPAL.Rule = "principal" + apar + cpar + alla + SENTENCIAS + clla;
 
             STRUCT.Rule = visibilidad + clase + id + HEREDA + alla + SENTENCIAS_CLASE + clla;
@@ -285,7 +288,6 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                                  | ACCESO_ARRAY
                                  | ACCESO_OBJ;
 
-            LLAMAR.Rule = llamar + apar + tstring + cpar + ppt;
 
             TIPO_V.Rule =
                           entero
@@ -422,7 +424,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
             this.MarkPunctuation("(", ")", ";", ":", "{", "}", "=",".",",","[","]", "@sobrescribir");
             this.MarkPunctuation("repetir","until","imprimir","principal","x","retornar","este");
-            this.MarkPunctuation("Si", "Sino", "Sino Si", "Mientras", "Hacer","para","llamar","clase","hereda_de");
+            this.MarkPunctuation("Si", "Sino", "Sino Si", "Mientras", "Hacer","para","llamar","clase","hereda_de","importar");
             //this.MarkPunctuation("whilex", "whilexorand", "repeat", "count", "loop","create","Principal");
             this.MarkTransient(SENTENCIA, CONDFOR, BODY,ARRAY,ACCESO,CASILLA,SENTENCIAS_THIS);
 

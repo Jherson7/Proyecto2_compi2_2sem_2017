@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Proyecto2_compi2_2sem_2017.UML
 {
-    class variable_uml
+   public class variable_uml
     {
         public  string nombre;
         public string tipo;

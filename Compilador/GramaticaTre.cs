@@ -477,9 +477,9 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             this.MarkPunctuation("(", ")", ";", ":", "{", "}", "=>", ".", ",", "[", "]", "sobrescribir","/**","**/");
             this.MarkPunctuation("repetir", "hasta", "out_string", "principal", "loop", "retornar", "self");
             this.MarkPunctuation("Si", "Sino", "Sino Si", "Mientras", "Hacer", "para", "llamar", "clase", "hereda_de");
-            this.MarkPunctuation("__","SUPER", "funcion", "imprimir");
-            this.MarkTransient(SENTENCIA, CONDFOR, BODY,IDENT_LISTA,IDENT_SENT);//ARRAY, SENT, ACCESO);
-
+            this.MarkPunctuation("__","SUPER", "funcion", "imprimir","elegir","caso");
+            this.MarkTransient(SENTENCIA, CONDFOR, BODY,IDENT_LISTA,IDENT_SENT, CASILLA);//ARRAY, SENT, ACCESO);
+            this.MarkTransient(ARRAY, ACCESO);
         }
         public override void CreateTokenFilters(LanguageData language, TokenFilterList filters)
         {

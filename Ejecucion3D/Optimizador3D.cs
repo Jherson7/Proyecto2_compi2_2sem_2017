@@ -219,11 +219,11 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
         {
             //salida.Append("if ");
 
-            string eti = raiz.ChildNodes[1].Token.Text;
+            string eti = raiz.ChildNodes[2].Token.Text;
             int pos = 0;
             lista_etiquetas.TryGetValue(eti, out pos);
 
-            ParseTreeNode aux = raiz.ChildNodes[0];
+            ParseTreeNode aux = raiz.ChildNodes[1];
 
             string uno = aux.ChildNodes[0].Token.Text;
             string op = aux.ChildNodes[1].Token.Text;

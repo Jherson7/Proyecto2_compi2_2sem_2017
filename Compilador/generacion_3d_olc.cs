@@ -162,7 +162,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                             }else
                             {
                                 escribir_comentario("solo reservo el espacio porque el arreglo no esta inicializado");
-                                llenar_casillas_arreglo_tree(var.tam);
+                                llenar_casillas_arreglo_tree(var.tam_array_oculto);
                                 escribir_comentario("termino de resvervar el tamano del arreglo: "+var.nombre);
                             }
 
@@ -245,6 +245,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             for(int i=0;i<nodo;i++)
                 aumentar_heap();//metodo que aumenta el puntero del heap en uno
         }
+
         private void traducirMain()
         {
             LinkedList<metodo> lista = Control3d.getListaMetodo();
@@ -508,7 +509,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                     else
                     {
                         escribir_comentario("solo reservo el espacio porque el arreglo no esta inicializado");
-                        llenar_casillas_arreglo_tree(var.tam);
+                        llenar_casillas_arreglo_tree(var.tam_array_oculto);
                         escribir_comentario("termino de resvervar el tamano del arreglo: " + var.nombre);
                     }
                     var.estado = true;//se asigno correctamente
@@ -695,6 +696,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             {
                 if (x.nombre.Contains("for") || x.nombre.Contains("mientras") || x.nombre.Contains("loop") || x.nombre.Contains("repeat")|| x.nombre.Contains("switch"))
                 {
+
                     goto_etiqueta(x.salida, "vino break, salida del ciclo");
                     return;
                 }
@@ -1296,7 +1298,13 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 case "decimal":
                     return "num";
                 case "cadena":
-                    return "cad"; 
+                    return "cad";
+                case "booleano":
+                case "boool":
+                case "boolean":
+                    return "bool";
+                case "caracter":
+                    return "char";
                 default:
                     return tipo;
             }
@@ -1370,6 +1378,8 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             aumentarAmbito(nuevo_ambito);
             nodo3d val = castear_nodo3d(evaluarEXPRESION(nodo.ChildNodes[0]));
 
+            setear_continue_salir();
+
             escribir3d(val.etv + ":", "condicion verdadera de if");
             ejecutar(nodo.ChildNodes[1], nuevo_ambito);
             escribir3d("\tgoto " + salida, "para que no ejecute las sentencias del else");
@@ -1386,8 +1396,15 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 escribir3d(salida + ":", "para que no ejecute las sentencias del else");
             }
             #endregion
-            
+
             #region IF_ELSEIF_ELSE
+            else if (nodo.ChildNodes.Count == 2)
+            {//if solo
+              //nada porque si entra aqui es de parte de tree
+
+
+            }
+
             else
             {
                 foreach(ParseTreeNode elif in nodo.ChildNodes[2].ChildNodes)
@@ -1423,6 +1440,25 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 lista_c3d.First().codigo.Append(cont);
             else
                 Control3d.agregarError(new errores("semantico", nodo.Span.Location.Line, nodo.Span.Location.Column, "Erro en la traduccion del IF, no se agrego el codigo"));
+        }
+
+        private void setear_continue_salir()
+        {
+            if (lista_ambito.Count > 0)
+            {
+                for (int i =1;i<lista_ambito.Count; i++)
+                {
+                    ambitos x = lista_ambito.ElementAt(i);
+                    if (x.nombre.Contains("for") || x.nombre.Contains("mientras") || x.nombre.Contains("loop") || x.nombre.Contains("repeat") || x.nombre.Contains("switch"))
+                    {
+
+                        lista_ambito.First().continuar = x.continuar;
+                        lista_ambito.First().salida = x.salida;
+                        return;
+                    }
+                }
+               
+            }
         }
 
         private void ejecutarSWITCH(ParseTreeNode nodo)
@@ -1746,7 +1782,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                     case "ACCESO_ARRAY":return acceso_arreglo(nodo.ChildNodes[0]);                                                    /*     */
                     case "CALLFUN":     return ejecutarCALLFUN(nodo.ChildNodes[0]);
                     case "ESTE":        return evaluarESTE(nodo.ChildNodes[0]);
-
+                    case "NATIVAS":     return evaluarNATIVAS(nodo.ChildNodes[0]);
                     case "ACCESO_OBJ":
                         hacer_cond.AddFirst(true);
                         nodo3d ret = acceso_a_objectos(nodo.ChildNodes[0],false);
@@ -1769,7 +1805,110 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 return new nodo3d();//error
         }
 
-        
+        private nodo3d evaluarNATIVAS(ParseTreeNode nodo)
+        {
+            //throw new NotImplementedException();
+            ParseTreeNode nativa = nodo.ChildNodes[0];
+            switch (nativa.Term.Name)
+            {
+                case "PARSE_INT":
+                    return ParseInt(nativa.ChildNodes[1]);
+                //AQUI AGREGO LAS DEMAS
+            }
+            return new nodo3d();
+        }
+
+        private nodo3d parse_int(ParseTreeNode nodo)
+        {
+            nodo3d cad = evaluarEXPRESION(nodo);
+            String cadena = "";
+
+            String t0 = Temp();
+            String t1 = Temp();
+            String t2 = Temp();
+            String t3 = Temp();
+            String t4 = Temp();
+            String t5 = Temp();
+            String t6 = Temp();
+            String t7 = Temp();
+
+            String e1 = Etiqueta();
+            String e2 = Etiqueta();
+            String e3 = Etiqueta();
+            String e4 = Etiqueta();
+            String e5 = Etiqueta();
+            String e6 = Etiqueta();
+            String e7 = Etiqueta();
+            String e8 = Etiqueta();
+            String e9 = Etiqueta();
+            String e10 = Etiqueta();
+            String e11 = Etiqueta();
+            String e12 = Etiqueta();
+
+            //codigo 3d
+            cadena += "\t" + t0 + " = " + cad.val + "\n";// temporal que guarda el numero a convertir en cadena
+            cadena += "\t" + t1 + " = " + "1\n"; //temporal que guardara si es negativo o positivo
+            cadena += "\t" + "if " + t0 + " >= 0 goto " + e1 + "\n"; // si es negativo guardamos el -1
+            cadena += "\t" + t1 + " = -1\n";
+            cadena += "\t" + t0 + " = " + t0 + " * " + t1 + "\n";
+            cadena +=  e1 + ":\n";
+            cadena += "\t" + t2 + " = 1\n"; // temporal con el que sabremos el tamaño del numero  
+            cadena +=  e3 + ":\n";
+            cadena += "\t" + t3 + " = 1\n"; // temporal que llevara el contador de 9
+            cadena +=  e4 + ":\n";
+            cadena += "\t" + t4 + " = " + t2 + " * " + t3 + "\n";
+            cadena += "\t" + "if " + t3 + " > 10 goto " + e5 + "\n";
+            cadena += "\t" + "if " + t0 + " < " + t4 + " goto " + e2 + "\n";
+            cadena += "\t" + t3 + " = " + t3 + " + 1\n";
+            cadena += "\t" + "goto " + e4 + "\n";
+            cadena +=  e5 + ":\n";
+            cadena += "\t" + t2 + " = " + t2 + " * 10\n";
+            cadena += "\t" + "goto " + e3 + "\n";
+            ////////////////////////////////////////////////////////////////
+            cadena +=  e2 + "://comenzamos a guardar el numero en el heap\n";
+            cadena += "\t" + t5 + " = H\n"; // temporal que guardara la posicion del heap donde creamos el numero
+            cadena += "\t" + "if " + t1 + " == 1 goto " + e6 + "\n";
+            cadena += "\t" + "Heap[H] = 45\n";
+            cadena += "\t" + "H = H + 1\n";
+            cadena +=  e6 + ":\n";
+            cadena += "\t" + t3 + " = " + t3 + " - 1\n";
+            cadena += "\t" + t6 + " = 0\n";
+            cadena += "\t" + t7 + "= 48\n";
+            cadena +=  e7 + ":\n";
+            cadena += "\t" + "if " + t6 + " == " + t3 + " goto " + e8 + "\n";
+            cadena += "\t" + t6 + " = " + t6 + " + 1\n";
+            cadena += "\t" + t7 + " = " + t7 + " + 1\n";
+            cadena += "\t" + "goto " + e7 + "\n";
+
+            cadena +=  e8 + ":\n";//aqui guarda ascii
+            cadena += "\t" + "Heap[H] = " + t7 + "\n";
+            cadena += "\t" + "H = H + 1\n";
+
+
+            cadena += "\t" + "if " + t2 + " == 1 goto " + e9 + "\n";
+            cadena += "\t" + t4 + " = " + t2 + " * " + t3 + "\n";
+            cadena += "\t" + t0 + " = " + t0 + " - " + t4 + "\n";
+            cadena += "\t" + t2 + " = " + t2 + " / 10\n";
+
+            cadena +=  e10 + ":\n";
+            cadena += "\t" + t3 + " = 1\n"; // temporal que llevara el contador de 9
+            cadena +=  e11 + ":\n";
+            cadena += "\t" + t4 + " = " + t2 + " * " + t3 + "\n";
+            cadena += "\t" + "if " + t3 + " > 10 goto " + e12 + "\n";
+            cadena += "\t" + "if " + t0 + " < " + t4 + " goto " + e6 + "\n";
+            cadena += "\t" + t3 + " = " + t3 + " + 1\n";
+            cadena += "\t" + "goto " + e11 + "\n";
+            cadena +=  e12 + ":\n";
+            cadena += "\t" + t2 + " = " + t2 + " * 10\n";
+            cadena += "\t" + "goto " + e10 + "\n";
+
+            cadena +=  e9 + ":\n";
+            cadena += "\t" + "Heap[H] = 0\n";
+            cadena += "\t" + "H = H + 1\n";
+
+            escribir3d(cadena, "conversion ParseINT");
+            return new nodo3d("cad", t5);
+        }
 
         private nodo3d acceso_a_objectos(ParseTreeNode nodo,bool ban)
         {
@@ -1780,7 +1919,11 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             nodoTabla var = get_variable(nombre, lista_ambito.First().nombre);
             nodo3d retorno = new nodo3d();
 
-            
+            if (var == null)
+            {
+                agregar_error("no se encontro la variable: "+nombre + ", en ambito: " + lista_ambito.First().nombre,nodo);
+                return new nodo3d();
+            }
             nodo3d id = evaluarID(var.nombre,nodo);
 
             if (var != null)
@@ -2216,7 +2359,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 string salida2 = Control3d.getEti();
                 string l2 = Control3d.getEti();
                 obtener_de_heap(tmp2, val2.val,"puntero de la segunda cadena");
-                escribir3d(l2 + ":", "\t\tciclo para copiar la segunda cadena");
+                escribir3d(l2 + ":", "\tciclo para copiar la segunda cadena");
                 escribir_condicion_sin_goto(tmp2, "0", "==", salida2,"termino de copiar la segunda cad");
                 asignar_heap("H", tmp2,"");
                 aumentar_heap();
@@ -2314,7 +2457,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
         private nodo3d evaluarChar(ParseTreeNode nodo)
         {
-            string cad =nodo.ChildNodes[0].Token.Text.Replace("'", "");
+            string cad =nodo.Token.Text.Replace("'", "");
             int val = (int)cad.ElementAt(0);
             return new nodo3d("char", val.ToString());
         }
@@ -2510,73 +2653,111 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             String e12 = Control3d.getEti();
 
             //codigo 3d
-            cadena += "\t\t" + t0 + " = " + numero + "//Convirtiendo entero a cadena\n"; // temporal que guarda el numero a convertir en cadena
-            cadena += "\t\t" + t1 + " = " + "1\n"; //temporal que guardara si es negativo o positivo
-            cadena += "\t\t" + "if " + t0 + " >= 0 goto " + e1 + "\n"; // si es negativo guardamos el -1
-            cadena += "\t\t" + t1 + " = -1\n";
-            cadena += "\t\t" + t0 + " = " + t0 + " * -1\n";
+            cadena += "\t" + t0 + " = " + numero + "//Convirtiendo entero a cadena\n"; // temporal que guarda el numero a convertir en cadena
+            cadena += "\t" + t1 + " = " + "1\n"; //temporal que guardara si es negativo o positivo
+            cadena += "\t" + "if " + t0 + " >= 0 goto " + e1 + "\n"; // si es negativo guardamos el -1
+            cadena += "\t" + t1 + " = -1\n";
+            cadena += "\t" + t0 + " = " + t0 + " * -1\n";
             cadena += "\t" + e1 + ":\n";
-            cadena += "\t\t" + t2 + " = 1\n"; // temporal con el que sabremos el tamaño del numero  
+            cadena += "\t" + t2 + " = 1\n"; // temporal con el que sabremos el tamaño del numero  
             cadena += "\t" + e3 + ":\n";
-            cadena += "\t\t" + t3 + " = 1\n"; // temporal que llevara el contador de 9
+            cadena += "\t" + t3 + " = 1\n"; // temporal que llevara el contador de 9
             cadena += "\t" + e4 + ":\n";
-            cadena += "\t\t" + t4 + " = " + t2 + " * " + t3 + "\n";
-            cadena += "\t\t" + "if " + t3 + " > 10 goto " + e5 + "\n";
-            cadena += "\t\t" + "if " + t0 + " < " + t4 + " goto " + e2 + "\n";
-            cadena += "\t\t" + t3 + " = " + t3 + " + 1\n";
-            cadena += "\t\t" + "goto " + e4 + "\n";
+            cadena += "\t" + t4 + " = " + t2 + " * " + t3 + "\n";
+            cadena += "\t" + "if " + t3 + " > 10 goto " + e5 + "\n";
+            cadena += "\t" + "if " + t0 + " < " + t4 + " goto " + e2 + "\n";
+            cadena += "\t" + t3 + " = " + t3 + " + 1\n";
+            cadena += "\t" + "goto " + e4 + "\n";
             cadena += "\t" + e5 + ":\n";
-            cadena += "\t\t" + t2 + " = " + t2 + " * 10\n";
-            cadena += "\t\t" + "goto " + e3 + "\n";
+            cadena += "\t" + t2 + " = " + t2 + " * 10\n";
+            cadena += "\t" + "goto " + e3 + "\n";
             ////////////////////////////////////////////////////////////////
             cadena += "\t" + e2 + "://comenzamos a guardar el numero en el heap\n";
-            cadena += "\t\t" + t5 + " = H\n"; // temporal que guardara la posicion del heap donde creamos el numero
-            cadena += "\t\t" + "if " + t1 + " == 1 goto " + e6 + "\n";
-            cadena += "\t\t" + "Heap[H] = 45\n";
-            cadena += "\t\t" + "H = H + 1\n";
+            cadena += "\t" + t5 + " = H\n"; // temporal que guardara la posicion del heap donde creamos el numero
+            cadena += "\t" + "if " + t1 + " == 1 goto " + e6 + "\n";
+            cadena += "\t" + "Heap[H] = 45\n";
+            cadena += "\t" + "H = H + 1\n";
             cadena += "\t" + e6 + ":\n";
-            cadena += "\t\t" + t3 + " = " + t3 + " - 1\n";
-            cadena += "\t\t" + t6 + " = 0\n";
-            cadena += "\t\t" + t7 + "= 48\n";
+            cadena += "\t" + t3 + " = " + t3 + " - 1\n";
+            cadena += "\t" + t6 + " = 0\n";
+            cadena += "\t" + t7 + "= 48\n";
             cadena += "\t" + e7 + ":\n";
-            cadena += "\t\t" + "if " + t6 + " == " + t3 + " goto " + e8 + "\n";
-            cadena += "\t\t" + t6 + " = " + t6 + " + 1\n";
-            cadena += "\t\t" + t7 + " = " + t7 + " + 1\n";
-            cadena += "\t\t" + "goto " + e7 + "\n";
+            cadena += "\t" + "if " + t6 + " == " + t3 + " goto " + e8 + "\n";
+            cadena += "\t" + t6 + " = " + t6 + " + 1\n";
+            cadena += "\t" + t7 + " = " + t7 + " + 1\n";
+            cadena += "\t" + "goto " + e7 + "\n";
 
             cadena += "\t" + e8 + ":\n";//aqui guarda ascii
-            cadena += "\t\t" + "Heap[H] = " + t7 + "\n";
-            cadena += "\t\t" + "H = H + 1\n";
+            cadena += "\t" + "Heap[H] = " + t7 + "\n";
+            cadena += "\t" + "H = H + 1\n";
 
 
-            cadena += "\t\t" + "if " + t2 + " == 1 goto " + e9 + "\n";
-            cadena += "\t\t" + t4 + " = " + t2 + " * " + t3 + "\n";
-            cadena += "\t\t" + t0 + " = " + t0 + " - " + t4 + "\n";
-            cadena += "\t\t" + t2 + " = " + t2 + " / 10\n";
+            cadena += "\t" + "if " + t2 + " == 1 goto " + e9 + "\n";
+            cadena += "\t" + t4 + " = " + t2 + " * " + t3 + "\n";
+            cadena += "\t" + t0 + " = " + t0 + " - " + t4 + "\n";
+            cadena += "\t" + t2 + " = " + t2 + " / 10\n";
 
             cadena += "\t" + e10 + ":\n";
-            cadena += "\t\t" + t3 + " = 1\n"; // temporal que llevara el contador de 9
+            cadena += "\t" + t3 + " = 1\n"; // temporal que llevara el contador de 9
             cadena += "\t" + e11 + ":\n";
-            cadena += "\t\t" + t4 + " = " + t2 + " * " + t3 + "\n";
-            cadena += "\t\t" + "if " + t3 + " > 10 goto " + e12 + "\n";
-            cadena += "\t\t" + "if " + t0 + " < " + t4 + " goto " + e6 + "\n";
-            cadena += "\t\t" + t3 + " = " + t3 + " + 1\n";
-            cadena += "\t\t" + "goto " + e11 + "\n";
+            cadena += "\t" + t4 + " = " + t2 + " * " + t3 + "\n";
+            cadena += "\t" + "if " + t3 + " > 10 goto " + e12 + "\n";
+            cadena += "\t" + "if " + t0 + " < " + t4 + " goto " + e6 + "\n";
+            cadena += "\t" + t3 + " = " + t3 + " + 1\n";
+            cadena += "\t" + "goto " + e11 + "\n";
             cadena += "\t" + e12 + ":\n";
-            cadena += "\t\t" + t2 + " = " + t2 + " * 10\n";
-            cadena += "\t\t" + "goto " + e10 + "\n";
+            cadena += "\t" + t2 + " = " + t2 + " * 10\n";
+            cadena += "\t" + "goto " + e10 + "\n";
 
             cadena += "\t" + e9 + ":\n";
-            cadena += "\t\t" + "Heap[H] = 0\n";
-            cadena += "\t\t" + "H = H + 1\n";
+            cadena += "\t" + "Heap[H] = 0\n";
+            cadena += "\t" + "H = H + 1\n";
 
             // codigo3d.Codigo = cadena
             //codigo3d.Tipo = Constante.TCadena
             //codigo3d.Valor = t5
             escribir3d("", " comienza traduccion del numero entero");
             escribir3d(cadena, "");
-            escribir3d("", "fin de la traduccion de num_to_int");
+            escribir3d("", "fin de la traduccion de int to str");
             return new nodo3d("cad", t5);
+        }
+
+        private nodo3d ParseInt(ParseTreeNode nodo)
+        {
+            String cadena = "";
+
+            nodo3d aux = evaluarEXPRESION(nodo);
+            String t0 = Temp();
+            String t1 = Temp();
+            String t2 = Temp();
+            String t3 = Temp();
+
+            String e1 = Etiqueta();
+            String e2 = Etiqueta();
+            String e3 = Etiqueta();
+
+
+            //codigo 3d
+            cadena += "\t" + t0 + " = " + aux.val + "\n"; // temporal que guarda el numero a convertir en cadena
+            cadena += "\t" + t1 + " = Heap[" + t0 + "]\n"; //temporal que guardara si es negativo o positivo
+            cadena += "\t" + t2 + " = 0\n";
+            cadena +=  e1 + ":\n";
+            cadena += "\t" + "ifFalse " + t1 + " >= 48 goto " + e2 + "\n";
+            cadena += "\t" + "ifFalse " + t1 + " <= 57 goto " + e2 + "\n";
+            cadena += "\t" + t3 + " = " + t1 + " - 48\n";
+            cadena += "\t" + t2 + " = " + t2 + " * 10\n";
+            cadena += "\t" + t2 + " = " + t2 + " + " + t3 + "\n";
+            cadena += "\t" + t0 + " = " + t0 + " + 1\n";
+            cadena += "\t" + t1 + " = Heap[" + t0 + "]\n";
+            cadena += "\t" + "ifFalse " + t1 + " == 0 goto " + e1 + "\n";
+            cadena += "\t" + "goto " + e3 + "\n";
+            cadena +=  e2 + ":\n";
+            cadena += "\t" + "goto L1\n";
+            cadena +=  e3 + ":\n";
+
+            escribir3d(cadena, "");
+            escribir3d("", "fin de la traduccion de int to str");
+            return new nodo3d("num",t2);
         }
 
         #region ESCRIBIR EN 3D
@@ -2631,12 +2812,12 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
         public void escribir3d(string cont, string comentario)
         {
-            this.lista_c3d.First().codigo.Append(cont + " \t\t//" + comentario + "\n");
+            this.lista_c3d.First().codigo.Append(cont + " \t//" + comentario + "\n");
         }
 
         public void escribir_condicion(string uno, string dos, string op, string etv, string etf, string comentario)
         {
-            string cond = "\tif " + uno + " " + op + " " + dos + " goto " + etv + " \t\t//" + comentario + "\n";
+            string cond = "\tif " + uno + " " + op + " " + dos + " goto " + etv + " \t//" + comentario + "\n";
             string cond2 = "\tgoto " + etf + "\n";
             this.lista_c3d.First().codigo.Append(cond);
             this.lista_c3d.First().codigo.Append(cond2);
@@ -2698,7 +2879,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         
         public void escribir_comentario(string com)
         {
-            this.lista_c3d.First().codigo.Append("\t\t// "+com+"\n");
+            this.lista_c3d.First().codigo.Append("\t// "+com+"\n");
         }
         
         public string Temp()

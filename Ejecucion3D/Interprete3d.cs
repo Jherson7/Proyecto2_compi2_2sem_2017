@@ -193,7 +193,9 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
                     break;
                 case "THROW":
                     MessageBox.Show("GRAVE ERROR INTENTO ACCEDER A UNA POSICION NULA O VACIA CERCA DE LA LINEA: " + ptr);
-                    throw new NullReferenceException();
+                    //throw new NullReferenceException();
+                    return;
+                    //break;
                 default:
                     if(!raiz.nombre.Equals("LABEL"))
                         MessageBox.Show("me falta: " + raiz.nombre);
@@ -255,9 +257,16 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
         {
             try
             {
-                if ((Boolean)evaluarCOND(raiz.ChildNodes[0]))
+                ParseTreeNode cond = raiz.ChildNodes[1];
+
+                Boolean a = (Boolean)evaluarCOND(cond);
+
+                if (raiz.ChildNodes[0].Term.Name.Equals("ifFalse"))
+                    a = !a;
+
+                if (a)
                 {
-                    string eti = raiz.ChildNodes[1].Token.Text;
+                    string eti = raiz.ChildNodes[2].Token.Text;
                     int pos = -1;
                     lista_etiquetas.TryGetValue(eti, out pos);
                     setPtr(pos);

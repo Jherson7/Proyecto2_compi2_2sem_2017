@@ -251,6 +251,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                              | ASIGNACION + ppt
                              | DECLARAR_ASIG + ppt
                              | DECLARAR_ARRAY + ppt
+                             | DECLARAR + ppt
                              | ASIG_ARRAY + ppt
                              | IF
                              | IMPRIMIR + ppt
@@ -300,7 +301,9 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
              DECREMENTOS.Rule = id + "++"
                              |  id + "--";
 
-             DECLARAR_ARRAY.Rule = TIPO_V + id + L_ARRAY + asig + LLAVE;
+             DECLARAR_ARRAY.Rule =  TIPO_V + id + L_ARRAY + asig + LLAVE
+                                  | TIPO_V + id + L_ARRAY 
+                                  ;
 
              L_ARRAY.Rule = MakeStarRule(L_ARRAY, CASILLA);
 

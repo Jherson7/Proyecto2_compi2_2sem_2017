@@ -117,6 +117,7 @@
     <Compile Include="TablaSimbolos\nodoTabla.cs" />
     <Compile Include="TablaSimbolos\tablaSimbolos.cs" />
     <Compile Include="UML\clase_uml.cs" />
+    <Compile Include="UML\constructor_uml.cs" />
     <Compile Include="UML\crear_clase.cs">
       <SubType>Form</SubType>
     </Compile>

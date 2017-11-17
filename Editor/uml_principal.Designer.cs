@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(uml_principal));
             this.flowLayoutPanel1 = new System.Windows.Forms.FlowLayoutPanel();
             this.button1 = new System.Windows.Forms.Button();
@@ -44,11 +45,14 @@
             this.button7 = new System.Windows.Forms.Button();
             this.button8 = new System.Windows.Forms.Button();
             this.button9 = new System.Windows.Forms.Button();
-            this.txt_salida = new System.Windows.Forms.RichTextBox();
+            this.ironyFCTB1 = new FastColoredTextBoxNS.IronyFCTB();
+            this.txt_salida = new FastColoredTextBoxNS.IronyFCTB();
             this.flowLayoutPanel1.SuspendLayout();
             this.flowLayoutPanel2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.flowLayoutPanel3.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.ironyFCTB1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txt_salida)).BeginInit();
             this.SuspendLayout();
             // 
             // flowLayoutPanel1
@@ -147,6 +151,7 @@
             this.flowLayoutPanel3.Controls.Add(this.button7);
             this.flowLayoutPanel3.Controls.Add(this.button8);
             this.flowLayoutPanel3.Controls.Add(this.button9);
+            this.flowLayoutPanel3.Controls.Add(this.ironyFCTB1);
             this.flowLayoutPanel3.Controls.Add(this.txt_salida);
             this.flowLayoutPanel3.Location = new System.Drawing.Point(743, 41);
             this.flowLayoutPanel3.Name = "flowLayoutPanel3";
@@ -172,6 +177,7 @@
             this.cmb_clase.Name = "cmb_clase";
             this.cmb_clase.Size = new System.Drawing.Size(265, 21);
             this.cmb_clase.TabIndex = 0;
+            this.cmb_clase.SelectedIndexChanged += new System.EventHandler(this.cmb_clase_SelectedIndexChanged);
             // 
             // button7
             // 
@@ -181,6 +187,7 @@
             this.button7.Size = new System.Drawing.Size(75, 61);
             this.button7.TabIndex = 3;
             this.button7.UseVisualStyleBackColor = true;
+            this.button7.Click += new System.EventHandler(this.button7_Click);
             // 
             // button8
             // 
@@ -201,13 +208,42 @@
             this.button9.TabIndex = 5;
             this.button9.UseVisualStyleBackColor = true;
             // 
+            // ironyFCTB1
+            // 
+            this.ironyFCTB1.AutoScrollMinSize = new System.Drawing.Size(107, 14);
+            this.ironyFCTB1.BackBrush = null;
+            this.ironyFCTB1.CharHeight = 14;
+            this.ironyFCTB1.CharWidth = 8;
+            this.ironyFCTB1.Cursor = System.Windows.Forms.Cursors.IBeam;
+            this.ironyFCTB1.DisabledColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
+            this.ironyFCTB1.Font = new System.Drawing.Font("Courier New", 9.75F);
+            this.ironyFCTB1.IsReplaceMode = false;
+            this.ironyFCTB1.Location = new System.Drawing.Point(290, 30);
+            this.ironyFCTB1.Name = "ironyFCTB1";
+            this.ironyFCTB1.Paddings = new System.Windows.Forms.Padding(0);
+            this.ironyFCTB1.SelectionColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(255)))));
+            this.ironyFCTB1.Size = new System.Drawing.Size(11, 8);
+            this.ironyFCTB1.TabIndex = 6;
+            this.ironyFCTB1.Text = "ironyFCTB1";
+            this.ironyFCTB1.Zoom = 100;
+            // 
             // txt_salida
             // 
+            this.txt_salida.AutoScrollMinSize = new System.Drawing.Size(27, 14);
+            this.txt_salida.BackBrush = null;
+            this.txt_salida.CharHeight = 14;
+            this.txt_salida.CharWidth = 8;
+            this.txt_salida.Cursor = System.Windows.Forms.Cursors.IBeam;
+            this.txt_salida.DisabledColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
+            this.txt_salida.Font = new System.Drawing.Font("Courier New", 9.75F);
+            this.txt_salida.IsReplaceMode = false;
             this.txt_salida.Location = new System.Drawing.Point(3, 97);
             this.txt_salida.Name = "txt_salida";
-            this.txt_salida.Size = new System.Drawing.Size(411, 421);
-            this.txt_salida.TabIndex = 2;
-            this.txt_salida.Text = "";
+            this.txt_salida.Paddings = new System.Windows.Forms.Padding(0);
+            this.txt_salida.SelectionColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(255)))));
+            this.txt_salida.Size = new System.Drawing.Size(411, 442);
+            this.txt_salida.TabIndex = 7;
+            this.txt_salida.Zoom = 100;
             // 
             // uml_principal
             // 
@@ -224,6 +260,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.flowLayoutPanel3.ResumeLayout(false);
             this.flowLayoutPanel3.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.ironyFCTB1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.txt_salida)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -243,8 +281,9 @@
         private System.Windows.Forms.ComboBox cmb_clase;
         private System.Windows.Forms.Button button7;
         private System.Windows.Forms.Button button8;
-        private System.Windows.Forms.RichTextBox txt_salida;
         private System.Windows.Forms.Button button9;
         private System.Windows.Forms.PictureBox pictureBox1;
+        private FastColoredTextBoxNS.IronyFCTB ironyFCTB1;
+        private FastColoredTextBoxNS.IronyFCTB txt_salida;
     }
 }

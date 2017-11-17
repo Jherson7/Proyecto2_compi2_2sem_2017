@@ -29,7 +29,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         private LinkedList<int> posicion;
         public Dictionary<string,objeto_clase> lista_clases;
         private objeto_clase clase_actual;
-
+        public Boolean es_heredada = false;
         #endregion
 
         /****************************************************************************************/
@@ -75,17 +75,22 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             }
             //---------------------> Todo Bien
             //Graficador g = new Graficador();
-           // g.graficar(arbol);
+            // g.graficar(arbol);
             SentenciasGlobales(raiz);
+            startin();
+        }
+
+        private void startin()
+        {
+            
             //iniciar();
             iniciar_traduccion_clases();
-            
+
             mostrarTablaSimbolos();
             Control3d.setListaClases(lista_clases);//seteo las clases
             Control3d.setListaMetodos(metodos);//seteo los metodos para traducirlos
             Control3d.set_clase_actual(clase_actual);
             generacion_3d_olc gen = new generacion_3d_olc();
-            //ejecutar(raiz);
         }
 
         public void analizar_TREE(String entrada)
@@ -111,6 +116,8 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             }
              Graficador g = new Graficador();
              g.graficar(arbol);
+             SentenciasGlobales(raiz);
+            startin();
         }
 
         
@@ -184,6 +191,9 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                         tama *= x;
                     nodoTabla variable = new nodoTabla(a.visibilidad, a.tipo, a.nombre, "var_array", pos++, tama, aux.nombre + "_Global", a.casilla, a.valor);
                     tabla.AddLast(variable);
+                    variable.es_heredada = a.es_heredada;
+                    variable.set_tam_oculto(tama);
+                    
                     //tabla.posGlobal += tam;//me falta cuando sea
                 }
                 else
@@ -347,9 +357,67 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 case "IMPORTAR":
                     ejecutarIMPORTAR(raiz);
                     break;
+                case "IMPORTS":
+                    ejecutarIMPORTS(raiz.ChildNodes[0]);
+                    
+                    break;
                 case "STRUCT":
                     guardar_clase_tree(raiz);
                     break;
+            }
+        }
+
+        private void ejecutarIMPORTS(ParseTreeNode raiz)
+        {
+            //throw new NotImplementedException();
+            ParseTreeNode archivos = raiz.ChildNodes[1];
+            foreach(var item in archivos.ChildNodes)
+            {
+                string archivo = item.ChildNodes[0].Token.Text;
+                string nombre = "";
+                ///1 preguntar si continene http
+                ///2 preguntar si tiene / de ruta
+                ///3 si no es porque esta en la carpeta local
+                string ext = "";
+                if (archivo.Contains("//"))
+                {
+
+                }
+                else if (archivo.EndsWith(".olc"))
+                {
+                    nombre = archivo.Replace("\"", "").Replace(".olc", "");
+                    ext = ".olc";
+                }
+                else
+                {
+                    nombre = archivo.Replace("\"", "").Replace(".tree", "");
+                    ext = ".tree";
+                }
+                if (!lista_clases.ContainsKey(nombre))
+                {
+                    string ruta = Control3d.getRuta() + nombre + ext;//cambiar la ruta  cuando se abra un archivo
+                    string cont = retornarContenido(ruta);
+
+                    if (cont != "")
+                    {
+                        //ejecutar el parse y retonar y NodoArbol
+                        ParseTreeNode aux;
+                        if (ext.Contains("olc"))
+                        {
+                            aux =retonarRaizOLC(cont, nombre);
+                        }
+                        else
+                        {
+                            aux = retonrarRaizTREE(cont, nombre);
+                        }
+                        if (aux != null)
+                            SentenciasGlobales(aux);
+                        else
+                            Control3d.agregarError(new Control3D.errores("semantico", raiz.Span.Location.Line, raiz.Span.Location.Column, "ERROR AL ANALIZAR EL CONTENIDO DEL ARCHIVO tree: " + nombre));
+                    }
+                }
+                else
+                    Control3d.agregarError(new Control3D.errores("semantico", raiz.Span.Location.Line, raiz.Span.Location.Column, "Ya se importo un archivo con nombre:  " + nombre));
             }
         }
 
@@ -390,17 +458,23 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         private void ejecutarLlamar(ParseTreeNode raiz)
         {
             Console.WriteLine(raiz.Term.Name);
-            string nombre_archivo = raiz.ChildNodes[0].Token.Text.Replace("\"", "").Replace(".olc","");
+            string original = raiz.ChildNodes[0].Token.Text.Replace("\"", "");
+
+            string nombre_archivo = raiz.ChildNodes[0].Token.Text.Replace("\"", "").Replace(".olc","").Replace(".tree","");
 
             if (!lista_clases.ContainsKey(nombre_archivo))
             {
-                string ruta = Control3d.getRuta() + nombre_archivo+".olc";//cambiar la ruta  cuando se abra un archivo
+                string ruta = Control3d.getRuta() + original;//cambiar la ruta  cuando se abra un archivo
                 string cont = retornarContenido(ruta);
 
                 if (cont != "")
                 {
                     //ejecutar el parse y retonar y NodoArbol
-                    ParseTreeNode aux = retonarRaizOLC(cont,nombre_archivo);
+                    ParseTreeNode aux;
+                    if (original.EndsWith("olc"))
+                        aux = retonarRaizOLC(cont, nombre_archivo);
+                    else
+                        aux = retonrarRaizTREE(cont, nombre_archivo);
                     if (aux != null)
                         SentenciasGlobales(aux);
                     else
@@ -530,10 +604,20 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
         private void ejecutarHeredar(ParseTreeNode raiz)
         {
+            es_heredada = true;
             string ruta = "";
             string nombre = raiz.ChildNodes[0].Token.Text;
+
             ruta = Control3d.getRuta() + nombre + ".olc";
             string contenido = retornarContenido(ruta);
+
+            if (contenido == "")
+            {
+                ruta = Control3d.getRuta() + nombre + ".tree";
+                contenido = retornarContenido(ruta);
+            }
+
+
             if (contenido != "")
             {
                 ParseTreeNode raiz_aux = retonarRaizOLC(contenido, nombre);
@@ -554,6 +638,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                         catch
                         {
                             Control3d.agregarError(new Control3D.errores("semantico", raiz.Span.Location.Line, raiz.Span.Location.Column, "Error en la clase a heredar:  " + nombre+", revise el contenido de la clase"));
+                            es_heredada = false;
                             return;
                         }
                     }
@@ -563,6 +648,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             }
             else
                 Control3d.agregarError(new Control3D.errores("semantico", raiz.Span.Location.Line, raiz.Span.Location.Column, "Error al leer el archivo que contiene la clase a heredar:  " + nombre));
+            es_heredada = false;
         }
 
         private void sentencias_clase(ParseTreeNode raiz,string nombre_clase)
@@ -612,17 +698,20 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                     guardar_metodo(tipo, nombre, visibilidad, aux);
                 }else if (aux.Term.Name.Equals("L_ARRAY")){
                     guardarArreglo(visibilidad, tipo, nombre, raiz.ChildNodes[3]);
-                }else if (aux.Term.Name.Equals("new")){
+                }else if (aux.Term.Name.Equals("new")|| aux.Term.Name.Equals("nuevo"))
+                {
                     guardarInstancia(visibilidad, tipo, nombre, raiz.ChildNodes[3].ChildNodes[1].Token.Text,raiz.ChildNodes[3].ChildNodes[2], nombre_clase,raiz.ChildNodes[3]);
                 }
                 else//seria una declaracion asignacion
                 {
                     Variable var = new Variable(visibilidad, tipo, nombre, raiz.ChildNodes[3].ChildNodes[0]);
+                    var.set_hereda(es_heredada);
                     guardarVariable(var, raiz.Span.Location.Line, raiz.Span.Location.Column);
                 }
             }else
             {
                 Variable var = new Variable(visibilidad, tipo, nombre, null);
+                var.set_hereda(es_heredada);
                 guardarVariable(var,raiz.Span.Location.Line,raiz.Span.Location.Column);
             }
         }
@@ -657,12 +746,16 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         private void guardarConstructor(string visibilidad, ParseTreeNode raiz,string clase)
         {
             string id = raiz.ChildNodes[0].Token.Text;
+            if (id.Equals("constructor"))
+            {
+
+            }else 
             if (!id.Equals(clase))
             {
                 Control3d.agregarError(new Control3D.errores("semantico", raiz.Span.Location.Line, raiz.Span.Location.Column, "Error en el nombre del constructor en la clase: " + clase));
                 return;
             }
-            if (raiz.ChildNodes.Count == 3)
+            if (raiz.ChildNodes.Count == 3&&raiz.ChildNodes[1].ChildNodes.Count>0)
                 guardar_constructor_parametros(visibilidad, "CONSTRUCTOR", clase, raiz.ChildNodes[1], raiz.ChildNodes[2]);
             else
             {
@@ -723,6 +816,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 //guardo la variable a pesar que haya herrores
                 //esto es nuevo, 
                 Variable var = new Variable(visibilidad, tipo, nombre, exp);
+                var.set_hereda(es_heredada);
                 guardarVariable(var, raiz.Span.Location.Line, raiz.Span.Location.Column);
             }
         }
@@ -826,7 +920,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 
             }
 
-            if (lista.Count >= 1)
+            if (lista.Count > 1)
             {
                 int colum = lista.ElementAt(1);
                 int fila = lista.ElementAt(0);
@@ -840,6 +934,8 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                var = new Variable(visibilidad, tipo, nombre, aux.ChildNodes[1], lista);
             else
                 var = new Variable(visibilidad, tipo, nombre, null, lista);
+            var.set_hereda(es_heredada);
+            
             guardarVariable(var, aux.Span.Location.Line, aux.Span.Location.Column);
         }
 
@@ -1106,7 +1202,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             }
 
 
-            if (lista.Count >= 1)//hago el cambio para que todo quede nitido
+            if (lista.Count > 1)//hago el cambio para que todo quede nitido
             {//acceso de la forma columna fila
                 int colum = lista.ElementAt(1);
                 int fila = lista.ElementAt(0);
@@ -1139,6 +1235,11 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 tabla.AddLast(nuevo);
                 if((fl))
                     nuevo.setExp(nodo.ChildNodes[3]);
+
+                int tam = 1;
+                for (int i = 0; i < var.casilla.Count; i++)
+                    tam *= var.casilla.ElementAt(i);
+                nuevo.set_tam_oculto(tam);
                 int x = posicion.First();
                 x++;
                 posicion.RemoveFirst();
@@ -1236,7 +1337,19 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                 }
 
                 
-            }else 
+            }
+            else  if (nodo.ChildNodes.Count == 2)
+                {//if solo
+                    string nuevo_ambito = ambito + "_if" + listaActual.noIf++;
+                    aumentarAmbito(nuevo_ambito);
+                    ejecutar(nodo.ChildNodes[1], nuevo_ambito);
+                    disminuirAmbito();
+
+
+
+                }
+
+                else 
             {
                 string nuevo_ambito = ambito + "_if" + listaActual.noIf++;
                 aumentarAmbito(nuevo_ambito);

@@ -20,7 +20,8 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
             MarkReservedWords("heap");
             MarkReservedWords("print");
             MarkReservedWords("throw");
-            
+            MarkReservedWords("ifFalse");
+
 
             var heap = ToTerm("heap");
             var stack = ToTerm("stack");
@@ -62,6 +63,7 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
             var BODY = new NonTerminal("BODY");
             var PRINT = new NonTerminal("PRINT");
             var THROW = new NonTerminal("THROW");
+            var IFFALSE = new NonTerminal("ifFalse");
 
             this.Root = INICIO;
 
@@ -81,6 +83,7 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
                         | PRINT
                         | CALLFUN
                         | THROW
+                        
                         ;
 
             PRINT.Rule = ToTerm("print") +apar+ comilla +mod + id+comilla + ToTerm(",")+E+cpar   ;
@@ -122,7 +125,11 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
             CALLFUN.Rule = id + apar + cpar
                         ;
 
-            CONDICIONAL.Rule = ToTerm("if") + COND + ToTerm("goto") + etiqueta;
+            CONDICIONAL.Rule = IFFALSE + COND + ToTerm("goto") + etiqueta;
+
+            IFFALSE.Rule= ToTerm("if")
+                        | ToTerm("ifFalse");
+
 
             GOTO.Rule = ToTerm("goto") + etiqueta;
 
@@ -158,7 +165,7 @@ namespace Proyecto2_compi2_2sem_2017.Ejecucion3D
             */ //YA NO LLEVA PRECEDECIA PORQUE ES 3D
 
             this.MarkPunctuation("(", ")", ";", ":", "{", "}", "=", ".", ",", "[", "]", "@sobrescribir");
-            this.MarkPunctuation("void", "goto","stack","if","heap","\"","%","print");
+            this.MarkPunctuation("void", "goto","stack","heap","\"","%","print");
             
             //this.MarkPunctuation("whilex", "whilexorand", "repeat", "count", "loop","create","Principal");
             this.MarkTransient(SENTECIA,E,BODY);

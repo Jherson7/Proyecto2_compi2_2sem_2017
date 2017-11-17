@@ -38,14 +38,13 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             MarkReservedWords("principal");
             MarkReservedWords("llamar");
             MarkReservedWords("importar");
-            MarkReservedWords("new");
+            MarkReservedWords("nuevo");
 
             MarkReservedWords("si");
             MarkReservedWords("Sino_Si");
             MarkReservedWords("Sino");
             MarkReservedWords("MIENTRAS");
             MarkReservedWords("HACER");
-            MarkReservedWords("x");
             MarkReservedWords("repetir");
             MarkReservedWords("until");
             MarkReservedWords("Para");
@@ -66,7 +65,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
 
             var tree = ToTerm(".tree");
-            var olc= ToTerm(".olc");
+            var olc = ToTerm(".olc");
             var apar = ToTerm("(");
             var cpar = ToTerm(")");
             var alla = ToTerm("{");
@@ -81,7 +80,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             var retorno = ToTerm("return");
             var clase = ToTerm("clase");
             var asig = ToTerm("=>");
-            var nuevo = ToTerm("new");
+            var nuevo = ToTerm("nuevo");
             var loop = ToTerm("loop");
 
             NumberLiteral numero = TerminalFactory.CreateCSharpNumber("numero");
@@ -186,28 +185,30 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             var HEREDA = new NonTerminal("HEREDA");
             var ESTE = new NonTerminal("ESTE");
             var auxiliar = new NonTerminal("auxiliar");
-
+            var NUEVO = new NonTerminal("NUEVO");
+            var DIM = new NonTerminal("DIM");
+            var L_DIM = new NonTerminal("L_DIM");
 
             this.Root = INICIO;
 
 
             visibilidad.Rule = privado
-                            |  publico
-                            |  protegido
+                            | publico
+                            | protegido
                             ;
             INICIO.Rule = LISTA_IMPORT + BODYSENT
                         | BODYSENT;
 
             BODYSENT.Rule = MakeStarRule(BODYSENT, BODY);
 
-            BODY.Rule = 
+            BODY.Rule =
                          STRUCT //LA UTILIZO PARA DECLARAR Las clases
-                       //| IMPORTAR 
+                                //| IMPORTAR 
                        ;
 
             STRUCT.Rule = clase + id + cora + HEREDA + corc + dosp + Eos + IDENT_SENT;//clase que hereda
 
-            HEREDA.Rule =  id
+            HEREDA.Rule = id
                         | Empty;
 
             IDENT_SENT.Rule = Indent + SENTENCIAS_CLASE + Dedent;
@@ -228,7 +229,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                                 | L_ARRAY + Eos//declarar arreglo
                                 ;
 
-            CONSTRUCTOR.Rule = id + cora + corc + dosp + Eos + IDENT_LISTA
+            CONSTRUCTOR.Rule = id + cora + PARAMETROS + corc + dosp + Eos + IDENT_LISTA
                              ;
 
             METODO.Rule = PARAMETROS + corc + dosp + Eos + IDENT_LISTA;
@@ -236,16 +237,16 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             TIPO_M.Rule =  //PRODUCCION PARA DECLARAR EL TIPO DE LOS METODOS
                            ToTerm("funcion") + id
                          | vacio
-                         | TIPO_V 
+                         | TIPO_V
                          ;
 
-            IMPORTAR.Rule = "importar" + LISTA_IMPORT + Eos ;
+            IMPORTAR.Rule = "importar" + LISTA_IMPORT + Eos;
 
-            LISTA_IMPORT.Rule = MakeStarRule(LISTA_IMPORT,ToTerm(",")+SENT_IMPOTAR);
+            LISTA_IMPORT.Rule = MakeStarRule(LISTA_IMPORT, ToTerm(",") + SENT_IMPOTAR);
 
-            SENT_IMPOTAR.Rule =   ruta
-                                | archivo 
-                                | url ;
+            SENT_IMPOTAR.Rule = ruta
+                                | archivo
+                                | url;
 
             LISTA_IMPORT.Rule = MakeStarRule(LISTA_IMPORT, IMPORTAR);
 
@@ -261,14 +262,25 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             */
 
 
-            OVERRIDE.Rule = ToTerm("/**")  + ToTerm("sobrescribir") +ToTerm( "**/") +Eos+
-                            visibilidad + TIPO_M + id + cora+METODO;
-            
+            OVERRIDE.Rule = ToTerm("/**") + ToTerm("Sobreescribir") + ToTerm("**/") + Eos +
+                            visibilidad + TIPO_M + id + cora + METODO;
+
 
             PARAMETROS.Rule = MakeStarRule(PARAMETROS, ToTerm(","), PARAMETRO);
 
             PARAMETRO.Rule = TIPO_V + id
+                             | TIPO_V + L_DIM + id
                            ;
+            L_DIM.Rule = MakeStarRule(L_DIM, DIM);
+
+            DIM.Rule = cora + corc;
+
+            TIPO_V.Rule = id
+                       | entero
+                       | str
+                       | BOOL
+                       | ToTerm("decimal")
+                       ;
 
 
             IDENT_LISTA.Rule = Indent + SENTENCIAS + Dedent;
@@ -291,13 +303,16 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                             | SWITCH
                             | NATIVAS + Eos
                             | CALLFUN + Eos
-                            | INSTANCIA + Eos
+                           // | INSTANCIA + Eos
+                            | DECREMENTOS + Eos
                             | ESTE 
                             | SUPER
                             | DECLARAR_ARRAY + Eos
                             | ASIG_ARRAY + Eos
                             | asigacion_objeto + Eos
-                           
+                            | ACCESO_OBJ + Eos
+                            
+
                             ;
 
             DECLARAR.Rule = TIPO_V + LISTA_ID;//PRODUCCION PARA DECLARAR
@@ -306,7 +321,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
             LISTA_ID.Rule = MakeStarRule(LISTA_ID, ToTerm(","), id);// SE PUEDEN DECLARAR MAS DE UN ID
 
-            INSTANCIA.Rule = id + id + asig + nuevo + id + cora + PARAMETROS2 + corc;
+//            INSTANCIA.Rule = id + id + asig + nuevo + id + cora + PARAMETROS2 + corc;
 
             DECLARAR_ARRAY.Rule = TIPO_V + id + L_ARRAY; //+ asig + LLAVE;
 
@@ -319,25 +334,19 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             ASIG_ARRAY.Rule = id + L_ARRAY + asig + EXP;
 
 
-            TIPO_V.Rule =
-                          entero
-                        | id
-                        | str
-                        | BOOL
-                        ;
-
+           
             ASIGNACION.Rule = id + ToTerm("=>") + EXP;
 
             /*ciclos de bifurcacion*/
             IF.Rule =
-                        "Si" + cora + EXP + corc + dosp + Eos + IDENT_LISTA
-                   |    "Si" + cora + EXP + corc + dosp + Eos + IDENT_LISTA + L_ELIF
-                   |    "Si" + cora + EXP + corc + dosp + Eos + IDENT_LISTA + L_ELIF + ELSE;
+                        "Si" +  EXP +  dosp + Eos + IDENT_LISTA
+                   |    "Si" +  EXP +  dosp + Eos + IDENT_LISTA + L_ELIF
+                   |    "Si" +  EXP +  dosp + Eos + IDENT_LISTA + L_ELIF + ELSE;
             ;
 
             L_ELIF.Rule = MakeStarRule(L_ELIF, ELIF);
 
-            ELIF.Rule = "Si_NO_Si" + cora + EXP + corc + dosp + Eos + IDENT_LISTA;
+            ELIF.Rule = "Si_NO_Si" + EXP +  dosp + Eos + IDENT_LISTA;
 
             ELSE.Rule = "Si_NO" + dosp + Eos + IDENT_LISTA;
 
@@ -349,8 +358,8 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
             FOR.Rule = ToTerm("PARA") + cora + CONDFOR + dosp + cora + EXP + corc + dosp + DECREMENTOS + corc + dosp + Eos + IDENT_LISTA;
 
-            DECREMENTOS.Rule = id + "++"
-                            |  id + "--";
+            DECREMENTOS.Rule = apar + id + "++" + cpar
+                            | apar + id + "--" + cpar;
 
             LOOP.Rule = loop + dosp + Eos + IDENT_LISTA;
 
@@ -393,9 +402,9 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
             double_TO_INT.Rule = ToTerm("doubleToINT") + cora + EXP + corc;
 
-            EXP.Rule = EXP + EXP + ToTerm("||")
-                       | EXP + EXP + ToTerm("&&")
-                       | EXP + EXP + ToTerm("??")
+            EXP.Rule =   EXP + EXP + ToTerm("OR")
+                       | EXP + EXP + ToTerm("AND")
+                       | EXP + EXP + ToTerm("XOR")
                        | EXP + EXP + ToTerm("==")
                        | EXP + EXP + ToTerm("!=")
                        | EXP + EXP + ToTerm(">")
@@ -409,6 +418,8 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                        | EXP + EXP + ToTerm("%")
                        | EXP + EXP + ToTerm("pow")
                        | apar + EXP + cpar
+                       | alla +EXP + clla
+                       | cora + EXP+ corc
                        | ToTerm("-") + EXP
                        | ToTerm("NOT") + EXP
                        | id
@@ -420,14 +431,19 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
                        | ACCESO_ARRAY
                        | ACCESO_OBJ
                        | CALLFUN
+                       | NATIVAS
+                       | NUEVO
+                       | DECREMENTOS
                       ;
 
-            CALLFUN.Rule =  id + cora + PARAMETROS2 + corc//probar si funciona con las condiciones que tengo :D
-                        ;
+            CALLFUN.Rule = id + cora + PARAMETROS2 + corc//probar si funciona con las condiciones que tengo :D
+;
+            NUEVO.Rule = nuevo + id + cora + PARAMETROS2 + corc;
+                    
             PARAMETROS2.Rule = MakeStarRule(PARAMETROS2, ToTerm(","), EXP);
 
             RETORNO.Rule = ToTerm("retornar")
-                        | ToTerm("retornar") + EXP;
+                        |  ToTerm("retornar") + EXP;
 
             /*self y super*/
 
@@ -443,6 +459,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
 
             ACCESO_OBJ.Rule = id + ToTerm(".") + LISTA_ACCESO
                             | CALLFUN + ToTerm(".") + LISTA_ACCESO
+                            | ACCESO_ARRAY + ToTerm(".") + LISTA_ACCESO
                             ;
 
             LISTA_ACCESO.Rule = MakeListRule(LISTA_ACCESO, ToTerm("."), ACCESO);
@@ -450,11 +467,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             ACCESO.Rule = id
                         | CALLFUN;
 
-            asigacion_objeto.Rule = ACCESO_OBJ + asig + auxiliar;
-
-            auxiliar.Rule =  EXP
-                          |  nuevo + id + cora + PARAMETROS2 +  corc;//ver en el interprete que debo hacer
-
+            asigacion_objeto.Rule = ACCESO_OBJ + asig + EXP;
 
 
 

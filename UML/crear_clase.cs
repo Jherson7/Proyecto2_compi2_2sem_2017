@@ -264,15 +264,6 @@ namespace Proyecto2_compi2_2sem_2017.UML
             dot.Append("}");
 
             generarDOT_PNG(dot.ToString(), "C:\\compiladores\\imagenes_uml\\uml.dot", "C:\\compiladores\\imagenes_uml\\diagrama.png");
-            /*digraph{
-               
-
-                struct3[shape = record, label = "{ Nombre clase|atributos|c| d|e|| metodos|uno|dos|tres}"];
-                struct4[shape = record, label = "{ Nombre clase|atributos|c| d|e|| metodos|uno|dos|tres}"];
-
-                struct3->struct4;
-
-            }*/
 
         }
 

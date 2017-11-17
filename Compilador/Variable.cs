@@ -13,6 +13,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
         public string visibilidad;
         public ParseTreeNode valor;
         public LinkedList<int> casilla;
+        public bool es_heredada;
 
         public Variable(String nom)
         {
@@ -25,6 +26,7 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             this.tipo = tipo;
             this.visibilidad = visibilidad;
             this.casilla = null;
+            es_heredada = false;
         }
         public Variable(string visibilidad, String tipo, String nom, ParseTreeNode val, LinkedList<int> casillas)
         {
@@ -33,7 +35,12 @@ namespace Proyecto2_compi2_2sem_2017.Compilador
             this.tipo = tipo;
             this.visibilidad = visibilidad;
             this.casilla = casillas;
+            es_heredada = false;
         }
 
+        public void set_hereda(bool val)
+        {
+            this.es_heredada = val;
+        }
     }
 }

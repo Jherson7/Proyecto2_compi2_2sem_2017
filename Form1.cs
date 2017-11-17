@@ -86,8 +86,9 @@ namespace Proyecto2_compi2_2sem_2017
                 {
                     aux.AppendText(err.tipo + "  |  " + err.descripcion + "  |  " + err.linea + "  |  " + err.columna + "\n");
                 }
-                RichTextBox c3d = (RichTextBox)control_salida.TabPages[3].Controls[0];
-                c3d.Text = Convert.ToString(Control3d.retornarC3D().ToString());
+                ironyFCTB1.SetParser(new Gramatica3d());
+                ironyFCTB1.Text = Control3d.retornarC3D().ToString();
+                
             }
         }
 
@@ -105,8 +106,8 @@ namespace Proyecto2_compi2_2sem_2017
         private void btnEjecutar3d_Click(object sender, EventArgs e)
         {
             Interprete3d inter = new Interprete3d();
-            RichTextBox c3d = (RichTextBox)control_salida.TabPages[3].Controls[0];
-            string cont = c3d.Text;
+            string cont = ironyFCTB1.Text;
+            
             inter.analizar(cont);
 
             RichTextBox salida = (RichTextBox)control_salida.TabPages[0].Controls[0];
@@ -153,6 +154,11 @@ namespace Proyecto2_compi2_2sem_2017
             
             tabControl1.TabPages.Add(pag);
             tabControl1.SelectTab(pag);
+
+            int ini = abrir.FileName.LastIndexOf("\\");
+            string ruta = abrir.FileName.Substring(0, ini+1);
+
+            Control3d.set_ruta(ruta);
 
             tree_view.Nodes.Add(new TreeNode(nombre));
             tree_view.Refresh();

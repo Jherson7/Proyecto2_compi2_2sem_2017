@@ -40,6 +40,8 @@
             this.arbolOlcToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.cERRARSESIONToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.reportesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.tablaSimbolosToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.reporteDeLaGramaticaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.optimizacionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.realizarOptimizacionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.panel1 = new System.Windows.Forms.Panel();
@@ -52,15 +54,12 @@
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.richTextBox4 = new System.Windows.Forms.RichTextBox();
             this.tabPage5 = new System.Windows.Forms.TabPage();
-            this.richTextBox5 = new System.Windows.Forms.RichTextBox();
             this.tabPage6 = new System.Windows.Forms.TabPage();
             this.richTextBox6 = new System.Windows.Forms.RichTextBox();
             this.label1 = new System.Windows.Forms.Label();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.richTextBox1 = new System.Windows.Forms.RichTextBox();
             this.tabControl1 = new System.Windows.Forms.TabControl();
-            this.tablaSimbolosToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.reporteDeLaGramaticaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.button1 = new System.Windows.Forms.Button();
             this.btnEjecutar3d = new System.Windows.Forms.Button();
             this.btnCompilar = new System.Windows.Forms.Button();
@@ -68,6 +67,7 @@
             this.btnAbrir = new System.Windows.Forms.Button();
             this.btnGuardar = new System.Windows.Forms.Button();
             this.btnNuevo = new System.Windows.Forms.Button();
+            this.ironyFCTB1 = new FastColoredTextBoxNS.IronyFCTB();
             this.menuStrip1.SuspendLayout();
             this.control_salida.SuspendLayout();
             this.tabPage3.SuspendLayout();
@@ -77,6 +77,7 @@
             this.tabPage6.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.tabControl1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.ironyFCTB1)).BeginInit();
             this.SuspendLayout();
             // 
             // contextMenuStrip1
@@ -158,6 +159,19 @@
             this.reportesToolStripMenuItem.Name = "reportesToolStripMenuItem";
             this.reportesToolStripMenuItem.Size = new System.Drawing.Size(65, 20);
             this.reportesToolStripMenuItem.Text = "Reportes";
+            // 
+            // tablaSimbolosToolStripMenuItem
+            // 
+            this.tablaSimbolosToolStripMenuItem.Name = "tablaSimbolosToolStripMenuItem";
+            this.tablaSimbolosToolStripMenuItem.Size = new System.Drawing.Size(200, 22);
+            this.tablaSimbolosToolStripMenuItem.Text = "Tabla Simbolos";
+            this.tablaSimbolosToolStripMenuItem.Click += new System.EventHandler(this.tablaSimbolosToolStripMenuItem_Click);
+            // 
+            // reporteDeLaGramaticaToolStripMenuItem
+            // 
+            this.reporteDeLaGramaticaToolStripMenuItem.Name = "reporteDeLaGramaticaToolStripMenuItem";
+            this.reporteDeLaGramaticaToolStripMenuItem.Size = new System.Drawing.Size(200, 22);
+            this.reporteDeLaGramaticaToolStripMenuItem.Text = "Reporte de la Gramatica";
             // 
             // optimizacionToolStripMenuItem
             // 
@@ -260,21 +274,13 @@
             // 
             // tabPage5
             // 
-            this.tabPage5.Controls.Add(this.richTextBox5);
+            this.tabPage5.Controls.Add(this.ironyFCTB1);
             this.tabPage5.Location = new System.Drawing.Point(4, 22);
             this.tabPage5.Name = "tabPage5";
             this.tabPage5.Size = new System.Drawing.Size(796, 168);
             this.tabPage5.TabIndex = 3;
             this.tabPage5.Text = "Codigo 3D";
             this.tabPage5.UseVisualStyleBackColor = true;
-            // 
-            // richTextBox5
-            // 
-            this.richTextBox5.Location = new System.Drawing.Point(2, 3);
-            this.richTextBox5.Name = "richTextBox5";
-            this.richTextBox5.Size = new System.Drawing.Size(793, 163);
-            this.richTextBox5.TabIndex = 1;
-            this.richTextBox5.Text = "";
             // 
             // tabPage6
             // 
@@ -330,19 +336,6 @@
             this.tabControl1.SelectedIndex = 0;
             this.tabControl1.Size = new System.Drawing.Size(657, 344);
             this.tabControl1.TabIndex = 0;
-            // 
-            // tablaSimbolosToolStripMenuItem
-            // 
-            this.tablaSimbolosToolStripMenuItem.Name = "tablaSimbolosToolStripMenuItem";
-            this.tablaSimbolosToolStripMenuItem.Size = new System.Drawing.Size(200, 22);
-            this.tablaSimbolosToolStripMenuItem.Text = "Tabla Simbolos";
-            this.tablaSimbolosToolStripMenuItem.Click += new System.EventHandler(this.tablaSimbolosToolStripMenuItem_Click);
-            // 
-            // reporteDeLaGramaticaToolStripMenuItem
-            // 
-            this.reporteDeLaGramaticaToolStripMenuItem.Name = "reporteDeLaGramaticaToolStripMenuItem";
-            this.reporteDeLaGramaticaToolStripMenuItem.Size = new System.Drawing.Size(200, 22);
-            this.reporteDeLaGramaticaToolStripMenuItem.Text = "Reporte de la Gramatica";
             // 
             // button1
             // 
@@ -414,6 +407,25 @@
             this.btnNuevo.UseVisualStyleBackColor = true;
             this.btnNuevo.Click += new System.EventHandler(this.btnNuevo_Click);
             // 
+            // ironyFCTB1
+            // 
+            this.ironyFCTB1.AutoScrollMinSize = new System.Drawing.Size(107, 14);
+            this.ironyFCTB1.BackBrush = null;
+            this.ironyFCTB1.CharHeight = 14;
+            this.ironyFCTB1.CharWidth = 8;
+            this.ironyFCTB1.Cursor = System.Windows.Forms.Cursors.IBeam;
+            this.ironyFCTB1.DisabledColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
+            this.ironyFCTB1.Font = new System.Drawing.Font("Courier New", 9.75F);
+            this.ironyFCTB1.IsReplaceMode = false;
+            this.ironyFCTB1.Location = new System.Drawing.Point(0, 0);
+            this.ironyFCTB1.Name = "ironyFCTB1";
+            this.ironyFCTB1.Paddings = new System.Windows.Forms.Padding(0);
+            this.ironyFCTB1.SelectionColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(255)))));
+            this.ironyFCTB1.Size = new System.Drawing.Size(793, 165);
+            this.ironyFCTB1.TabIndex = 0;
+            this.ironyFCTB1.Text = "ironyFCTB1";
+            this.ironyFCTB1.Zoom = 100;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -446,6 +458,7 @@
             this.tabPage6.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
             this.tabControl1.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.ironyFCTB1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -479,7 +492,6 @@
         private System.Windows.Forms.RichTextBox richTextBox2;
         private System.Windows.Forms.RichTextBox richTextBox3;
         private System.Windows.Forms.RichTextBox richTextBox4;
-        private System.Windows.Forms.RichTextBox richTextBox5;
         private System.Windows.Forms.RichTextBox richTextBox6;
         private System.Windows.Forms.Button btnEjecutar3d;
         private System.Windows.Forms.Button button1;
@@ -491,6 +503,7 @@
         private System.Windows.Forms.ToolStripMenuItem cERRARSESIONToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem tablaSimbolosToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem reporteDeLaGramaticaToolStripMenuItem;
+        private FastColoredTextBoxNS.IronyFCTB ironyFCTB1;
     }
 }
 
